@@ -14,8 +14,8 @@ function Base.:+(x::Variable{T}, constant) where T
                 δ(x) .+= δy
             end
             ifNotKeepδThenFreeδ!(y)
-            backward!(x)
         end
+        addchild(y, x)
     end
     return y
 end
@@ -36,8 +36,8 @@ function Base.:-(x::Variable{T}, constant) where T
                 δ(x) .+= δy
             end
             ifNotKeepδThenFreeδ!(y)
-            backward!(x)
         end
+        addchild(y, x)
     end
     return y
 end
@@ -53,8 +53,8 @@ function Base.:-(constant, x::Variable{T}) where T
                 δ(x) .-= δy
             end
             ifNotKeepδThenFreeδ!(y)
-            backward!(x)
         end
+        addchild(y, x)
     end
     return y
 end
@@ -70,8 +70,8 @@ function Base.:*(x::Variable{T}, constant) where T
                 δ(x) .+= δy .* constant
             end
             ifNotKeepδThenFreeδ!(y)
-            backward!(x)
         end
+        addchild(y, x)
     end
     return y
 end
@@ -92,8 +92,8 @@ function Base.:^(x::Variable{T}, n::Int) where T
                 δ(x) .+= n .* ᵛ(y) ./ ᵛ(x) .* δy
             end
             ifNotKeepδThenFreeδ!(y)
-            backward!(x)
         end
+        addchild(y, x)
     end
     return y
 end
@@ -111,9 +111,9 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
            if need2computeδ!(x) δ(x) .+= δz end
            if need2computeδ!(y) δ(y) .+= δz end
            ifNotKeepδThenFreeδ!(z)
-           backward!(x)
-           backward!(y)
        end
+       addchild(z, x)
+       addchild(z, y)
    end
    return z
 end
@@ -131,9 +131,9 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
             if need2computeδ!(x) δ(x) .+= δz end
             if need2computeδ!(y) δ(y) .-= δz end
             ifNotKeepδThenFreeδ!(z)
-            backward!(x)
-            backward!(y)
         end
+        addchild(z, x)
+        addchild(z, y)
     end
     return z
 end
@@ -155,9 +155,9 @@ function dotAdd(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
             if need2computeδ!(x) δ(x) .+= δz end
             if need2computeδ!(y) δ(y) .+= δz end
             ifNotKeepδThenFreeδ!(z)
-            backward!(x)
-            backward!(y)
         end
+        addchild(z, x)
+        addchild(z, y)
     end
     return z
 end
@@ -179,9 +179,9 @@ function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
             if need2computeδ!(x) δ(x) .+= δz .* ᵛ(y) end
             if need2computeδ!(y) δ(y) .+= δz .* ᵛ(x) end
             ifNotKeepδThenFreeδ!(z)
-            backward!(x)
-            backward!(y)
         end
+        addchild(z, x)
+        addchild(z, y)
     end
     return z
 end
@@ -202,9 +202,9 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
             if need2computeδ!(W) δ(W) .+= δY  * ᵛ(X)' end
             if need2computeδ!(X) δ(X) .+= ᵛ(W)' * δY  end
             ifNotKeepδThenFreeδ!(Y)
-            backward!(W)
-            backward!(X)
         end
+        addchild(Y, W)
+        addchild(Y, X)
     end
     return Y
 end
@@ -228,9 +228,9 @@ function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
             if need2computeδ!(M) δ(M) .+=     δZ          end
             if need2computeδ!(V) δ(V) .+= sum(δZ, dims=2) end
             ifNotKeepδThenFreeδ!(Z)
-            backward!(M)
-            backward!(V)
         end
+        addchild(Z, M)
+        addchild(Z, V)
     end
     return Z
 end
@@ -254,9 +254,9 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
             if need2computeδ!(M) δ(M) .+=     δZ .* ᵛ(V)          end
             if need2computeδ!(V) δ(V) .+= sum(δZ .* ᵛ(M), dims=2) end
             ifNotKeepδThenFreeδ!(Z)
-            backward!(M)
-            backward!(V)
         end
+        addchild(Z, M)
+        addchild(Z, V)
     end
     return Z
 end

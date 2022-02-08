@@ -1,11 +1,13 @@
 export Variable
 export zeroDelta
-export Zeros, Ones
 export clone
 export need2computeδ!
 export ifNotKeepδThenFreeδ!
 export elsizeof
 export value, delta, ᵛ, ᵟ, δ
+export isleaf, backprop, keepsgrad
+export haschild, childrenof, addchild
+export haskid, kidsof, addkid
 
 export XVariable, VarOrNil, FunOrNil
 const FunOrNil = Union{Function, Nothing}
@@ -13,47 +15,47 @@ const FunOrNil = Union{Function, Nothing}
 
 
 
-
 """
     mutable struct Variable{T}
 # Fields
-+ `value::T`                : value in forward
-+ `delta::Union{Nothing,T}` : gradients collected in backprop
-+ `shape::Tuple`            : shape of `value`
-+ `keepsgrad::Bool`         : whether keeps grad after backprop
-+ `isleaf::Bool`            : whether leaf node
-+ `backward::FunOrNil`      : backward function
++       `value::T`                : value in forward
++       `delta::Union{Nothing,T}` : gradients collected in backprop
++       `shape::Tuple`            : shape of `value`
++       `isleaf::Bool`            : whether leaf node
++       `backprop::Bool`          : whether needs backprop
++       `keepsgrad::Bool`         : whether keeps grad after backprop
++       `backward::FunOrNil`      : backward function
++ `children::Vector{Variable{T}}` : children Variables
 """
 mutable struct Variable{T}
-    value::T
-    delta::Union{Nothing,T}
-    shape::Tuple
-    backprop::Bool      # 是否反向传播，依赖的子节点都跟其一样
-    keepsgrad::Bool     # 是否保留梯度，可能用于训练或者其他
-    isleaf::Bool        # 可训练的，代表可学习的参数
-    backward::FunOrNil  # 反向传播函数
-    function Variable{T}(x, backprop::Bool=true,
-                            keepsgrad::Bool=false,
-                            isleaf::Bool=false) where T
-        s = size(x)
-        δ = nothing
-        new{T}(x, δ, s, backprop, keepsgrad, isleaf, nothing)
+    value     :: T
+    delta     :: Union{Nothing,T}
+    shape     :: Tuple
+    isleaf    :: Bool
+    backprop  :: Bool
+    keepsgrad :: Bool
+    backward  :: FunOrNil
+    children  :: Vector{Variable{T}}
+    function Variable{T}(x, isleaf::Bool=false,
+                            backprop::Bool=true,
+                            keepsgrad::Bool=false) where T
+        new{T}(x, nothing, size(x), isleaf, backprop, keepsgrad, nothing, [])
     end
 end
 
 
-# Convenient abstract-type-specilized constructors for data on GPU/CPU/xPU etc....
+# Convenient type-specilized constructors for data on GPU/CPU/xPU etc....
 function Variable(x; backprop::Bool=true,
                      keepsgrad::Bool=false,
                      type::Type=Array{Float32})
-    isleaf = true    # any user defined Variable is a leaf Variable
-    return Variable{type}(x, backprop, keepsgrad, isleaf)
+    isleaf = true    # any user defined Variable is a leaf
+    return Variable{type}(x, isleaf, backprop, keepsgrad)
 end
 
 
 const XVariable = Tuple{Char, Variable}
 const VarOrNil  = Union{Variable, Nothing}
-
+const Variables = Vector{Variable}
 
 # pretty printing
 function Base.show(io::IO, x::Variable{T}) where T
@@ -108,20 +110,14 @@ Base.ndims(x::Variable)          =   ndims(x.value)
 Base.length(x::Variable)         =  length(x.value)
 Base.strides(x::Variable)        = strides(x.value)
 Base.eltype(x::Variable)         =  eltype(x.value)
-Base.similar(x::Variable{T})  where T = Variable{T}( similar(x.value), x.backprop, x.keepsgrad, x.isleaf)
-Base.copy(x::Variable{T})     where T = Variable{T}(    copy(x.value), x.backprop, x.keepsgrad, x.isleaf)
-Base.deepcopy(x::Variable{T}) where T = Variable{T}(deepcopy(x.value), x.backprop, x.keepsgrad, x.isleaf)
+Base.similar(x::Variable{T})  where T = Variable{T}( similar(x.value), x.isleaf, x.backprop, x.keepsgrad)
+Base.copy(x::Variable{T})     where T = Variable{T}(    copy(x.value), x.isleaf, x.backprop, x.keepsgrad)
+Base.deepcopy(x::Variable{T}) where T = Variable{T}(deepcopy(x.value), x.isleaf, x.backprop, x.keepsgrad)
 
 Base.setindex!(x::Variable, v::Number,        k...) = (x.value[k...] .= v)
 Base.setindex!(x::Variable, v::AbstractArray, k...) = (x.value[k...]  = v)
 
 
-
-@inline function backward!(x::Variable)
-    if !x.isleaf && !isnothing(x.backward)
-        return x.backward(ᵟ(x))
-    end
-end
 
 function Base.getindex(x::Variable{T}, k...) where T
     y = Variable{T}(x.value[k...], x.backprop, x.keepsgrad, x.isleaf)
@@ -170,3 +166,20 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline δ(x::Variable) = x.delta
 @inline value(x::Variable) = x.value
 @inline delta(x::Variable) = x.delta
+@inline isleaf(x::Variable) = x.isleaf
+@inline backprop(x::Variable) = x.backprop
+@inline keepsgrad(x::Variable) = x.keepsgrad
+@inline haschild(x::Variable) = length(x.children) > 0 ? true : false
+@inline haskid(x::Variable)   = length(x.children) > 0 ? true : false
+@inline childrenof(x::Variable) = x.children
+@inline     kidsof(x::Variable) = x.children
+
+# @inline function backward!(x::Variable)
+#     if !x.isleaf && !isnothing(x.backward)
+#         return x.backward(ᵟ(x))
+#     end
+# end
+
+
+@inline addchild(p::Variable, c::Variable) = push!(p.children, c)
+@inline   addkid(p::Variable, c::Variable) = push!(p.children, c)

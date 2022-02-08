@@ -1,3 +1,6 @@
+export Zeros
+export Ones
+
 """
     Zeros(::Type{T}, shape...) where T
 return an all-zero-elements-array of type T which has shape `shape...`
