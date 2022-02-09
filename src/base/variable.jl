@@ -181,5 +181,5 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 # end
 
 
-@inline addchild(p::Variable, c::Variable) = push!(p.children, c)
-@inline   addkid(p::Variable, c::Variable) = push!(p.children, c)
+@inline addchild(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
+@inline   addkid(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
