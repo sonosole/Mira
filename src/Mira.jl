@@ -7,6 +7,7 @@ import Statistics.mean
 
 include("./kit/include.jl")
 include("./base/include.jl")
+include("./block/include.jl")
 
 
 

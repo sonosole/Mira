@@ -36,9 +36,9 @@ mutable struct Variable{T}
     keepsgrad :: Bool
     backward  :: FunOrNil
     children  :: Vector{Variable{T}}
-    function Variable{T}(x, isleaf::Bool=false,
-                            backprop::Bool=true,
-                            keepsgrad::Bool=false) where T
+    function Variable{T}(x, backprop  :: Bool=true,
+                            keepsgrad :: Bool=false,
+                            isleaf    :: Bool=false) where T
         new{T}(x, nothing, size(x), isleaf, backprop, keepsgrad, nothing, [])
     end
 end
@@ -49,7 +49,7 @@ function Variable(x; backprop::Bool=true,
                      keepsgrad::Bool=false,
                      type::Type=Array{Float32})
     isleaf = true    # any user defined Variable is a leaf
-    return Variable{type}(x, isleaf, backprop, keepsgrad)
+    return Variable{type}(x, backprop, keepsgrad, isleaf)
 end
 
 
@@ -70,7 +70,7 @@ end
 
 
 function clone(x::Variable; type::Type=Array{Float32})
-    return Variable{type}(type(x.value), x.backprop, x.keepsgrad, x.isleaf)
+    return Variable{type}(x.value, x.backprop, x.keepsgrad, x.isleaf)
 end
 
 
@@ -110,9 +110,9 @@ Base.ndims(x::Variable)          =   ndims(x.value)
 Base.length(x::Variable)         =  length(x.value)
 Base.strides(x::Variable)        = strides(x.value)
 Base.eltype(x::Variable)         =  eltype(x.value)
-Base.similar(x::Variable{T})  where T = Variable{T}( similar(x.value), x.isleaf, x.backprop, x.keepsgrad)
-Base.copy(x::Variable{T})     where T = Variable{T}(    copy(x.value), x.isleaf, x.backprop, x.keepsgrad)
-Base.deepcopy(x::Variable{T}) where T = Variable{T}(deepcopy(x.value), x.isleaf, x.backprop, x.keepsgrad)
+Base.similar(x::Variable{T})  where T = Variable{T}( similar(x.value), x.backprop, x.keepsgrad, x.isleaf)
+Base.copy(x::Variable{T})     where T = Variable{T}(    copy(x.value), x.backprop, x.keepsgrad, x.isleaf)
+Base.deepcopy(x::Variable{T}) where T = Variable{T}(deepcopy(x.value), x.backprop, x.keepsgrad, x.isleaf)
 
 Base.setindex!(x::Variable, v::Number,        k...) = (x.value[k...] .= v)
 Base.setindex!(x::Variable, v::AbstractArray, k...) = (x.value[k...]  = v)
@@ -127,8 +127,8 @@ function Base.getindex(x::Variable{T}, k...) where T
                 x.delta[k...] .+= δy
             end
             ifNotKeepδThenFreeδ!(y);
-            backward!(x)
         end
+        addchild(y, x)
     end
     return y
 end
@@ -166,11 +166,13 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline δ(x::Variable) = x.delta
 @inline value(x::Variable) = x.value
 @inline delta(x::Variable) = x.delta
+
+# Variable's states fns
 @inline isleaf(x::Variable) = x.isleaf
 @inline backprop(x::Variable) = x.backprop
 @inline keepsgrad(x::Variable) = x.keepsgrad
 @inline haschild(x::Variable) = length(x.children) > 0 ? true : false
-@inline haskid(x::Variable)   = length(x.children) > 0 ? true : false
+@inline   haskid(x::Variable) = length(x.children) > 0 ? true : false
 @inline childrenof(x::Variable) = x.children
 @inline     kidsof(x::Variable) = x.children
 
