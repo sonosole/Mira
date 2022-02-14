@@ -23,7 +23,7 @@ function crossEntropy(x::Variable{T}, label::Variable{T}) where T
             if need2computeδ!(x)
                 δ(x) .-= δ(y) .* ᵛ(label) ./ (ᵛ(x) .+ ϵ)
             end
-            ifNotKeepδThenFreeδ!(y);
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

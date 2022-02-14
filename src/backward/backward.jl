@@ -3,8 +3,15 @@ export backward_by_dfs
 export backward_by_indegree
 
 
-function backward!(x::Variable{T}, d::Union{Nothing,T}=nothing; keepgraph::Bool=false, by::String="dfs") where T
-    if !isnothing(d) δ(x) .= d end
+function backward!(x::Variable{T}, d::Union{Real,T}=1.0f0; keepgraph::Bool=false, by::String="dfs") where T
+    if need2computeδ!(x)
+        if d isa Real
+            δ(x) .= eltype(T)(d)
+        else
+            δ(x) .= d
+        end
+    end
+
     by=="dfs" && return backward_by_dfs(x, keepgraph)
     by=="indegree" && return backward_by_indegree(x, keepgraph)
     @error "by is dfs or indegree, but got $by"

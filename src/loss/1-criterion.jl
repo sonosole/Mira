@@ -4,7 +4,7 @@ export loss
 # Internal function
 function _sum(x::Variable{T}) where T
     y = Variable{T}([sum(ᵛ(x))], x.backprop)
-    if x.backprop
+    if y.backprop
         y.backward = function _sumBackward()
             if need2computeδ!(x)
                 δ(x) .+= δ(y)
@@ -21,7 +21,7 @@ end
 function _mean(x::Variable{T}) where T
     n = eltype(x)(1) / prod(size(x))
     μ = Variable{T}([sum(ᵛ(x)) * n], x.backprop)
-    if x.backprop
+    if μ.backprop
         μ.backward = function _meanBackward()
             if need2computeδ!(x)
                 δ(x) .+= δ(μ) .* n
