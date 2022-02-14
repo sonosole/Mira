@@ -193,21 +193,21 @@ function in2col(x::Variable{Array{T}}, kernel::Int, stride::Int) where T
     end
 
     if y.backprop
-        y.backward = function in2colBackward(δy)
+        y.backward = function in2colBackward()
             if need2computeδ!(x)
                 Threads.@threads for b = 1:batchsize
                     index = 1 + (b-1)*step
                     start = 1
                     final = kernel
                     for s = 1:step
-                        x.delta[:,start:final,b] += reshape(δy[:,index], (ichannels, kernel))
+                        x.delta[:,start:final,b] += reshape(y.delta[:,index], (ichannels, kernel))
                         start += stride
                         final += stride
                         index += 1
                     end
                 end
             end
-            ifNotKeepδThenFreeδ!(y);
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -64,13 +64,13 @@ limit the scope of the data, i.e. ⤦\n
 function min2max!(x::Variable{S}; lower=0.0, upper=1.0) where S
     y = Variable{S}(min2max!(ᵛ(x), lower=lower, upper=upper), x.backprop)
     if y.backprop
-        y.backward = function min2maxBackward(δy)
+        y.backward = function min2maxBackward()
             if need2computeδ!(x)
                 T = eltype(S)
                 L = T(lower)
                 U = T(upper)
                 ∇ = L .< ᵛ(x) .< U
-                δ(x) .+= δy .* ∇
+                δ(x) .+= δ(y) .* ∇
             end
             ifNotKeepδThenFreeδ!(y);
         end
@@ -316,9 +316,9 @@ function leakyrelu!(x::Variable{T}) where T
     if y.backprop
         mask1 = ᵛ(x) .> tempv
         mask2 = .!mask1
-        y.backward = function leakyreluBackward(δy)
+        y.backward = function leakyreluBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* (mask1 .+ ZPONE .* mask2)
+                δ(x) .+= δ(y) .* (mask1 .+ ZPONE .* mask2)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -335,9 +335,9 @@ function leakyrelu(x::Variable{T}) where T
     mask2 = .!mask1
     y = Variable{T}(max.(tempv, ᵛ(x)), x.backprop)
     if y.backprop
-        y.backward = function leakyreluBackward(δy)
+        y.backward = function leakyreluBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* (mask1 + ZPONE .* mask2)
+                δ(x) .+= δ(y) .* (mask1 + ZPONE .* mask2)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -365,9 +365,9 @@ function sigmoid!(x::Variable{T}) where T
     y = Variable{T}(sigmoid!(ᵛ(x)), x.backprop)
     if y.backprop
         𝟙 = eltype(x)(1)
-        y.backward = function sigmoidBackward(δy)
+        y.backward = function sigmoidBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* ᵛ(y) .* (𝟙 .- ᵛ(y))
+                δ(x) .+= δ(y) .* ᵛ(y) .* (𝟙 .- ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -381,9 +381,9 @@ function sigmoid(x::Variable{T}) where T
     y = Variable{T}(sigmoid(ᵛ(x)), x.backprop)
     if y.backprop
         𝟙 = eltype(x)(1.0)
-        y.backward = function sigmoidBackward(δy)
+        y.backward = function sigmoidBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* ᵛ(y) .* (𝟙 .- ᵛ(y))
+                δ(x) .+= δ(y) .* ᵛ(y) .* (𝟙 .- ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -429,9 +429,9 @@ end
 function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}) where {T,N}
     y = Variable{T}(softmax(ᵛ(x); dims=dims), x.backprop)
     if y.backprop
-        y.backward = function softmaxBackward(δy)
+        y.backward = function softmaxBackward()
             if need2computeδ!(x)
-                ẏy = δy .* ᵛ(y)
+                ẏy = δ(y) .* ᵛ(y)
                 δ(x) .+= ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -595,9 +595,9 @@ end
 function Base.:reshape(x::Variable{T}, newsize) where T
     y = Variable{T}( reshape(ᵛ(x), newsize), x.backprop )
     if y.backprop
-        y.backward = function reshapeBackward(δy)
+        y.backward = function reshapeBackward()
             if need2computeδ!(x)
-                δ(x) .+= reshape(δy, x.shape)
+                δ(x) .+= reshape(δ(y), x.shape)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -941,9 +941,9 @@ function tanh!(x::Variable{T}) where T
         TOO = eltype(x)
         𝟙 = TOO(1.0)
         𝟚 = TOO(2.0)
-        y.backward = function tanhBackward(δy)
+        y.backward = function tanhBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* (𝟙 .- ᵛ(y).^𝟚)
+                δ(x) .+= δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -959,9 +959,9 @@ function Base.:tanh(x::Variable{T}) where T
         TOO = eltype(x)
         𝟙 = TOO(1.0)
         𝟚 = TOO(2.0)
-        y.backward = function tanhBackward(δy)
+        y.backward = function tanhBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* (𝟙 .- ᵛ(y).^𝟚)
+                δ(x) .+= δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end

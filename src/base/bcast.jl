@@ -49,13 +49,13 @@ function Base.Broadcast.broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), backprop)
     if backprop
-        z.backward = function DotAddBackward(δz)
+        z.backward = function DotAddBackward()
             if need2computeδ!(x)
-                δx = δz
+                δx = δ(z)
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
-                δy = δz
+                δy = δ(z)
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z);
@@ -73,13 +73,13 @@ function Base.Broadcast.broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) .- ᵛ(y), backprop)
     if backprop
-        z.backward = function DotMinusBackward(δz)
+        z.backward = function DotMinusBackward()
             if need2computeδ!(x)
-                δx = δz
+                δx = δ(z)
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
-                δy = - δz
+                δy = - δ(z)
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z);
@@ -97,13 +97,13 @@ function Base.Broadcast.broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
-        z.backward = function DotMulBackward(δz)
+        z.backward = function DotMulBackward()
             if need2computeδ!(x)
-                δx = δz .* ᵛ(y)
+                δx = δ(z) .* ᵛ(y)
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
-                δy = δz .* ᵛ(x)
+                δy = δ(z) .* ᵛ(x)
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z);
@@ -121,8 +121,8 @@ function Base.Broadcast.broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) ./ ᵛ(y), backprop)
     if backprop
-        z.backward = function DotDivBackward(δz)
-            δx = δz ./ ᵛ(y)
+        z.backward = function DotDivBackward()
+            δx = δ(z) ./ ᵛ(y)
             if need2computeδ!(x)
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end

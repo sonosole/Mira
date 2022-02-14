@@ -9,9 +9,9 @@ function Base.:+(x::Variable{T}, constant) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .+ C, x.backprop)
     if y.backprop
-        y.backward = function matAddScalarBackward(δy)
+        y.backward = function matAddScalarBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy
+                δ(x) .+= δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -31,9 +31,9 @@ function Base.:-(x::Variable{T}, constant) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .- C, x.backprop)
     if y.backprop
-        y.backward = function matMinusScalarBackward(δy)
+        y.backward = function matMinusScalarBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy
+                δ(x) .+= δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -48,9 +48,9 @@ function Base.:-(constant, x::Variable{T}) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(C .- ᵛ(x), x.backprop)
     if y.backprop
-        y.backward = function scalarMinusMatBackward(δy)
+        y.backward = function scalarMinusMatBackward()
             if need2computeδ!(x)
-                δ(x) .-= δy
+                δ(x) .-= δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -65,9 +65,9 @@ function Base.:*(x::Variable{T}, constant) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .* C, x.backprop)
     if y.backprop
-        y.backward = function matMulScalarBackward(δy)
+        y.backward = function matMulScalarBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* constant
+                δ(x) .+= δ(y) .* constant
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -87,9 +87,9 @@ function Base.:^(x::Variable{T}, n::Int) where T
     n = eltype(ᵛ(x))(n)
     y = Variable{T}(ᵛ(x) .^ n, x.backprop)
     if y.backprop
-        y.backward = function powerBackward(δy)
+        y.backward = function powerBackward()
             if need2computeδ!(x)
-                δ(x) .+= n .* ᵛ(y) ./ ᵛ(x) .* δy
+                δ(x) .+= n .* ᵛ(y) ./ ᵛ(x) .* δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -107,9 +107,9 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
    backprop = (x.backprop || y.backprop)
    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
    if backprop
-       z.backward = function add2varBackward(δz)
-           if need2computeδ!(x) δ(x) .+= δz end
-           if need2computeδ!(y) δ(y) .+= δz end
+       z.backward = function add2varBackward()
+           if need2computeδ!(x) δ(x) .+= δ(z) end
+           if need2computeδ!(y) δ(y) .+= δ(z) end
            ifNotKeepδThenFreeδ!(z)
        end
        addchild(z, x)
@@ -127,9 +127,9 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
     if backprop
-        z.backward = function minus2varBackward(δz)
-            if need2computeδ!(x) δ(x) .+= δz end
-            if need2computeδ!(y) δ(y) .-= δz end
+        z.backward = function minus2varBackward()
+            if need2computeδ!(x) δ(x) .+= δ(z) end
+            if need2computeδ!(y) δ(y) .-= δ(z) end
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -151,9 +151,9 @@ function dotAdd(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), backprop)
     if backprop
-        z.backward = function dotAddBackward(δz)
-            if need2computeδ!(x) δ(x) .+= δz end
-            if need2computeδ!(y) δ(y) .+= δz end
+        z.backward = function dotAddBackward()
+            if need2computeδ!(x) δ(x) .+= δ(z) end
+            if need2computeδ!(y) δ(y) .+= δ(z) end
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -175,9 +175,9 @@ function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     backprop = (x.backprop || y.backprop)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
-        z.backward = function dotMulBackward(δz)
-            if need2computeδ!(x) δ(x) .+= δz .* ᵛ(y) end
-            if need2computeδ!(y) δ(y) .+= δz .* ᵛ(x) end
+        z.backward = function dotMulBackward()
+            if need2computeδ!(x) δ(x) .+= δ(z) .* ᵛ(y) end
+            if need2computeδ!(y) δ(y) .+= δ(z) .* ᵛ(x) end
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -198,9 +198,9 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
     backprop = (W.backprop || X.backprop)
     Y = Variable{T}(ᵛ(W) * ᵛ(X), backprop)
     if backprop
-        Y.backward = function matMulBackward(δY)
-            if need2computeδ!(W) δ(W) .+= δY  * ᵛ(X)' end
-            if need2computeδ!(X) δ(X) .+= ᵛ(W)' * δY  end
+        Y.backward = function matMulBackward()
+            if need2computeδ!(W) δ(W) .+= δ(Y)  * ᵛ(X)' end
+            if need2computeδ!(X) δ(X) .+= ᵛ(W)' * δ(Y)  end
             ifNotKeepδThenFreeδ!(Y)
         end
         addchild(Y, W)
@@ -224,9 +224,9 @@ function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     backprop = (M.backprop || V.backprop)
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
     if backprop
-        Z.backward = function matAddVecBackward(δZ)
-            if need2computeδ!(M) δ(M) .+=     δZ          end
-            if need2computeδ!(V) δ(V) .+= sum(δZ, dims=2) end
+        Z.backward = function matAddVecBackward()
+            if need2computeδ!(M) δ(M) .+=     δ(Z)          end
+            if need2computeδ!(V) δ(V) .+= sum(δ(Z), dims=2) end
             ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
@@ -250,9 +250,9 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     backprop = (M.backprop || V.backprop)
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)
     if backprop
-        Z.backward = function matMulVecBackward(δZ)
-            if need2computeδ!(M) δ(M) .+=     δZ .* ᵛ(V)          end
-            if need2computeδ!(V) δ(V) .+= sum(δZ .* ᵛ(M), dims=2) end
+        Z.backward = function matMulVecBackward()
+            if need2computeδ!(M) δ(M) .+=     δ(Z) .* ᵛ(V)          end
+            if need2computeδ!(V) δ(V) .+= sum(δ(Z) .* ᵛ(M), dims=2) end
             ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)

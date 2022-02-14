@@ -6,8 +6,12 @@ export ifNotKeepδThenFreeδ!
 export elsizeof
 export value, delta, ᵛ, ᵟ, δ
 export isleaf, backprop, keepsgrad
-export haschild, childrenof, addchild
-export haskid, kidsof, addkid
+export haschild, childrenof, addchild, nchildrenof
+export haskid, kidsof, addkid, nkidsof
+
+export visited
+export setvisited
+export unsetvisited
 
 export XVariable, VarOrNil, FunOrNil
 const FunOrNil = Union{Function, Nothing}
@@ -24,6 +28,7 @@ const FunOrNil = Union{Function, Nothing}
 +       `isleaf::Bool`            : whether leaf node
 +       `backprop::Bool`          : whether needs backprop
 +       `keepsgrad::Bool`         : whether keeps grad after backprop
++       `visited::Bool`           : whether visited during backprop
 +       `backward::FunOrNil`      : backward function
 + `children::Vector{Variable{T}}` : children Variables
 """
@@ -34,12 +39,18 @@ mutable struct Variable{T}
     isleaf    :: Bool
     backprop  :: Bool
     keepsgrad :: Bool
+    visited   :: Bool
     backward  :: FunOrNil
     children  :: Vector{Variable{T}}
     function Variable{T}(x, backprop  :: Bool=true,
                             keepsgrad :: Bool=false,
                             isleaf    :: Bool=false) where T
-        new{T}(x, nothing, size(x), isleaf, backprop, keepsgrad, nothing, [])
+        delta    = nothing
+        shape    = size(x)
+        visited  = false
+        backward = nothing
+        children = Vector{Variable{T}}()
+        new{T}(x, delta, shape, isleaf, backprop, keepsgrad, visited, backward, children)
     end
 end
 
@@ -175,12 +186,12 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline   haskid(x::Variable) = length(x.children) > 0 ? true : false
 @inline childrenof(x::Variable) = x.children
 @inline     kidsof(x::Variable) = x.children
+@inline nchildrenof(x::Variable) = length(x.children)
+@inline     nkidsof(x::Variable) = length(x.children)
 
-# @inline function backward!(x::Variable)
-#     if !x.isleaf && !isnothing(x.backward)
-#         return x.backward(ᵟ(x))
-#     end
-# end
+@inline visited(x::Variable)      = x.visited
+@inline setvisited(x::Variable)   = x.visited = true
+@inline unsetvisited(x::Variable) = x.visited = false
 
 
 @inline addchild(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)

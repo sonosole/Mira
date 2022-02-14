@@ -21,9 +21,9 @@ function dropout(x::Variable{T}; p=0.1) where T
     m = T(rand(τ, x.shape) .< (l - p)) .* (l/(l - p)) # weighted mask
     y = Variable{T}(ᵛ(x) .* m, x.backprop)
     if y.backprop
-        y.backward = function dropoutBackward(δy)
+        y.backward = function dropoutBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* m
+                δ(x) .+= δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -51,9 +51,9 @@ function dropout!(x::Variable{T}; p=0.1) where T
     m = T(rand(τ, x.shape) .< (l - p)) .* (l/(l - p)) # weighted mask
     y = Variable{T}(dotmul!(ᵛ(x), m), x.backprop)
     if y.backprop
-        y.backward = function dropoutBackward(δy)
+        y.backward = function dropoutBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* m
+                δ(x) .+= δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -82,9 +82,9 @@ function xdropout(x::Variable{T}; p=0.1, dim=1) where T
     m = T(rand(τ, S) .< (l - p)) .* (l/(l - p))  # weighted mask
     y = Variable{T}(ᵛ(x) .* m, x.backprop)
     if x.backprop
-        y.backward = function dropoutBackward(δy)
+        y.backward = function dropoutBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* m
+                δ(x) .+= δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -113,9 +113,9 @@ function xdropout!(x::Variable{T}; p=0.1, dim=1) where T
     m = T(rand(τ, S) .< (l - p)) .* (l/(l - p))  # weighted mask
     y = Variable{T}(dotmul!(ᵛ(x), m), x.backprop)
     if y.backprop
-        y.backward = function dropoutBackward(δy)
+        y.backward = function dropoutBackward()
             if need2computeδ!(x)
-                δ(x) .+= δy .* m
+                δ(x) .+= δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y);
         end
