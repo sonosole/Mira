@@ -1,5 +1,5 @@
 export Variable
-export zeroDelta
+export zerodelta
 export clone
 export need2computeδ!
 export ifNotKeepδThenFreeδ!
@@ -85,7 +85,7 @@ function clone(x::Variable; type::Type=Array{Float32})
 end
 
 
-function zeroDelta(x::Variable{T}) where T
+function zerodelta(x::Variable{T}) where T
     # 要切断某些反向传播路径的时候将其初始化为零
     if isnothing(x.delta)
         x.delta = Zeros(T, x.shape);

@@ -27,11 +27,11 @@
     outs = softmax(forward(model, x); dims=1)
     COST1 = crossEntropyLoss(outs, l)
     backward(COST1)
+    GRAD = blocks[1].w.delta[1]
 
     # [3] with a samll change of a weight
     DELTA = 1e-5
     model[1].w.value[1] += DELTA
-    GRAD = blocks[1].w.delta[1]
 
     # [4] forward and backward propagation
     outs = softmax(forward(model, x); dims=1)
@@ -39,8 +39,7 @@
     backward(COST2)
 
     # [5] check if the auto-grad is true or not
-    dLdW = (ᵛ(COST2) - ᵛ(COST1))/DELTA
+    dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA
     err  = abs((dLdW-GRAD)/(GRAD==0.0 ? 1.0 : GRAD))*100
-    err  = err < 1e-3 ? 0.0 : err
-    @test err < 5.0
+    @test err < 1e-2
 end

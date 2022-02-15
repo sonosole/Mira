@@ -14,9 +14,9 @@
     LOSS1 = mse(outs, l)
     COST1 = loss(LOSS1)
     backward(COST1)
+    GRAD = m.w.delta[1]
 
     # [3] with a samll change of a weight
-    GRAD = m.w.delta[1]
     DELTA = 1e-6
     m.w.value[1] += DELTA
 
@@ -27,8 +27,7 @@
     backward(COST2)
 
     # [5] check if the auto-grad is true or not
-    dLdW = (ᵛ(COST2) - ᵛ(COST1))/DELTA;   # numerical gradient
+    dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
     err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
-    err  = err < 1e-1 ? 0.0 : err;
-    @test err<1.0
+    @test err < 1e-1
 end

@@ -21,10 +21,10 @@
 
     # [0] prepare model
     model = Chain(
-    IndRNN(2,128,relu; type=TYPE),
-    IndRNN(128,64,cos; type=TYPE),
-    IndRNN(64,64,cos;  type=TYPE),
-    Dense(64,1,relu;   type=TYPE)
+        IndRNN(2,128,relu; type=TYPE),
+        IndRNN(128,64,cos; type=TYPE),
+        IndRNN(64,64,cos;  type=TYPE),
+        Dense(64,1,relu;   type=TYPE)
     )
 
     # [1] prepare input data and its label
@@ -34,29 +34,30 @@
     # [2] forward and backward propagation
     resethidden(model)
     for t = 1:T-1
-        tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) )
-        zeroDelta(tmp)
+        tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) );
+        zerodelta(tmp);
     end
-    y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) )
-    COST1 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) )
+    y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) );
+    COST1 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) );
     backward(COST1)
+    GRAD = model[1].w.delta[1]
 
     # [3] with a samll change of a weight
-    GRAD = model[1].w.delta[1]
-    DELTA = 1e-4
+    DELTA = 1e-5
     model[1].w.value[1] += DELTA
 
     # [4] forward and backward propagation again
     resethidden(model)
     for t = 1:T-1
         tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) )
-        zeroDelta(tmp)
+        zerodelta(tmp)
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) )
     COST2 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) )
     backward(COST2)
 
     # [5] check if the auto-grad is true or not
-    dLdW = (ᵛ(COST2) - ᵛ(COST1))/DELTA
-    @test abs(dLdW-GRAD)<1e-4
+    dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA
+    err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
+    @test err < 0.1
 end

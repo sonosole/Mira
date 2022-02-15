@@ -27,10 +27,9 @@
                 backward(COST2);
 
                 # [5] check if the auto-grad is true or not
-                dLdW = (ᵛ(COST2) - ᵛ(COST1))/DELTA;   # numerical gradient
+                dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
                 err  = abs((dLdW-GRAD)/(GRAD+eps(Float32)))*100;  # relative error in %
-                err  = err < 1e-1 ? 0.0 : err;
-                @test err<1.0
+                @test err < 1e-1
             end
         end
     end
@@ -64,10 +63,9 @@ end
             backward(COST2);
 
             # [5] check if the auto-grad is true or not
-            dLdW = (ᵛ(COST2) - ᵛ(COST1))/DELTA;   # numerical gradient
+            dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
             err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
-            err  = err < 1e-1 ? 0.0 : err;
-            @test err<1.0
+            @test err < 1e-1
         end
     end
 end
@@ -90,9 +88,9 @@ end
             # [2] forward and backward propagation
             COST1 = mseLoss(pool(x; dims1=DIM1, dims2=DIM2), l)
             backward(COST1);
+            GRAD = x.delta[1];
 
             # [3] with a samll change of a weight
-            GRAD = x.delta[1];
             DELTA = 1e-6;
             x.value[1] += DELTA;
 
@@ -101,10 +99,9 @@ end
             backward(COST2);
 
             # [5] check if the auto-grad is true or not
-            dLdW = (ᵛ(COST2) - ᵛ(COST1))/DELTA;   # numerical gradient
+            dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
             err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
-            err  = err < 1e-1 ? 0.0 : err;
-            @test err<1.0
+            @test err < 1e-1
         end
     end
 end

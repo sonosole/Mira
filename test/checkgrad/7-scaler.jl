@@ -25,9 +25,8 @@
 
     # [5] check if the auto-grad is true or not
     ϵ    = eps(Float64)
-    ∂C∂k = (ᵛ(C₂) - ᵛ(C₁))/Δ;            # numerical gradient
-    err  = (∂C∂k - ∇)/(∇+ϵ);       # relative error
-    err  = abs(err) * 100;         # relative error in %
-    err  = err < 1e-1 ? 0.0 : err; # zero-error if under 0.1%
-    @test err < 1.0
+    ∂C∂k = (ᵛ(C₂)[1] - ᵛ(C₁)[1])/Δ;   # numerical gradient
+    err  = (∂C∂k - ∇)/(∇+ϵ);          # relative error
+    err  = abs(err) * 100;            # relative error in %
+    @test err < 1e-1                  # error under 0.1%
 end
