@@ -4,7 +4,7 @@ export PackedSeqForward
 
 
 """
-    PadSeqPackBatch(inputs::Vector; epsilon::Real=0.0) -> output
+    PadSeqPackBatch(inputs::Vector; eps::Real=0.0) -> output
 + `inputs` <: AbstractArray{Real,2}
 + `output` <: AbstractArray{Real,3}
 pad epsilon to align raw input features probably with different length
@@ -23,14 +23,14 @@ pad epsilon to align raw input features probably with different length
      3.0  3.0  3.0
      3.0  3.0  3.0
 """
-function PadSeqPackBatch(inputs::Vector; epsilon::Real=0.0)
+function PadSeqPackBatch(inputs::Vector; eps::Real=0.0)
     # all Array of inputs shall have the same size in dim-1
     batchSize = length(inputs)
     lengths   = [size(inputs[i], 2) for i in 1:batchSize]
     featDims  = size(inputs[1], 1)
     maxSteps  = maximum(lengths)
     RNNBatch  = zeros(eltype(inputs[1]), featDims, maxSteps, batchSize)
-    fill!(RNNBatch, epsilon)
+    fill!(RNNBatch, eps)
 
     for i = 1:batchSize
         Tᵢ = lengths[i]
