@@ -84,7 +84,7 @@ function forward(m::RNN, x::Variable{T}) where T
     w = m.w  # input's weights
     b = m.b  # input's bias
     u = m.u  # memory's weights
-    h = m.h ≠ nothing ? m.h : Variable{T}(Zeros(T, size(w,1), size(x,2)))
+    h = m.h ≠ nothing ? m.h : Variable(Zeros(T, size(w,1), size(x,2)), type=T)
     x = f(matAddVec(w*x + u*h, b))
     m.h = x
     return x
