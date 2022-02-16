@@ -139,8 +139,8 @@ function forward(model::IndLSTM, x::Variable{T}) where T
     uc = model.uc
     bc = model.bc
 
-    h = model.h ≠ nothing ? model.h : Variable{T}(Zeros(T, size(wi,1), size(x,2)))
-    c = model.c ≠ nothing ? model.c : Variable{T}(Zeros(T, size(wc,1), size(x,2)))
+    h = model.h ≠ nothing ? model.h : Variable(Zeros(T, size(wi,1), size(x,2)), type=T)
+    c = model.c ≠ nothing ? model.c : Variable(Zeros(T, size(wc,1), size(x,2)), type=T)
 
     z = tanh(    matAddVec(wc * x + matMulVec(h,uc), bc) )
     i = sigmoid( matAddVec(wi * x + matMulVec(h,ui), bi) )
