@@ -8,7 +8,7 @@
                 inputdims = 64;
                 timeSteps = 16;
                 batchsize = 32;
-                x = Variable(rand(inputdims, timeSteps, batchsize); type=TYPE, keepsgrad=true,);
+                x = Variable(rand(inputdims, timeSteps, batchsize); type=TYPE, keepsgrad=true);
                 if d==1;l = Variable(rand(1, timeSteps, batchsize); type=TYPE);end
                 if d==2;l = Variable(rand(inputdims, 1, batchsize); type=TYPE);end
                 if d==3;l = Variable(rand(inputdims, timeSteps, 1); type=TYPE);end
