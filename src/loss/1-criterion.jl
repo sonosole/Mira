@@ -1,4 +1,5 @@
 export loss
+export cost
 
 
 # Internal function
@@ -53,6 +54,11 @@ function loss(x::Variable{T}; reduction::String="sum") where T
     @error "wrong reduction method" reduction=="sum" || reduction=="mean"
 end
 
+
+function cost(x::Variable)
+    @assert length(x)==1
+    return x.value[1]
+end
 
 
 include("./1-criterion-regression.jl")

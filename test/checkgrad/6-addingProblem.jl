@@ -21,10 +21,10 @@
 
     # [0] prepare model
     model = Chain(
-        IndRNN(2,128,relu; type=TYPE),
-        IndRNN(128,64,cos; type=TYPE),
-        IndRNN(64,64,cos;  type=TYPE),
-        Dense(64,1,relu;   type=TYPE)
+        IndRNN(2,128,leakyrelu; type=TYPE),
+        IndLSTM(128,64; type=TYPE),
+        RNN(64,64,cos;  type=TYPE),
+        Dense(64,1,leakyrelu;   type=TYPE)
     )
 
     # [1] prepare input data and its label
@@ -35,7 +35,6 @@
     resethidden(model)
     for t = 1:T-1
         tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) );
-        zerodelta(tmp);
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) );
     COST1 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) );
@@ -50,7 +49,6 @@
     resethidden(model)
     for t = 1:T-1
         tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) )
-        zerodelta(tmp)
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) )
     COST2 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) )

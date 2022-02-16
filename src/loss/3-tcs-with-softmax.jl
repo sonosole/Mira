@@ -1,6 +1,6 @@
-export CRNN_Batch_TCS_With_Softmax
 export DNN_Batch_TCS_With_Softmax
 export RNN_Batch_TCS_With_Softmax
+export CRNN_Batch_TCS_With_Softmax
 
 
 """
@@ -55,19 +55,21 @@ function DNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    if x.backprop
-        function DNN_Batch_TCS_With_Softmax_Backward()
+    Δ = p - r
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    if y.backprop
+        y.backward = function DNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, DNN_Batch_TCS_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 
@@ -124,19 +126,21 @@ function RNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
         loglikely[b] /= Lᵇ * 3 + 1
     end
 
-    if x.backprop
-        function RNN_Batch_TCS_With_Softmax_Backward()
+    Δ = p - r
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    if y.backprop
+        y.backward = function RNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, RNN_Batch_TCS_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 """
@@ -175,7 +179,8 @@ function CRNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
                                      seqlabels::Vector;
                                      background::Int=1,
                                      foreground::Int=2,
-                                     weight=1.0) where T
+                                     reduction::String="seqlen",
+                                     weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
     loglikely = zeros(T, batchsize)
     p = softmax(ᵛ(x); dims=1)
@@ -183,20 +188,23 @@ function CRNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
 
     Threads.@threads for b = 1:batchsize
         r[:,:,b], loglikely[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
-        loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    if x.backprop
-        function CRNN_Batch_TCS_With_Softmax_Backward()
+    Δ = p - r
+    reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, CRNN_Batch_TCS_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end

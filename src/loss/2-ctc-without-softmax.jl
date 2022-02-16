@@ -7,12 +7,12 @@ export CRNN_Batch_CTC
 """
     DNN_CTC(p::Variable{Array{T}}, seq; blank=1, weight=1.0)
 
-for case batchsize==1 for test case
+case batchsize==1 for test case, `p` here is probability or weighted probability
 
 # Inputs
 `p`      : 2-D Variable, probability or weighted probability\n
-`seq`    : 1-D Array, input sequence's label.\n
-`weight` : weight for CTC loss\n
+`seq`    : 1-D Array, input sequence's label\n
+`weight` : weight for CTC loss
 
 # Structure
                    ┌───┐
@@ -35,8 +35,10 @@ for case batchsize==1 for test case
 function DNN_CTC(p::Variable{Array{T}}, seq; blank=1, weight=1.0) where T
     L = length(seq) * 2 + 1
     r, loglikely = CTC(ᵛ(p), seq, blank=blank)
-    if p.backprop
-        function DNN_CTC_Backward()
+    y = Variable{T}([loglikely / L], p.backprop)
+
+    if y.backprop
+        y.backward = function DNN_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -45,9 +47,9 @@ function DNN_CTC(p::Variable{Array{T}}, seq; blank=1, weight=1.0) where T
                 end
             end
         end
-        push!(graph.backward, DNN_CTC_Backward)
+        addchild(y, x)
     end
-    return loglikely / L
+    return y
 end
 
 
@@ -60,7 +62,7 @@ a batch of concatenated input sequence is processed by neural networks into `p`
 `p`         : 2-D Variable, probability or weighted probability\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : records each input sequence's length, like [20,17,...]\n
-`weight`    : weight for CTC loss\n
+`weight`    : weight for CTC loss
 
 # Structure
                    ┌───┐
@@ -92,8 +94,9 @@ function DNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector, inputlens; blan
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    if p.backprop
-        function DNN_Batch_CTC_Backward()
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    if y.backprop
+        y.backward = function DNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -102,9 +105,9 @@ function DNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector, inputlens; blan
                 end
             end
         end
-        push!(graph.backward, DNN_Batch_CTC_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 
@@ -117,7 +120,7 @@ a batch of padded input sequence is processed by neural networks into `p`
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : each input's length, like [19,97,...]\n
-`weight`    : weight for CTC loss\n
+`weight`    : weight for CTC loss
 
 # Structure
                    ┌───┐
@@ -149,8 +152,9 @@ function RNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector, inputlens; blan
         loglikely[b] /= Lᵇ * 2 + 1
     end
 
-    if p.backprop
-        function RNN_Batch_CTC_Backward()
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    if y.backprop
+        y.backward = function RNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -159,9 +163,9 @@ function RNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector, inputlens; blan
                 end
             end
         end
-        push!(graph.backward, RNN_Batch_CTC_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 
@@ -171,9 +175,9 @@ end
 a batch of padded input sequence is processed by neural networks into `p`
 
 # Inputs
-`p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability.\n
+`p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`weight`    : weight for CTC loss\n
+`weight`    : weight for CTC loss
 
 # Structure
                    ┌───┐
@@ -203,8 +207,9 @@ function CRNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector; blank=1, weigh
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    if p.backprop
-        function CRNN_Batch_CTC_Backward()
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    if y.backprop
+        y.backward = function CRNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -213,7 +218,7 @@ function CRNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector; blank=1, weigh
                 end
             end
         end
-        push!(graph.backward, CRNN_Batch_CTC_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end

@@ -32,23 +32,27 @@ case batchsize==1 for test case. `x` is the output of a whole complete input seq
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_CTC_With_Softmax(x::Variable{Array{T}}, seq; blank=1, weight=1.0) where T
+function DNN_CTC_With_Softmax(x::Variable{Array{T}}, seq; blank::Int=1, weight=1.0) where T
     p = softmax(ᵛ(x); dims=1)
     L = length(seq) * 2 + 1
     r, loglikely = CTC(p, seq, blank=blank)
-    if x.backprop
-        function DNN_CTC_With_Softmax_Backward()
+
+    Δ = p - r
+    y = Variable{T}([loglikely], x.backprop)
+
+    if y.backprop
+        y.backward = function DNN_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, DNN_CTC_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return loglikely / L
+    return y
 end
 
 
@@ -81,7 +85,11 @@ a batch of concatenated input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+function DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
+                                    seqlabels::Vector,
+                                    inputlens;
+                                    blank::Int=1,
+                                    weight=1.0) where T
     batchsize = length(inputLengths)
     loglikely = zeros(T, batchsize)
     I, F = indexbounds(inputlens)
@@ -94,19 +102,22 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector, in
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    if x.backprop
-        function DNN_Batch_CTC_With_Softmax_Backward()
+    Δ = p - r
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+
+    if y.backprop
+        y.backward = function DNN_Batch_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, DNN_Batch_CTC_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 
@@ -139,7 +150,11 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+function RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
+                                    seqlabels::Vector,
+                                    inputlens;
+                                    blank::Int=1,
+                                    weight=1.0) where T
     batchsize = length(inputlens)
     loglikely = zeros(T, batchsize)
     p = zero(ᵛ(x))
@@ -153,19 +168,22 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector, in
         loglikely[b] /= Lᵇ * 2 + 1
     end
 
-    if x.backprop
-        function RNN_Batch_CTC_With_Softmax_Backward()
+    Δ = p - r
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+
+    if y.backprop
+        y.backward = function RNN_Batch_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, RNN_Batch_CTC_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 
@@ -197,7 +215,11 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector; blank=1, weight=1.0) where T
+function CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
+                                     seqlabels::Vector;
+                                     blank::Int=1,
+                                     weight::Float64=1.0,
+                                     reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
     loglikely = zeros(T, batchsize)
     p = softmax(ᵛ(x); dims=1)
@@ -205,20 +227,23 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector; b
 
     Threads.@threads for b = 1:batchsize
         r[:,:,b], loglikely[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
-        loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    if x.backprop
-        function CRNN_Batch_CTC_With_Softmax_Backward()
+    Δ = p - r
+    reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_Batch_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+=  p - r
+                    δ(x) .+= Δ
                 else
-                    δ(x) .+= (p - r) .* weight
+                    δ(x) .+= Δ .* weight
                 end
             end
         end
-        push!(graph.backward, CRNN_Batch_CTC_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end

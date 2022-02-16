@@ -1,6 +1,6 @@
-export CRNN_Batch_TCS
 export DNN_Batch_TCS
 export RNN_Batch_TCS
+export CRNN_Batch_TCS
 
 
 """
@@ -54,8 +54,9 @@ function DNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    if p.backprop
-        function DNN_Batch_TCS_Backward()
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    if y.backprop
+        y.backward = function DNN_Batch_TCS_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -64,9 +65,9 @@ function DNN_Batch_TCS(p::Variable{Array{T}},
                 end
             end
         end
-        push!(graph.backward, DNN_Batch_TCS_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 
@@ -121,8 +122,9 @@ function RNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= Lᵇ * 3 + 1
     end
 
-    if p.backprop
-        function RNN_Batch_TCS_Backward()
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    if y.backprop
+        y.backward = function RNN_Batch_TCS_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -131,9 +133,9 @@ function RNN_Batch_TCS(p::Variable{Array{T}},
                 end
             end
         end
-        push!(graph.backward, RNN_Batch_TCS_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
 
 """
@@ -182,8 +184,9 @@ function CRNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    if p.backprop
-        function CRNN_Batch_TCS_Backward()
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    if y.backprop
+        y.backward = function CRNN_Batch_TCS_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
@@ -192,7 +195,7 @@ function CRNN_Batch_TCS(p::Variable{Array{T}},
                 end
             end
         end
-        push!(graph.backward, CRNN_Batch_TCS_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)/batchsize
+    return y
 end
