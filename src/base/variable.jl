@@ -57,7 +57,7 @@ end
 
 
 # Convenient type-specilized constructors for data on GPU/CPU/xPU etc....
-function Variable(x; backprop::Bool=false,
+function Variable(x; backprop::Bool=true,
                      keepsgrad::Bool=false,
                      type::Type=Array{Float32})
     isleaf = true    # any user defined Variable is a leaf
