@@ -1,6 +1,6 @@
 function Base.maximum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     y = Variable{T}(maximum(ᵛ(x), dims=dims), x.backprop)
-    if x.backprop
+    if y.backprop
         mask = ᵛ(x) .== ᵛ(y)
         y.backward = function maximumBackward()
             if need2computeδ!(x)
@@ -15,7 +15,7 @@ end
 
 function Base.minimum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     y = Variable{T}(minimum(ᵛ(x), dims=dims), x.backprop)
-    if x.backprop
+    if y.backprop
         mask = ᵛ(x) .== ᵛ(y)
         y.backward = function minimumBackward()
             if need2computeδ!(x)
@@ -30,7 +30,7 @@ end
 
 function Base.sum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     y = Variable{T}(sum(ᵛ(x), dims=dims), x.backprop)
-    if x.backprop
+    if y.backprop
         y.backward = function sumBackward()
             if need2computeδ!(x)
                 δ(x) .+= δ(y)
@@ -46,7 +46,7 @@ end
 function mean(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     n = eltype(x)(1) / prod(size(x, i) for i in dims)
     μ = Variable{T}(sum(ᵛ(x), dims=dims) .* n, x.backprop)
-    if x.backprop
+    if μ.backprop
         μ.backward = function meanBackward()
             if need2computeδ!(x)
                 δ(x) .+= δ(μ) .* n
@@ -62,7 +62,7 @@ end
 function maxmin(x::Variable{T}; dims1::Int, dims2::Int) where T
     t = minimum(maximum(ᵛ(x), dims=dims1), dims=dims2)
     y = Variable{T}(t, x.backprop)
-    if x.backprop
+    if y.backprop
         mask = ᵛ(x) .== ᵛ(y)
         y.backward = function maxminBackward()
             if need2computeδ!(x)
@@ -94,7 +94,7 @@ function linearpool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N
     Σxᵢ² = sum(ᵛ(x) .* ᵛ(x), dims=dims)     # Σ xᵢ·xᵢ
     Σxᵢ  = sum(ᵛ(x),         dims=dims)     # Σ xᵢ
     y    = Variable{T}(Σxᵢ² ./ Σxᵢ, x.backprop)
-    if x.backprop
+    if y.backprop
         TWO = eltype(x)(2.0f0)
         y.backward = function linearpoolBackward()
             if need2computeδ!(x)
