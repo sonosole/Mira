@@ -12,6 +12,7 @@ export haskid, kidsof, addkid, nkidsof
 export visited
 export setvisited
 export unsetvisited
+export Vecvar
 
 export XVariable, VarOrNil, FunOrNil
 const FunOrNil = Union{Function, Nothing}
@@ -56,7 +57,7 @@ end
 
 
 # Convenient type-specilized constructors for data on GPU/CPU/xPU etc....
-function Variable(x; backprop::Bool=true,
+function Variable(x; backprop::Bool=false,
                      keepsgrad::Bool=false,
                      type::Type=Array{Float32})
     isleaf = true    # any user defined Variable is a leaf
@@ -86,7 +87,6 @@ end
 
 
 function zerodelta(x::Variable{T}) where T
-    # 要切断某些反向传播路径的时候将其初始化为零
     if isnothing(x.delta)
         x.delta = Zeros(T, x.shape);
     end
@@ -196,3 +196,7 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 
 @inline addchild(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
 @inline   addkid(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
+
+function Vecvar(n::Int=0)
+    return Vector{Variable}(undef, n)
+end
