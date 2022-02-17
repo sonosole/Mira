@@ -1,7 +1,7 @@
 abstract type Optimizer end
 export Optimizer
 
-include("./update.jl.jl")
+include("./update.jl")
 
 # optimizers with L1 and L2 weight decay
 include("./1-SGDL1L2.jl")
