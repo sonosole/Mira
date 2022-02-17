@@ -178,7 +178,7 @@ function CRNN_TDC_With_Softmax(x::Variable{Array{T}},
 
     Δ = p - r
     reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_TDC_With_Softmax_Backward()
