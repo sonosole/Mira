@@ -1,3 +1,5 @@
+export Adam
+
 """
     Adam(::Vector{XVariable}; lr=1e-3, b1=0.9, b2=0.999, eps=1e-8, L1decay=0.001, L2decay=0.01)
 

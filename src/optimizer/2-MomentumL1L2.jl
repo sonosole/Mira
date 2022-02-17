@@ -1,3 +1,5 @@
+export Momentum
+
 """
     Momentum(::Vector{XVariable}; lr=1e-4, inertia=0.9, L1decay=0.001, L2decay=0.01)
 

@@ -22,6 +22,15 @@ function update!(vars::Vector{Variable}, lr)
 end
 
 
+function update!(vars::Vector{XVariable}, lr)
+    # update multi Variables
+    for xvar in xparams
+        c , x = xvar
+        update!(x, lr)
+    end
+end
+
+
 function zerograds!(params::Vector{Variable})
     for x in params
         if !isnothing(δ(x))

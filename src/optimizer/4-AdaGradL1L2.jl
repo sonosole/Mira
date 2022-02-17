@@ -1,3 +1,5 @@
+export AdaGrad
+
 """
     AdaGrad(::Vector{XVariable}; lr=1e-2, eps=1e-10, L1decay=0.001, L2decay=0.01)
 

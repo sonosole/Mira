@@ -1,3 +1,5 @@
+export SGD
+
 """
     SGD(::Vector{XVariable}; lr=1e-4, L1decay=0.001, L2decay=0.01)
 

@@ -1,3 +1,6 @@
+export AutoGradCliper
+export AutoGradNormCliper
+
 # element-wise clipping
 function AutoGradCliper(xparams::Vector{XVariable}; lr=1e-3, clipvalue=0.01, eps=1e-3)
     g = clipvalue / lr
