@@ -128,7 +128,7 @@ end
 
 
 
-function CRNN_FastCTC_With_Softmax(x::Variable{Array{T}},
+function CRNN_FastCTC_With_Softmax(x::Variable{T},
                                    seqlabels::Vector;
                                    blank::Int=1,
                                    weight::Float64=1.0,
