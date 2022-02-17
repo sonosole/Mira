@@ -38,7 +38,7 @@ function DNN_CTC_With_Softmax(x::Variable{Array{T}}, seq; blank::Int=1, weight=1
     r, loglikely = CTC(p, seq, blank=blank)
 
     Δ = p - r
-    y = Variable{T}([loglikely], x.backprop)
+    y = Variable{Array{T}}([loglikely], x.backprop)
 
     if y.backprop
         y.backward = function DNN_CTC_With_Softmax_Backward()
@@ -103,7 +103,7 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
     end
 
     Δ = p - r
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
 
     if y.backprop
         y.backward = function DNN_Batch_CTC_With_Softmax_Backward()
@@ -169,7 +169,7 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
     end
 
     Δ = p - r
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
 
     if y.backprop
         y.backward = function RNN_Batch_CTC_With_Softmax_Backward()
@@ -231,7 +231,7 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
 
     Δ = p - r
     reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_Batch_CTC_With_Softmax_Backward()
