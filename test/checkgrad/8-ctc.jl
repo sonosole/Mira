@@ -59,7 +59,7 @@
 
     # [0] model
     F = 64;   # featdim
-    T = 1250; # timesteps
+    T = 522;  # timesteps
     B = 4;    # batchsize
     TYPE  = Array{Float64};
     MODEL = AModel(F, 32);

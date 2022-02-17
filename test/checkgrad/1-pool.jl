@@ -27,7 +27,7 @@
                 backward(COST2);
 
                 # [5] check if the auto-grad is true or not
-                dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
+                dLdW = (cost(COST2) - cost(COST1))/DELTA;         # numerical gradient
                 err  = abs((dLdW-GRAD)/(GRAD+eps(Float32)))*100;  # relative error in %
                 @test err < 1e-1
             end
@@ -63,7 +63,7 @@ end
             backward(COST2);
 
             # [5] check if the auto-grad is true or not
-            dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
+            dLdW = (cost(COST2) - cost(COST1))/DELTA;         # numerical gradient
             err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
             @test err < 1e-1
         end
@@ -99,7 +99,7 @@ end
             backward(COST2);
 
             # [5] check if the auto-grad is true or not
-            dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA;         # numerical gradient
+            dLdW = (cost(COST2) - cost(COST1))/DELTA;         # numerical gradient
             err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
             @test err < 1e-1
         end

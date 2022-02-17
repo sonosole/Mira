@@ -55,7 +55,7 @@
     backward(COST2)
 
     # [5] check if the auto-grad is true or not
-    dLdW = (ᵛ(COST2)[1] - ᵛ(COST1)[1])/DELTA
+    dLdW = (cost(COST2) - cost(COST1)/DELTA
     err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
     @test err < 0.1
 end
