@@ -1,4 +1,7 @@
 export clip
+export update!
+export zerograds!
+
 
 function clip(x, clipval)
     x = (abs(x) > clipval) ? clipval * sign(x) : x
