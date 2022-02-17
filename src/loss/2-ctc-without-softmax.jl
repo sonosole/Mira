@@ -35,7 +35,7 @@ case batchsize==1 for test case, `p` here is probability or weighted probability
 function DNN_CTC(p::Variable{Array{T}}, seq; blank=1, weight=1.0) where T
     L = length(seq) * 2 + 1
     r, loglikely = CTC(ᵛ(p), seq, blank=blank)
-    y = Variable{T}([loglikely / L], p.backprop)
+    y = Variable{Array{T}}([loglikely / L], p.backprop)
 
     if y.backprop
         y.backward = function DNN_CTC_Backward()
@@ -94,7 +94,7 @@ function DNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector, inputlens; blan
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
     if y.backprop
         y.backward = function DNN_Batch_CTC_Backward()
             if need2computeδ!(p)
@@ -152,7 +152,7 @@ function RNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector, inputlens; blan
         loglikely[b] /= Lᵇ * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
     if y.backprop
         y.backward = function RNN_Batch_CTC_Backward()
             if need2computeδ!(p)
@@ -207,7 +207,7 @@ function CRNN_Batch_CTC(p::Variable{Array{T}}, seqlabels::Vector; blank=1, weigh
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
     if y.backprop
         y.backward = function CRNN_Batch_CTC_Backward()
             if need2computeδ!(p)
