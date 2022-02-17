@@ -54,7 +54,7 @@ function DNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function DNN_Batch_TCS_Backward()
             if need2computeδ!(p)
@@ -122,7 +122,7 @@ function RNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= Lᵇ * 3 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function RNN_Batch_TCS_Backward()
             if need2computeδ!(p)
@@ -184,7 +184,7 @@ function CRNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{Array{T}}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function CRNN_Batch_TCS_Backward()
             if need2computeδ!(p)
