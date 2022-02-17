@@ -5,7 +5,7 @@ export CRNN_Batch_CTC_With_Softmax
 
 
 """
-    DNN_CTC_With_Softmax(x::Variable{Array{T}}, seq; blank=1, weight=1.0)
+    DNN_CTC_With_Softmax(x::Variable{T}, seq; blank=1, weight=1.0)
 
 case batchsize==1 for test case. `x` is the output of a whole complete input sequence
 
@@ -32,13 +32,13 @@ case batchsize==1 for test case. `x` is the output of a whole complete input seq
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_CTC_With_Softmax(x::Variable{Array{T}}, seq; blank::Int=1, weight=1.0) where T
+function DNN_CTC_With_Softmax(x::Variable{T}, seq; blank::Int=1, weight=1.0) where T
     p = softmax(ᵛ(x); dims=1)
     L = length(seq) * 2 + 1
     r, loglikely = CTC(p, seq, blank=blank)
 
     Δ = p - r
-    y = Variable{Array{T}}([loglikely], x.backprop)
+    y = Variable{T}([loglikely], x.backprop)
 
     if y.backprop
         y.backward = function DNN_CTC_With_Softmax_Backward()
@@ -57,7 +57,7 @@ end
 
 
 """
-    DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+    DNN_Batch_CTC_With_Softmax(x::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
 
 a batch of concatenated input sequence is processed by neural networks into `x`
 
@@ -85,13 +85,13 @@ a batch of concatenated input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
+function DNN_Batch_CTC_With_Softmax(x::Variable{T},
                                     seqlabels::Vector,
                                     inputlens;
                                     blank::Int=1,
                                     weight=1.0) where T
     batchsize = length(inputLengths)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
     p = softmax(ᵛ(x); dims=1)
     r = zero(p)
@@ -103,7 +103,7 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
     end
 
     Δ = p - r
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
 
     if y.backprop
         y.backward = function DNN_Batch_CTC_With_Softmax_Backward()
@@ -122,7 +122,7 @@ end
 
 
 """
-    RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+    RNN_Batch_CTC_With_Softmax(x::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -150,13 +150,13 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
+function RNN_Batch_CTC_With_Softmax(x::Variable{T},
                                     seqlabels::Vector,
                                     inputlens;
                                     blank::Int=1,
                                     weight=1.0) where T
     batchsize = length(inputlens)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
@@ -169,7 +169,7 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
     end
 
     Δ = p - r
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
 
     if y.backprop
         y.backward = function RNN_Batch_CTC_With_Softmax_Backward()
@@ -188,7 +188,7 @@ end
 
 
 """
-    CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}}, seqlabels::Vector; blank=1, weight=1.0) where T
+    CRNN_Batch_CTC_With_Softmax(x::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -215,13 +215,13 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
+function CRNN_Batch_CTC_With_Softmax(x::Variable{T},
                                      seqlabels::Vector;
                                      blank::Int=1,
                                      weight::Float64=1.0,
                                      reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
@@ -231,7 +231,7 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{Array{T}},
 
     Δ = p - r
     reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{Array{T}}([sum(loglikely)], x.backprop)
+    y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_Batch_CTC_With_Softmax_Backward()
