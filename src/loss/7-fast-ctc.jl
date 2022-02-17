@@ -134,7 +134,7 @@ function CRNN_FastCTC_With_Softmax(x::Variable{Array{T}},
                                    weight::Float64=1.0,
                                    reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
