@@ -91,8 +91,5 @@
 
     dLdW = (cost(c2) - cost(c1))/DELTA;   # numerical gradient
     err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
-    println("\nBWD ",GRAD);
-    println("SHU ",dLdW);
-    println("ERR ",trunc(err,digits=3), " %");
     @test err < 1e-1
 end
