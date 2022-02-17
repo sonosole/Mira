@@ -4,7 +4,7 @@ export CRNN_Batch_TCS
 
 
 """
-    DNN_Batch_TCS(p::Variable{Array{T}},
+    DNN_Batch_TCS(p::Variable{T},
                   seqlabels::Vector,
                   inputlens;
                   background::Int=1,
@@ -37,14 +37,14 @@ a batch of concatenated input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function DNN_Batch_TCS(p::Variable{Array{T}},
+function DNN_Batch_TCS(p::Variable{T},
                        seqlabels::Vector,
                        inputlens;
                        background::Int=1,
                        foreground::Int=2,
                        weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
@@ -54,7 +54,7 @@ function DNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function DNN_Batch_TCS_Backward()
             if need2computeδ!(p)
@@ -72,7 +72,7 @@ end
 
 
 """
-    RNN_Batch_TCS(p::Variable{Array{T}},
+    RNN_Batch_TCS(p::Variable{T},
                   seqlabels::Vector,
                   inputlens;
                   background::Int=1,
@@ -105,14 +105,14 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function RNN_Batch_TCS(p::Variable{Array{T}},
+function RNN_Batch_TCS(p::Variable{T},
                        seqlabels::Vector,
                        inputlens;
                        background::Int=1,
                        foreground::Int=2,
                        weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -122,7 +122,7 @@ function RNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= Lᵇ * 3 + 1
     end
 
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function RNN_Batch_TCS_Backward()
             if need2computeδ!(p)
@@ -139,7 +139,7 @@ function RNN_Batch_TCS(p::Variable{Array{T}},
 end
 
 """
-    CRNN_Batch_TCS(p::Variable{Array{T}},
+    CRNN_Batch_TCS(p::Variable{T},
                    seqlabels::Vector;
                    background::Int=1,
                    foreground::Int=2,
@@ -170,13 +170,13 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function CRNN_Batch_TCS(p::Variable{Array{T}},
+function CRNN_Batch_TCS(p::Variable{T},
                         seqlabels::Vector;
                         background::Int=1,
                         foreground::Int=2,
                         weight=1.0) where T
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -184,7 +184,7 @@ function CRNN_Batch_TCS(p::Variable{Array{T}},
         loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function CRNN_Batch_TCS_Backward()
             if need2computeδ!(p)
