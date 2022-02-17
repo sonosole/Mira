@@ -4,7 +4,7 @@ export CRNN_Batch_TCS_With_Softmax
 
 
 """
-    DNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
+    DNN_Batch_TCS_With_Softmax(x::Variable{T},
                                seqlabels::Vector,
                                inputlens;
                                background::Int=1,
@@ -37,14 +37,14 @@ a batch of concatenated input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
+function DNN_Batch_TCS_With_Softmax(x::Variable{T},
                                     seqlabels::Vector,
                                     inputlens;
                                     background::Int=1,
                                     foreground::Int=2,
                                     weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
@@ -56,7 +56,7 @@ function DNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
     end
 
     Δ = p - r
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
     if y.backprop
         y.backward = function DNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
@@ -74,7 +74,7 @@ end
 
 
 """
-    RNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
+    RNN_Batch_TCS_With_Softmax(x::Variable{T},
                                seqlabels::Vector,
                                inputlens;
                                background::Int=1,
@@ -107,14 +107,14 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function RNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
+function RNN_Batch_TCS_With_Softmax(x::Variable{T},
                                     seqlabels::Vector,
                                     inputlens;
                                     background::Int=1,
                                     foreground::Int=2,
                                     weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
@@ -127,7 +127,7 @@ function RNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
     end
 
     Δ = p - r
-    y = Variable{Array{T}}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
     if y.backprop
         y.backward = function RNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
@@ -144,7 +144,7 @@ function RNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
 end
 
 """
-    CRNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
+    CRNN_Batch_TCS_With_Softmax(x::Variable{T},
                                 seqlabels::Vector;
                                 background::Int=1,
                                 foreground::Int=2,
@@ -175,14 +175,14 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function CRNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
+function CRNN_Batch_TCS_With_Softmax(x::Variable{T},
                                      seqlabels::Vector;
                                      background::Int=1,
                                      foreground::Int=2,
                                      reduction::String="seqlen",
                                      weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
@@ -192,7 +192,7 @@ function CRNN_Batch_TCS_With_Softmax(x::Variable{Array{T}},
 
     Δ = p - r
     reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{Array{T}}([sum(loglikely)], x.backprop)
+    y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_Batch_TCS_With_Softmax_Backward()
