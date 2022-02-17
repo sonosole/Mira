@@ -133,11 +133,11 @@ Base.setindex!(x::Variable, v::AbstractArray, k...) = (x.value[k...]  = v)
 function Base.getindex(x::Variable{T}, k...) where T
     y = Variable{T}(x.value[k...], x.backprop, x.keepsgrad, x.isleaf)
     if y.backprop
-        y.backward = function getindexBackward(δy)
+        y.backward = function getindexBackward()
             if need2computeδ!(x)
-                x.delta[k...] .+= δy
+                x.delta[k...] .+= y.delta
             end
-            ifNotKeepδThenFreeδ!(y);
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
