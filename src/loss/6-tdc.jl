@@ -161,14 +161,14 @@ end
 export CRNN_TDC_With_Softmax
 
 
-function CRNN_TDC_With_Softmax(x::Variable{Array{T}},
+function CRNN_TDC_With_Softmax(x::Variable{T},
                                seqlabels::Vector;
                                blank::Int=1,
                                front::Int=2,
                                reduction::String="seqlen",
                                weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(T, batchsize)
+    loglikely = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
@@ -178,7 +178,7 @@ function CRNN_TDC_With_Softmax(x::Variable{Array{T}},
 
     Δ = p - r
     reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{Array{T}}([sum(loglikely)], x.backprop)
+    y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_TDC_With_Softmax_Backward()
