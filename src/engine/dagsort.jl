@@ -86,29 +86,25 @@ end
 
 
 """
-    sort_by_indegree(topnode::Variable) -> stack
+    sort_by_indegree(topnode::Variable) -> queue
 """
 function sort_by_indegree(topnode::Variable; by::Function=indegree_by_bfs)
+    queue   = Vector{Variable}()
     sorted  = Vector{Variable}()
-    record  = Vector{Variable}()
     idegree = indegree(topnode; by=by)
 
-    while length(idegree) ≠ 0
-        for (node, ins) in idegree
-            if ins == 0
-                push!(record, node)
-                push!(sorted, node)
-                if haskid(node)
-                    for kid in kidsof(node)
-                        idegree[kid] -= 1
-                    end
+    push!(queue, topnode)
+    while length(queue) ≠ 0
+        node = popfirst!(queue)
+        if haskid(node)
+            for kid in kidsof(node)
+                idegree[kid] -= 1
+                if idegree[kid] == 0
+                    push!(queue, kid)
                 end
             end
         end
-        # remove nodes with 0 indegree
-        while length(record) ≠ 0
-            delete!(idegree, pop!(record))
-        end
+        push!(sorted, node)
     end
     return sorted
 end
