@@ -1,4 +1,3 @@
-export Variable
 export zerodelta
 export clone
 export need2computeδ!
@@ -14,7 +13,9 @@ export setvisited
 export unsetvisited
 export Vecvar
 
-export XVariable, VarOrNil, FunOrNil
+export Variable, Variables
+export XVariable, XVariables
+export VarOrNil, FunOrNil
 const FunOrNil = Union{Function, Nothing}
 
 
@@ -22,27 +23,23 @@ const FunOrNil = Union{Function, Nothing}
 
 """
     mutable struct Variable{T}
-# Fields
-+       `value::T`                : value in forward
-+       `delta::Union{Nothing,T}` : gradients collected in backprop
-+       `shape::Tuple`            : shape of `value`
-+       `isleaf::Bool`            : whether leaf node
-+       `backprop::Bool`          : whether needs backprop
-+       `keepsgrad::Bool`         : whether keeps grad after backprop
-+       `visited::Bool`           : whether visited during backprop
-+       `backward::FunOrNil`      : backward function
-+ `children::Vector{Variable{T}}` : children Variables
+
+# Constructor
+    function Variable{T}(x,
+                         backprop  :: Bool=true,  # when forward, it's true
+                         keepsgrad :: Bool=false, # whether keeps grad after backward
+                         isleaf    :: Bool=false) # whether leaf node
 """
 mutable struct Variable{T}
-    value     :: T
-    delta     :: Union{Nothing,T}
-    shape     :: Tuple
-    isleaf    :: Bool
-    backprop  :: Bool
-    keepsgrad :: Bool
-    visited   :: Bool
-    backward  :: FunOrNil
-    children  :: Vector{Variable{T}}
+    value     :: T                   # value in forward
+    delta     :: Union{Nothing,T}    # gradients collected in backprop
+    shape     :: Tuple               # shape of `value`
+    isleaf    :: Bool                # whether leaf node
+    backprop  :: Bool                # whether needs backprop when forward
+    keepsgrad :: Bool                # whether keeps grad after backprop
+    visited   :: Bool                # whether visited during backprop
+    backward  :: FunOrNil            # backward function
+    children  :: Vector{Variable{T}} # children Variables
     function Variable{T}(x, backprop  :: Bool=true,
                             keepsgrad :: Bool=false,
                             isleaf    :: Bool=false) where T
@@ -65,9 +62,10 @@ function Variable(x; backprop::Bool=true,
 end
 
 
-const XVariable = Tuple{Char, Variable}
-const VarOrNil  = Union{Variable, Nothing}
-const Variables = Vector{Variable}
+const XVariable  = Tuple{Char, Variable}
+const VarOrNil   = Union{Variable, Nothing}
+const Variables  = Vector{Variable}
+const XVariables = Vector{Tuple{Char, Variable}}
 
 # pretty printing
 function Base.show(io::IO, x::Variable{T}) where T
