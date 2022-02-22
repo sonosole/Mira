@@ -57,7 +57,7 @@ end
 
 function cost(x::Variable)
     @assert length(x)==1
-    return x.value[1]
+    return Array(x.value)[1]
 end
 
 
