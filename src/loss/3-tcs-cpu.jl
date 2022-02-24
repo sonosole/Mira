@@ -53,16 +53,17 @@ function TCS(p::Array{TYPE,2}, seqlabel; background::Int=1, foreground::Int=2) w
 
     # --- forward in log scale ---
 	for t = 2:T
+        τ = t-1
 	    for s = 1:L
 	        if s!=1
 				R = mod(s,3)
 	            if R==1 || s==2 || R==0
-	                a[s,t] = LogSum2Exp(a[s,t-1], a[s-1,t-1])
+	                a[s,t] = LogSum2Exp(a[s,τ], a[s-1,τ])
 	            elseif R==2
-	                a[s,t] = LogSum3Exp(a[s,t-1], a[s-1,t-1], a[s-2,t-1])
+	                a[s,t] = LogSum3Exp(a[s,τ], a[s-1,τ], a[s-2,τ])
 	            end
 	        else
-	            a[s,t] = a[s,t-1]
+	            a[s,t] = a[s,τ]
 	        end
 	        a[s,t] += log(p[seq[s],t])
 	    end
@@ -70,18 +71,20 @@ function TCS(p::Array{TYPE,2}, seqlabel; background::Int=1, foreground::Int=2) w
 
     # --- backward in log scale ---
 	for t = T-1:-1:1
+        τ = t+1
 		for s = L:-1:1
-			Q = b[s,t+1] + log(p[seq[s],t+1])
+			Q⁰ = b[s,τ] + log(p[seq[s],τ])
 			if s!=L
 				R = mod(s,3)
-				V = b[s+1,t+1] + log(p[seq[s+1],t+1])
+				Q¹ = b[s+1,τ] + log(p[seq[s+1],τ])
 				if R==1 || R==2 || s==L-1
-					b[s,t] = LogSum2Exp(Q, V)
+					b[s,t] = LogSum2Exp(Q⁰, Q¹)
 				elseif R==0
-					b[s,t] = LogSum3Exp(Q, V, b[s+2,t+1] + log(p[seq[s+2],t+1]))
+                    Q² = b[s+2,τ] + log(p[seq[s+2],τ]
+					b[s,t] = LogSum3Exp(Q⁰, Q¹, Q²))
 				end
 			else
-				b[s,t] = Q
+				b[s,t] = Q⁰
 			end
 		end
 	end
