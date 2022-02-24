@@ -20,3 +20,5 @@ include("./learn-rate.jl")
 
 # update and zerograds
 include("./misc.jl")
+
+include("./regularize.jl")
