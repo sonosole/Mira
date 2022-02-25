@@ -81,7 +81,7 @@ function TCS(p::Array{TYPE,2}, seqlabel; background::Int=1, foreground::Int=2) w
 					b[s,t] = LogSum2Exp(Q⁰, Q¹)
 				elseif R==0
                     Q² = b[s+2,τ] + log(p[seq[s+2],τ]
-					b[s,t] = LogSum3Exp(Q⁰, Q¹, Q²))
+					b[s,t] = LogSum3Exp(Q⁰, Q¹, Q²)
 				end
 			else
 				b[s,t] = Q⁰
