@@ -7,7 +7,6 @@
     μ        :: Union{AbstractArray,Nothing}    # running average
     σ        :: Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
     views    :: NTuple                          # views to collect elements for mean and var
-    training :: Bool                            # if traning or not
     eps      :: AbstractFloat                   # prevent dividing by zero, 1e-10 for default
     momentum :: AbstractFloat                   # smoothing const, or called historical inertia coefficient
 
@@ -15,19 +14,18 @@ Applies mean and scaling normalization over a N-dimensional input, like BatchNor
 
 """
 mutable struct ZNorm <: Normalizer
-    γ::VarOrNil                        # scaling params
-    β::VarOrNil                        # shifting params
-    μ::Union{AbstractArray,Nothing}    # running average
-    σ::Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
-    views   ::NTuple                   # views to collect elements for mean and var
-    training::Bool                     # if traning or not
-    eps     ::AbstractFloat            # prevent dividing by zero, 1e-10 for default
-    momentum::AbstractFloat            # inertia coefficient
-    function ZNorm(;ndims::Int,        # how many dimentions the input data has
+    γ :: VarOrNil                        # scaling params
+    β :: VarOrNil                        # shifting params
+    μ :: Union{AbstractArray,Nothing}    # running average
+    σ :: Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
+    views    :: NTuple                   # views to collect elements for mean and var
+    eps      :: AbstractFloat            # prevent dividing by zero, 1e-10 for default
+    momentum :: AbstractFloat            # inertia coefficient
+    function ZNorm(;ndims::Int,          # how many dimentions the input data has
                    keptdims::Union{Tuple,Int},     # must be unique and sorted and positive
                    keptsize::Union{Tuple,Int},     # must be positive
                    eps::AbstractFloat=1e-10,       # stability const
-                   momentum::AbstractFloat=0.900,  # smoothing const or historical inertia
+                   momentum::AbstractFloat=0.9,    # smoothing const or historical inertia
                    type::Type=Array{Float32})
 
         shape, views = ShapeAndViews(ndims, keptdims, keptsize);
@@ -37,14 +35,14 @@ mutable struct ZNorm <: Normalizer
         σ =  Ones(type, shape);
         new(γ, β, μ, σ, views, true, eps, momentum)
     end
-    function ZNorm(views, training, eps, momentum)
-        new(nothing, nothing, nothing, nothing, views, training, eps, momentum)
+    function ZNorm(views, eps, momentum)
+        new(nothing, nothing, nothing, nothing, views, eps, momentum)
     end
 end
 
 
 function clone(this::ZNorm; type::Type=Array{Float32})
-    cloned = ZNorm(this.views, this.training, this.eps, this.momentum)
+    cloned = ZNorm(this.views, this.eps, this.momentum)
     cloned.γ = clone(this.γ, type=type)
     cloned.β = clone(this.β, type=type)
     cloned.μ = type(this.μ)
@@ -133,7 +131,7 @@ end
 
 function BatchNorm0d(nchannels::Int;
                      eps::AbstractFloat=1e-10,
-                     momentum::AbstractFloat=0.900,
+                     momentum::AbstractFloat=0.9,
                      type::Type=Array{Float32})
     return ZNorm(eps=eps,
                  ndims=2,
@@ -146,7 +144,7 @@ end
 
 function BatchNorm1d(nchannels::Int;
                      eps::AbstractFloat=1e-10,
-                     momentum::AbstractFloat=0.900,
+                     momentum::AbstractFloat=0.9,
                      type::Type=Array{Float32})
     return ZNorm(eps=eps,
                  ndims=3,
