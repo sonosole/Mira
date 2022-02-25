@@ -8,7 +8,7 @@
     σ        :: Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
     views    :: NTuple                          # views to collect elements for mean and var
     training :: Bool                            # if traning or not
-    epsilion :: AbstractFloat                   # prevent dividing by zero, 1e-10 for default
+    eps      :: AbstractFloat                   # prevent dividing by zero, 1e-10 for default
     momentum :: AbstractFloat                   # smoothing const, or called historical inertia coefficient
 
 Applies mean and scaling normalization over a N-dimensional input, like BatchNorm LayerNorm and InstanceNorm.
@@ -19,14 +19,14 @@ mutable struct ZNorm <: Normalizer
     β::VarOrNil                        # shifting params
     μ::Union{AbstractArray,Nothing}    # running average
     σ::Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
-    views::NTuple                      # views to collect elements for mean and var
+    views   ::NTuple                   # views to collect elements for mean and var
     training::Bool                     # if traning or not
-    epsilion::AbstractFloat            # prevent dividing by zero, 1e-10 for default
+    eps     ::AbstractFloat            # prevent dividing by zero, 1e-10 for default
     momentum::AbstractFloat            # inertia coefficient
     function ZNorm(;ndims::Int,        # how many dimentions the input data has
                    keptdims::Union{Tuple,Int},     # must be unique and sorted and positive
                    keptsize::Union{Tuple,Int},     # must be positive
-                   epsilion::AbstractFloat=1e-10,  # stability const
+                   eps::AbstractFloat=1e-10,       # stability const
                    momentum::AbstractFloat=0.900,  # smoothing const or historical inertia
                    type::Type=Array{Float32})
 
@@ -35,16 +35,16 @@ mutable struct ZNorm <: Normalizer
         β = Variable{type}(Zeros(type, shape), true, true, true);
         μ = Zeros(type, shape);
         σ =  Ones(type, shape);
-        new(γ, β, μ, σ, views, true, epsilion, momentum)
+        new(γ, β, μ, σ, views, true, eps, momentum)
     end
-    function ZNorm(views, training, epsilion, momentum)
-        new(nothing, nothing, nothing, nothing, views, training, epsilion, momentum)
+    function ZNorm(views, training, eps, momentum)
+        new(nothing, nothing, nothing, nothing, views, training, eps, momentum)
     end
 end
 
 
 function clone(this::ZNorm; type::Type=Array{Float32})
-    cloned = ZNorm(this.views, this.training, this.epsilion, this.momentum)
+    cloned = ZNorm(this.views, this.training, this.eps, this.momentum)
     cloned.γ = clone(this.γ, type=type)
     cloned.β = clone(this.β, type=type)
     cloned.μ = type(this.μ)
@@ -85,7 +85,7 @@ end
 function forward(b::ZNorm, x::Variable{T}) where T
     γ = b.γ
     β = b.β
-    ϵ = b.epsilion
+    ϵ = b.eps
     ρ = b.momentum
     v = b.views
     μ = mean(ᵛ(x), dims=v)
@@ -110,11 +110,10 @@ function forward(b::ZNorm, x::Variable{T}) where T
                 δ(x) .+= σ¯¹ .* ∂𝐋∂𝐗
                 δ(x) .-= σ¯³ .* n   .* SumΔ∂𝐋∂𝐗 .* Δ
                 δ(x) .+= σ¯³ .* n^2 .* SumΔ∂𝐋∂𝐗 .* sum(Δ, dims=v) .- σ¯¹ .* n .* sum(∂𝐋∂𝐗, dims=v)
-
-                if need2computeδ!(γ) δ(γ) .+= sum(δ(y) .* 𝐗, dims=v) end
-                if need2computeδ!(β) δ(β) .+= sum(δ(y),      dims=v) end
             end
-            ifNotKeepδThenFreeδ!(y);
+            if need2computeδ!(γ) δ(γ) .+= sum(δ(y) .* 𝐗, dims=v) end
+            if need2computeδ!(β) δ(β) .+= sum(δ(y),      dims=v) end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -123,7 +122,7 @@ end
 
 
 function predict(b::ZNorm, x::AbstractArray)
-    ϵ = b.epsilion
+    ϵ = b.eps
     γ = ᵛ(b.γ)
     β = ᵛ(b.β)
     μ = b.μ
@@ -133,26 +132,26 @@ end
 
 
 function BatchNorm0d(nchannels::Int;
-            epsilion::AbstractFloat=1e-10,
-            momentum::AbstractFloat=0.900,
-            type::Type=Array{Float32})
-    return ZNorm(ndims=2,
+                     eps::AbstractFloat=1e-10,
+                     momentum::AbstractFloat=0.900,
+                     type::Type=Array{Float32})
+    return ZNorm(eps=eps,
+                 ndims=2,
                  keptdims=1,
                  keptsize=nchannels,
-                 epsilion=epsilion,
                  momentum=momentum,
                  type=type)
 end
 
 
 function BatchNorm1d(nchannels::Int;
-            epsilion::AbstractFloat=1e-10,
-            momentum::AbstractFloat=0.900,
-            type::Type=Array{Float32})
-    return ZNorm(ndims=3,
+                     eps::AbstractFloat=1e-10,
+                     momentum::AbstractFloat=0.900,
+                     type::Type=Array{Float32})
+    return ZNorm(eps=eps,
+                 ndims=3,
                  keptdims=1,
                  keptsize=nchannels,
-                 epsilion=epsilion,
                  momentum=momentum,
                  type=type)
 end
