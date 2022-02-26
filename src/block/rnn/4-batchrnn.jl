@@ -32,7 +32,7 @@ function PadSeqPackBatch(inputs::Vector; eps::Real=0.0)
     RNNBatch  = zeros(eltype(inputs[1]), featdim, maxlen, batchsize)
     fill!(RNNBatch, eps)
 
-    for i = 1:batchsize
+    Threads.@threads for i = 1:batchsize
         T = lengths[i]
         s = rand(1:(maxlen-T+1))
         e = s + T - 1
