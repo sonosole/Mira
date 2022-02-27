@@ -154,12 +154,12 @@ end
 # pretty printing
 function Base.show(io::IO, xv::XVariable)
     c, x = xv
-    if  x.isleaf println(cyan("\n≡≡≡ Leaf Variable ($c) ≡≡≡")) end
-    if !x.isleaf println(cyan("\n≡≡≡ None Leaf Variable ≡≡≡")) end
+    if  x.isleaf println(cyan!("\n≡≡≡ Leaf Variable ($c) ≡≡≡")) end
+    if !x.isleaf println(cyan!("\n≡≡≡ None Leaf Variable ≡≡≡")) end
 
-    print(blue("\nvalue is "))
+    print(blue!("\nvalue is "))
     display(x.value)
-    print(green("\ndelta is "))
+    print(green!("\ndelta is "))
     display(x.delta)
 end
 
