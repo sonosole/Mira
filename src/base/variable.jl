@@ -94,9 +94,7 @@ end
 function need2computeδ!(x::Variable{T}) where T
     # 不需要学习的叶子参数不需要初始化，其他情况都要
     if !(x.isleaf && !x.keepsgrad)
-        if isnothing(x.delta)
-            x.delta = Zeros(T, x.shape);
-        end
+        zerodelta(x)
         return true
     else
         return false
