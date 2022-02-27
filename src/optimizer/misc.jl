@@ -16,7 +16,7 @@ end
 
 function update!(vars::Vector{Variable}, lr)
     # update multi Variables
-    for var in vars
+    Threads.@threads for var in vars
         update!(var, lr)
     end
 end
@@ -24,7 +24,7 @@ end
 
 function update!(vars::Vector{XVariable}, lr)
     # update multi Variables
-    for xvar in xparams
+    Threads.@threads for xvar in xparams
         c , x = xvar
         update!(x, lr)
     end
@@ -32,7 +32,7 @@ end
 
 
 function zerograds!(params::Vector{Variable})
-    for x in params
+    Threads.@threads for x in params
         if !isnothing(δ(x))
             δ(x) .= 0.0
         end
@@ -41,7 +41,7 @@ end
 
 
 function zerograds!(xparams::Vector{XVariable})
-    for xvar in xparams
+    Threads.@threads for xvar in xparams
         c , x = xvar
         if !isnothing(δ(x))
             δ(x) .= 0.0
@@ -51,7 +51,7 @@ end
 
 
 function zerograds!(O::Optimizer)
-    for xvar in O.xparams
+    Threads.@threads for xvar in O.xparams
         c , x = xvar
         if !isnothing(δ(x))
             δ(x) .= 0.0
