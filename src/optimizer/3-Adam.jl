@@ -53,7 +53,7 @@ function update!(O::Adam; clipfn::Function=LPInfNormClip, clipvalue=10.0)
     b₁ᵗ = O.b1t
     b₂ᵗ = O.b2t
 
-    for i = 1:length(O.xparams)
+    Threads.@threads for i = 1:length(O.xparams)
         c , θ = O.xparams[i]
         μ = - sqrt(1-b₂ᵗ) / (1-b₁ᵗ) * lr
         ∇ = clipfn(setNanInfZero(δ(θ)), clipvalue)

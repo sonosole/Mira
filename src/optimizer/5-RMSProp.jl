@@ -39,7 +39,7 @@ function update!(O::RMSProp; clipfn::Function=LPInfNormClip, clipvalue=10.0)
     λ₁ = O.L1decay
     λ₂ = O.L2decay
 
-    for i = 1:length(O.xparams)
+    Threads.@threads for i = 1:length(O.xparams)
         c , θ = O.xparams[i]
         ∇ = clipfn(setNanInfZero(δ(θ)), clipvalue)
         𝒗 = ᵛ(θ)
