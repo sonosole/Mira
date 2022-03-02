@@ -26,7 +26,7 @@ function clip!(xparams::Vector{XVariable}, kind='u'; L1decay=0.0, L2decay=0.0, c
 
     λ₁ = -L1decay
     λ₂ = -L2decay
-    for (c, θ) in xparams
+    Threads.@threads for (c, θ) in xparams
         if c == kind || kind=='a'
             𝒗 = ᵛ(θ)
             i = abs.(𝒗) .> clipvalue
