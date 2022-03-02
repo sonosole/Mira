@@ -3,11 +3,11 @@ export Optimizer
 
 
 # optimizers with L1 and L2 weight decay
-include("./1-SGDL1L2.jl")
-include("./2-MomentumL1L2.jl")
-include("./3-AdamL1L2.jl")
-include("./4-AdaGradL1L2.jl")
-include("./5-RMSPropL1L2.jl")
+include("./1-SGD.jl")
+include("./2-Momentum.jl")
+include("./3-Adam.jl")
+include("./4-AdaGrad.jl")
+include("./5-RMSProp.jl")
 
 # auto gradient clipping
 include("./auto-grad-cliper.jl")
