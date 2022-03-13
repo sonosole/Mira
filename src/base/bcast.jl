@@ -40,25 +40,25 @@ function unbcast(δx::AbstractArray, x::AbstractArray)
     end
 end
 
-
+import Base.Broadcast.broadcasted
 
 # z = x .+ y
-function Base.Broadcast.broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     @assert T1 <: T2 || T1 >: T2
     T = T1 <: T2 ? T1 : T2
-    backprop = (x.backprop || y.backprop)
-    z = Variable{T}(ᵛ(x) .+ ᵛ(y), backprop)
-    if backprop
+    z = Variable{T}(ᵛ(x) .+ ᵛ(y), x.backprop || y.backprop)
+    if z.backprop
         z.backward = function DotAddBackward()
+            δz = copy(δ(z))
             if need2computeδ!(x)
-                δx = δ(z)
+                δx = δz
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
-                δy = δ(z)
+                δy = δz
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z);
+            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -66,23 +66,59 @@ function Base.Broadcast.broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2
     return z
 end
 
-# z = x .- y
-function Base.Broadcast.broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+
+function broadcasted(::typeof(+), x::Variable{T1}, y::T2) where {T1,T2}
     @assert T1 <: T2 || T1 >: T2
     T = T1 <: T2 ? T1 : T2
-    backprop = (x.backprop || y.backprop)
-    z = Variable{T}(ᵛ(x) .- ᵛ(y), backprop)
-    if backprop
+    z = Variable{T}(ᵛ(x) .+ y, x.backprop)
+    if z.backprop
+        z.backward = function DotAddBackward()
+            if need2computeδ!(x)
+                δx = copy(δ(z))
+                δ(x) .+= unbcast(δx, ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+
+function broadcasted(::typeof(+), x::T1, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(x .+ ᵛ(y), y.backprop)
+    if z.backprop
+        z.backward = function DotAddBackward()
+            if need2computeδ!(y)
+                δy = copy(δ(z))
+                δ(y) .+= unbcast(δy, ᵛ(y))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, y)
+    end
+    return z
+end
+
+
+# z = x .- y
+function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(ᵛ(x) .- ᵛ(y), x.backprop || y.backprop)
+    if z.backprop
         z.backward = function DotMinusBackward()
             if need2computeδ!(x)
-                δx = δ(z)
+                δx = copy(δ(z))
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
                 δy = - δ(z)
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z);
+            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -90,13 +126,49 @@ function Base.Broadcast.broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2
     return z
 end
 
-# z = x .* y
-function Base.Broadcast.broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+
+function broadcasted(::typeof(-), x::Variable{T1}, y::T2) where {T1,T2}
     @assert T1 <: T2 || T1 >: T2
     T = T1 <: T2 ? T1 : T2
-    backprop = (x.backprop || y.backprop)
-    z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
-    if backprop
+    z = Variable{T}(ᵛ(x) .- y, x.backprop)
+    if z.backprop
+        z.backward = function DotMinusBackward()
+            if need2computeδ!(x)
+                δx = copy(δ(z))
+                δ(x) .+= unbcast(δx, ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+
+function broadcasted(::typeof(-), x::T1, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(x .- ᵛ(y), y.backprop)
+    if z.backprop
+        z.backward = function DotMinusBackward()
+            if need2computeδ!(y)
+                δy = - δ(z)
+                δ(y) .+= unbcast(δy, ᵛ(y))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, y)
+    end
+    return z
+end
+
+
+# z = x .* y
+function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(ᵛ(x) .* ᵛ(y), x.backprop || y.backprop)
+    if z.backprop
         z.backward = function DotMulBackward()
             if need2computeδ!(x)
                 δx = δ(z) .* ᵛ(y)
@@ -106,7 +178,7 @@ function Base.Broadcast.broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2
                 δy = δ(z) .* ᵛ(x)
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z);
+            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -114,13 +186,49 @@ function Base.Broadcast.broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2
     return z
 end
 
-# z = x ./ y
-function Base.Broadcast.broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+
+function broadcasted(::typeof(*), x::Variable{T1}, y::T2) where {T1,T2}
     @assert T1 <: T2 || T1 >: T2
     T = T1 <: T2 ? T1 : T2
-    backprop = (x.backprop || y.backprop)
-    z = Variable{T}(ᵛ(x) ./ ᵛ(y), backprop)
-    if backprop
+    z = Variable{T}(ᵛ(x) .* y, x.backprop)
+    if z.backprop
+        z.backward = function DotMulBackward()
+            if need2computeδ!(x)
+                δx = δ(z) .* ᵛ(y)
+                δ(x) .+= unbcast(δx, ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+
+function broadcasted(::typeof(*), x::T1, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(x .* ᵛ(y), y.backprop)
+    if z.backprop
+        z.backward = function DotMulBackward()
+            if need2computeδ!(y)
+                δy = δ(z) .* ᵛ(x)
+                δ(y) .+= unbcast(δy, ᵛ(y))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, y)
+    end
+    return z
+end
+
+
+# z = x ./ y
+function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(ᵛ(x) ./ ᵛ(y), x.backprop || y.backprop)
+    if z.backprop
         z.backward = function DotDivBackward()
             δx = δ(z) ./ ᵛ(y)
             if need2computeδ!(x)
@@ -130,9 +238,45 @@ function Base.Broadcast.broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2
                 δy = - δx .* ᵛ(z)
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z);
+            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
+        addchild(z, y)
+    end
+    return z
+end
+
+
+function broadcasted(::typeof(/), x::Variable{T1}, y::T2) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(ᵛ(x) ./ y, x.backprop)
+    if z.backprop
+        z.backward = function DotDivBackward()
+            δx = δ(z) ./ ᵛ(y)
+            if need2computeδ!(x)
+                δ(x) .+= unbcast(δx, ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+
+function broadcasted(::typeof(/), x::T1, y::Variable{T2}) where {T1,T2}
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T1 : T2
+    z = Variable{T}(x ./ ᵛ(y), y.backprop)
+    if z.backprop
+        z.backward = function DotDivBackward()
+            if need2computeδ!(y)
+                δy = - δ(z) ./ ᵛ(y) .* ᵛ(z)
+                δ(y) .+= unbcast(δy, ᵛ(y))
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
         addchild(z, y)
     end
     return z
