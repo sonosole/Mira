@@ -69,8 +69,8 @@ const XVariables = Vector{Tuple{Char, Variable}}
 
 # pretty printing
 function Base.show(io::IO, x::Variable{T}) where T
-    if  x.isleaf println(cyan!("\n≡≡≡ Leaf Variable ≡≡≡")) end
-    if !x.isleaf println(cyan!("\n≡≡≡ None Leaf Variable ≡≡≡")) end
+    if  x.isleaf println(cyan!("\n═══ Leaf Variable ═══")) end
+    if !x.isleaf println(cyan!("\n═══ None Leaf Variable ═══")) end
 
     print(blue!("\nvalue is "))
     display(x.value)
@@ -154,8 +154,8 @@ end
 # pretty printing
 function Base.show(io::IO, xv::XVariable)
     c, x = xv
-    if  x.isleaf println(cyan!("\n≡≡≡ Leaf Variable ($c) ≡≡≡")) end
-    if !x.isleaf println(cyan!("\n≡≡≡ None Leaf Variable ≡≡≡")) end
+    if  x.isleaf println(cyan!("\n═══ Leaf Variable ($c) ═══")) end
+    if !x.isleaf println(cyan!("\n═══ None Leaf Variable ═══")) end
 
     print(blue!("\nvalue is "))
     display(x.value)
