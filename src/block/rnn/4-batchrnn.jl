@@ -4,12 +4,12 @@ export PackedSeqForward
 
 
 """
-    PadSeqPackBatch(inputs::Vector; eps::Real=0.0) -> output
+    PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true) -> output
 + `inputs` <: AbstractArray{Real,2}
 + `output` <: AbstractArray{Real,3}
 pad epsilon to align raw input features probably with different length
 # Examples
-    julia> PadSeqPackBatch([ones(2,1), 2ones(2,2), 3ones(2,3)])
+    julia> PadSeqPackBatch([ones(2,1), 2ones(2,2), 3ones(2,3)], disorder=false)
     2×3×3 Array{Float64,3}:
     [:, :, 1] =
      1.0  0.0  0.0
@@ -23,7 +23,7 @@ pad epsilon to align raw input features probably with different length
      3.0  3.0  3.0
      3.0  3.0  3.0
 """
-function PadSeqPackBatch(inputs::Vector; eps::Real=0.0)
+function PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true)
     # all Array of inputs shall have the same size in dim-1
     batchsize = length(inputs)
     lengths   = [size(inputs[i], 2) for i in 1:batchsize]
@@ -31,12 +31,18 @@ function PadSeqPackBatch(inputs::Vector; eps::Real=0.0)
     maxlen    = maximum(lengths)
     RNNBatch  = zeros(eltype(inputs[1]), featdim, maxlen, batchsize)
     fill!(RNNBatch, eps)
-
-    Threads.@threads for i = 1:batchsize
-        T = lengths[i]
-        s = rand(1:(maxlen-T+1))
-        e = s + T - 1
-        RNNBatch[:,s:e,i] .= inputs[i]
+    if disorder
+        Threads.@threads for i = 1:batchsize
+            T = lengths[i]
+            s = rand(1:(maxlen-T+1))
+            e = s + T - 1
+            RNNBatch[:,s:e,i] .= inputs[i]
+        end
+    else
+        Threads.@threads for i = 1:batchsize
+            T = lengths[i]
+            RNNBatch[:,1:T,i] .= inputs[i]
+        end
     end
     return RNNBatch
 end
