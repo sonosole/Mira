@@ -49,7 +49,11 @@ macro basic(xstruct, blocks)
         end
 
         function Mira.bytesof(model::NerualStruct, unit::String="MB")
-            n = nparamsof(model) * elsizeof(model[1].w)
+            if model[1] <: Chain
+                n = nparamsof(model) * elsizeof(model[1][1].w)
+            else
+                n = nparamsof(model) * elsizeof(model[1].w)
+            end
             return blocksize(n, uppercase(unit))
         end
     end
