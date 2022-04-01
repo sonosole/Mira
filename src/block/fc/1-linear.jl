@@ -124,3 +124,12 @@ function to!(type::Type, m::Linear)
     m.b = to(type, m.b)
     return nothing
 end
+
+
+function nops(l::Linear)
+    m, n = size(l.w)
+    mops = m * n
+    aops = m * (n-1) + m
+    acts = 0
+    return (mops, aops, acts) # (mul, add, act)
+end

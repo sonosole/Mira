@@ -110,3 +110,12 @@ function to!(type::Type, m::Affine)
     m.w = to(type, m.w)
     return nothing
 end
+
+
+function nops(l::Affine)
+    m, n = size(l.w)
+    mops = m * n
+    aops = m * (n-1)
+    acts = 0
+    return (mops, aops, acts)
+end

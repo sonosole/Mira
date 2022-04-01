@@ -287,3 +287,12 @@ function to!(type::Type, m::RNNs)
         to!(type, layer)
     end
 end
+
+
+function nops(r::RNN)
+    m, n = size(r.w)
+    mops = m * n + m * m
+    aops = m * (n-1) + m * (m-1) + m
+    acts = m
+    return (mops, aops, acts)
+end

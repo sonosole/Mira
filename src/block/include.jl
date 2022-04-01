@@ -15,6 +15,7 @@ export xparamsof
 export nparamsof
 export weightsof
 export unbiasedof
+export nops
 
 include("./1-chain.jl")
 include("./2-residual.jl")

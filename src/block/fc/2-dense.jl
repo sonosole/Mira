@@ -268,3 +268,12 @@ function to!(type::Type, m::MLP)
         to!(type, layer)
     end
 end
+
+
+function nops(d::Dense)
+    m, n = size(d.w)
+    mops = m * n
+    aops = m * (n-1) + m
+    acts = m
+    return (mops, aops, acts) # (mul, add, act)
+end

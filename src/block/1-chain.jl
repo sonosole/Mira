@@ -165,3 +165,15 @@ function to!(type::Type, c::Chain)
     end
     return nothing
 end
+
+
+function nops(chain::Chain)
+    mops, aops, acts = 0, 0, 0
+    for m in chain
+        mo, ao, ac = nops(m)
+        mops += mo
+        aops += ao
+        acts += ac
+    end
+    return (mops, aops, acts)
+end
