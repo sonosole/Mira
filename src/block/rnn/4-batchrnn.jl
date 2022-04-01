@@ -5,7 +5,7 @@ export PackedSeqForward
 
 """
     PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true) -> output
-+ `inputs` <: AbstractArray{Real,2}
++ `inputs` <: Vector{AbstractArray{Real,2}}
 + `output` <: AbstractArray{Real,3}
 pad epsilon to align raw input features probably with different length
 # Examples
