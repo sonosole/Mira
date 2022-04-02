@@ -296,3 +296,6 @@ function nops(r::RNN)
     acts = m
     return (mops, aops, acts)
 end
+
+
+elsizeof(r::RNN) = elsizeof(r.w)

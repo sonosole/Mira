@@ -64,8 +64,10 @@ function nparamsof(model::MeanNorm)
     return 2*length(model.β)
 end
 
+elsizeof(m::MeanNorm) = elsizeof(m.β)
+
 function bytesof(model::MeanNorm, unit::String="MB")
-    n = nparamsof(model) * sizeof(eltype(model.β))
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 

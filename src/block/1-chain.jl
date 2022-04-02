@@ -119,9 +119,10 @@ function nparamsof(c::Chain)
     return nparams
 end
 
+elsizeof(c::Chain) = elsizeof(c[1])
 
 function bytesof(model::Chain, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model[1].w)
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 

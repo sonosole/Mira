@@ -81,9 +81,10 @@ function nparamsof(m::Affine)
     return length(m.w)
 end
 
+elsizeof(a::Affine) = elsizeof(a.w)
 
 function bytesof(model::Affine, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model.w)
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 
@@ -112,8 +113,8 @@ function to!(type::Type, m::Affine)
 end
 
 
-function nops(l::Affine)
-    m, n = size(l.w)
+function nops(a::Affine)
+    m, n = size(a.w)
     mops = m * n
     aops = m * (n-1)
     acts = 0

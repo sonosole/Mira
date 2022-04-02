@@ -287,3 +287,7 @@ function to!(type::Type, m::IndRNNs)
         to!(type, layer)
     end
 end
+
+
+elsizeof(i::IndRNN) = elsizeof(i.w)
+elsizeof(i::IndRNNs) = elsizeof(i[1].w)

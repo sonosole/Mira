@@ -48,13 +48,22 @@ macro basic(xstruct, blocks)
             return nparams
         end
 
+        Mira.elsizeof(m::NerualStruct) = elsizeof(m[1])
+
         function Mira.bytesof(model::NerualStruct, unit::String="MB")
-            if model[1] <: Chain
-                n = nparamsof(model) * elsizeof(model[1][1].w)
-            else
-                n = nparamsof(model) * elsizeof(model[1].w)
-            end
+            n = nparamsof(model) * elsizeof(model)
             return blocksize(n, uppercase(unit))
+        end
+
+        function Mira.nops(model::NerualStruct)
+            mops, aops, acts = 0, 0, 0
+            for m in model
+                mo, ao, ac = nops(m)
+                mops += mo
+                aops += ao
+                acts += ac
+            end
+            return (mops, aops, acts)
         end
     end
 end
@@ -99,9 +108,22 @@ macro extend(xstruct, blocks)
             return nparams
         end
 
+        Mira.elsizeof(m::NerualStruct) = elsizeof(m[1])
+
         function Mira.bytesof(model::NerualStruct, unit::String="MB")
-            n = nparamsof(model) * elsizeof(model[1].w)
+            n = nparamsof(model) * elsizeof(model)
             return blocksize(n, uppercase(unit))
+        end
+
+        function Mira.nops(model::NerualStruct)
+            mops, aops, acts = 0, 0, 0
+            for m in model
+                mo, ao, ac = nops(m)
+                mops += mo
+                aops += ao
+                acts += ac
+            end
+            return (mops, aops, acts)
         end
     end
 end

@@ -91,9 +91,10 @@ function nparamsof(m::Linear)
     return (lw + lb)
 end
 
+elsizeof(l::Linear) = elsizeof(l.w)
 
 function bytesof(model::Linear, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model.w)
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 

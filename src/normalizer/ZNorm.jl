@@ -75,8 +75,10 @@ function nparamsof(model::ZNorm)
     return 4*length(model.β)
 end
 
+elsizeof(z::ZNorm) = elsizeof(z.γ)
+
 function bytesof(model::ZNorm, unit::String="MB")
-    n = nparamsof(model) * sizeof(eltype(model.β))
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 

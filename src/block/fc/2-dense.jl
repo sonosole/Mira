@@ -220,9 +220,10 @@ function nparamsof(m::Dense)
     return (lw + lb)
 end
 
+elsizeof(d::Dense) = elsizeof(d.w)
 
 function bytesof(model::Dense, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model.w)
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 
@@ -235,9 +236,10 @@ function nparamsof(m::MLP)
     return num
 end
 
+elsizeof(m::MLP) = elsizeof(m[1].w)
 
 function bytesof(model::MLP, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model[1].w)
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 

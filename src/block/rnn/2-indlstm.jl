@@ -437,3 +437,7 @@ function to!(type::Type, m::IndLSTMs)
         to!(type, layer)
     end
 end
+
+
+elsizeof(i::IndLSTM) = elsizeof(i.wi)
+elsizeof(i::IndLSTMs) = elsizeof(i[1].wi)

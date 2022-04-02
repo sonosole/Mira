@@ -70,9 +70,10 @@ function nparamsof(m::Maxout)
     return (lw + lb)
 end
 
+elsizeof(m::Maxout) = elsizeof(m.w)
 
 function bytesof(model::Maxout, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model.w)
+    n = nparamsof(model) * elsizeof(model)
     return blocksize(n, uppercase(unit))
 end
 

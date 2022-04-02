@@ -105,6 +105,7 @@ function nparamsof(m::PlainConv1d)
     return (lw + lb)
 end
 
+elsizeof(c::PlainConv1d) = elsizeof(c.w)
 
 function bytesof(model::PlainConv1d, unit::String="MB")
     n = nparamsof(model) * elsizeof(model.w)
