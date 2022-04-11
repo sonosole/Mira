@@ -25,3 +25,9 @@ include("./4-macro.jl")
 include("./conv/include.jl")
 include("./fc/include.jl")
 include("./rnn/include.jl")
+
+
+kbytesof(model::Block) = bytesof(model, "KB")
+mbytesof(model::Block) = bytesof(model, "MB")
+gbytesof(model::Block) = bytesof(model, "GB")
+tbytesof(model::Block) = bytesof(model, "TB")

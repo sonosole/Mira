@@ -6,11 +6,6 @@ function blocksize(n::Int, u::String)
     if u == "TB" return n / 1099511627776 end
 end
 
-kbytesof(model::Block) = bytesof(model, "KB")
-mbytesof(model::Block) = bytesof(model, "MB")
-gbytesof(model::Block) = bytesof(model, "GB")
-tbytesof(model::Block) = bytesof(model, "TB")
-
 
 """
     deleteat!(atuple::Tuple, iters::Union{Tuple,Array,Vector,Int}) -> Tuple
