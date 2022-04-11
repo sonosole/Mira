@@ -8,7 +8,7 @@
 """
 abstract type Block end
 export Block
-export bytesof
+export bytesof, kbytesof, mbytesof, gbytesof, tbytesof
 export gradsof
 export paramsof
 export xparamsof
