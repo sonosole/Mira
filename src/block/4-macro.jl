@@ -120,6 +120,11 @@ macro extend(xstruct, blocks)
             return blocksize(n, uppercase(unit))
         end
 
+        Mira.kbytesof(model::NerualStruct) = Mira.bytesof(model, "KB")
+        Mira.mbytesof(model::NerualStruct) = Mira.bytesof(model, "MB")
+        Mira.gbytesof(model::NerualStruct) = Mira.bytesof(model, "GB")
+        Mira.tbytesof(model::NerualStruct) = Mira.bytesof(model, "TB")
+
         function Mira.nops(model::NerualStruct)
             mops, aops, acts = 0, 0, 0
             for m in model
