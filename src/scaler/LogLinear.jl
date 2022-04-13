@@ -101,7 +101,7 @@ end
 function forward(m::LogLinear, x::Variable)
     w = m.w
     b = m.b
-    c = ᵛ(w) .* ᵛ(x) .+ ᵛ(b)
+    c = log.(ᵛ(w) .* ᵛ(x) .+ ᵛ(b))
     y = Variable{T}(c, x.backprop)
     if y.backprop
         if w.value[1] < 0.0f0
@@ -131,7 +131,7 @@ end
 function predict(m::LogLinear, x)
     w = m.w.value
     b = m.b.value
-    return w .* x .+ b
+    return log.(w .* x .+ b)
 end
 
 
