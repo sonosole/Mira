@@ -4,7 +4,7 @@
 # Fields
     scale::VarOrNil
     views::Tuple
-Applies scale multiplication over channel dimension of a N-dimensional input.
+Applies scalar multiplication over channel dimension of a N-dimensional input.
 This scale vector is learnable.
 # Example
 If the `input` has size (C,H,W,B), then you should use :
