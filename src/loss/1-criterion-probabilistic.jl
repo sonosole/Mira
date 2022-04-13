@@ -8,8 +8,8 @@ export binaryCrossEntropyLoss
 
 
 """
-    crossEntropy(x::Variable{T}, label::Variable{T}) -> Variable{T}
-cross entropy = - y * log(̂y) where y is target and ̂y is the output of the network.
+    crossEntropy(̂p::Variable{T}, p::Variable{T}) -> y::Variable{T}
+cross entropy is `y = - p * log(̂p)` where p is target and ̂p is the output of the network.
 """
 function crossEntropy(x::Variable{T}, label::Variable{T}) where T
     @assert (x.shape == label.shape)
@@ -29,8 +29,8 @@ function crossEntropy(x::Variable{T}, label::Variable{T}) where T
 end
 
 """
-    crossEntropy(x::Variable{T}, label::T) -> Variable{T}
-cross entropy = - y * log(̂y) where y is target and ̂y is the output of the network.
+    crossEntropy(̂p::Variable{T}, p::Variable{T}) -> y::Variable{T}
+cross entropy is `y = - p * log(̂p)` where p is target and ̂p is the output of the network.
 """
 function crossEntropy(x::Variable{T}, label::T) where T
     @assert x.shape == size(label)
@@ -54,8 +54,8 @@ crossEntropyLoss(x::Variable{T}, label::T; reduction::String="sum") where T = lo
 
 
 """
-    binaryCrossEntropy(x::Variable{T}, l::Variable{T}) -> Variable{T}
-binary cross entropy = - y * log(̂y) - (1 - y) * log(1-̂y)
+    binaryCrossEntropy(̂p::Variable{T}, p::Variable{T}) -> y::Variable{T}
+binary cross entropy is `y = - plog(̂p) - (1-p)log(1-̂p)` where p is target and ̂p is the output of the network.
 """
 function binaryCrossEntropy(x::Variable{T}, label::Variable{T}) where T
     @assert (x.shape == label.shape)
@@ -70,7 +70,7 @@ function binaryCrossEntropy(x::Variable{T}, label::Variable{T}) where T
         y.backward = function binaryCrossEntropyBackward()
             if need2computeδ!(x)
                 temp1 = (𝟙 .- ᵛ(label)) ./ (𝟙 .- ᵛ(x) .+ ϵ)
-                temp2 = ᵛ(label) ./ (ᵛ(x) .+ ϵ)
+                temp2 =       ᵛ(label)  ./ (     ᵛ(x) .+ ϵ)
                 δ(x) .+= δ(y) .* (temp1 - temp2)
             end
             ifNotKeepδThenFreeδ!(y);
@@ -82,8 +82,8 @@ end
 
 
 """
-    binaryCrossEntropy(x::Variable{T}, l::T) -> Variable{T}
-binary cross entropy = - y * log(̂y) - (1 - y) * log(1-̂y)
+    binaryCrossEntropy(̂p::Variable{T}, p::Variable{T}) -> y::Variable{T}
+binary cross entropy is `y = - plog(̂p) - (1-p)log(1-̂p)` where p is target and ̂p is the output of the network.
 """
 function binaryCrossEntropy(x::Variable{T}, label::T) where T
     @assert x.shape == size(label.shape)
@@ -97,7 +97,7 @@ function binaryCrossEntropy(x::Variable{T}, label::T) where T
         y.backward = function binaryCrossEntropyBackward()
             if need2computeδ!(x)
                 temp1 = (𝟙 .- label) ./ (𝟙 .- ᵛ(x) .+ ϵ)
-                temp2 = label ./ (ᵛ(x) .+ ϵ)
+                temp2 =       label  ./ (     ᵛ(x) .+ ϵ)
                 δ(x) .+= δ(y) .* (temp1 - temp2)
             end
             ifNotKeepδThenFreeδ!(y)
