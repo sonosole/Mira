@@ -65,7 +65,7 @@ julia> x
 1×4 Array{Float64,2}:
  Inf  -Inf  NaN  0.602655
 
-julia> x = setNanInfZero!(x)
+julia> x = setNanInfZero(x)
 1×4 Array{Float64,2}:
  0.0  0.0  0.0  0.602655
 ```

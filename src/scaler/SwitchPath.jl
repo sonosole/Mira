@@ -67,6 +67,7 @@ function forward(m::SwitchPath, x::Variable{T}) where T
             ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
+        addchild(y, a)
     end
     return y
 end

@@ -4,7 +4,12 @@
 # Fields
     scale::VarOrNil
 Applies scalar multiplication over a N-dimensional input.
-This scalar called `scale` is a learnable parameter.
+This `scale` is a learnable parameter.
+# Example
+If the `input` has size (C,H,W,B), then you should use :
+
+`ScaleChannels(xxx; ndims=4)` and size(`scale`)==(1,1,1,1)
+
 """
 mutable struct ScalePath <: Scaler
     scale::VarOrNil
@@ -62,6 +67,7 @@ function forward(m::ScalePath, x::Variable{T}) where T
             ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
+        addchild(y, k)
     end
     return y
 end

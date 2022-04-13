@@ -4,8 +4,13 @@
 # Fields
     scale::VarOrNil
     views::Tuple
-Applies vector multiplication over a N-dimensional input.
-This scalar called `scale` is a learnable vector parameter.
+Applies scale multiplication over channel dimension of a N-dimensional input.
+This scale vector is learnable.
+# Example
+If the `input` has size (C,H,W,B), then you should use :
+
+`ScaleChannels(xxx; ndims=4, keptdim=1, keptsize=C)` and size(`scale`)==(C,1,1,1)
+
 """
 mutable struct ScaleChannels <: Scaler
     scale::VarOrNil
@@ -37,7 +42,7 @@ function clone(this::ScaleChannels; type::Type=Array{Float32})
 end
 
 function Base.show(io::IO, m::ScaleChannels)
-    print(io, "ScaleChannels(size(scale)=$(size(m.scale)); type=$(typeof(m.scale.value)))")
+    print(io, "ScaleChannels(size(scale)==$(size(m.scale)); type=$(typeof(m.scale.value)))")
 end
 
 function paramsof(m::ScaleChannels)
@@ -53,7 +58,7 @@ function xparamsof(m::ScaleChannels)
 end
 
 function nparamsof(m::ScaleChannels)
-    return 1
+    return length(m.scale)
 end
 
 function bytesof(m::ScaleChannels, unit::String="MB")
@@ -69,9 +74,10 @@ function forward(m::ScaleChannels, x::Variable{T}) where T
         y.backward = function ScaleChannelsBackward()
             if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(k)                end
             if need2computeδ!(k) δ(k) .+= sum(δ(y) .* ᵛ(x), dims=m.views) end
-            ifNotKeepδThenFreeδ!(y);
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
+        addchild(y, k)
     end
     return y
 end
