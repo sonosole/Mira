@@ -8,9 +8,12 @@ function clip(x, clipval)
 end
 
 
-function update!(var::Variable, lr)
+function update!(x::Variable, lr)
     # update single Variable
-    @. var.value -= lr * setNanInfZero(var.delta)
+    if !isnothing(δ(x))
+        setNanInfZero!(δ(x))
+        ᵛ(x) .-= lr .* δ(x)
+    end
 end
 
 
@@ -22,7 +25,7 @@ function update!(vars::Vector{Variable}, lr)
 end
 
 
-function update!(vars::Vector{XVariable}, lr)
+function update!(xparams::Vector{XVariable}, lr)
     # update multi Variables
     Threads.@threads for xvar in xparams
         c , x = xvar

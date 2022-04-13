@@ -41,7 +41,9 @@ function update!(O::RMSProp; clipfn::Function=LPInfNormClip, clipvalue=10.0)
 
     Threads.@threads for i = 1:length(O.xparams)
         c , θ = O.xparams[i]
-        ∇ = clipfn(setNanInfZero(δ(θ)), clipvalue)
+        isnothing(δ(θ)) && continue
+        setNanInfZero!(δ(θ))
+        ∇ = clipfn(δ(θ), clipvalue)
         𝒗 = ᵛ(θ)
         @. w[i] = ρ * w[i] + (1-ρ) * ∇ * ∇
         if c == 'w'

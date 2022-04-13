@@ -6,6 +6,7 @@ function AutoGradCliper(xparams::Vector{XVariable}; lr=1e-3, clipvalue=0.01, eps
     g = clipvalue / lr
     for k = 1:length(xparams)
         c , θ = xparams[k]
+        isnothing(δ(θ)) && continue
         w = ᵛ(θ)
         ∇ = δ(θ)
         a = max(abs.(w), eps) .* g
@@ -20,6 +21,7 @@ function AutoGradNormCliper(xparams::Vector{XVariable}; lr=1e-3, clipvalue=0.01,
     n = length(xparams)
     for k = 1:n
         c , θ = xparams[k]
+        isnothing(δ(θ)) && continue
         w = ᵛ(θ)
         ∇ = δ(θ)
         NormW = sum(abs.(w))      # l₁ norm of param
