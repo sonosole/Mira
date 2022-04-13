@@ -5,7 +5,7 @@ export L1NormClip
 export L0NormClip
 export LPInfNormClip
 export LNInfNormClip
-export setNanInfZero
+export setNanInfZero, setNanInfZero!
 export clip!
 
 """
@@ -73,6 +73,12 @@ julia> x = setNanInfZero!(x)
 function setNanInfZero(x)
     x[ isnan.(x) .⊻ isinf.(x) ] .= 0.0
     return x
+end
+
+
+function setNanInfZero!(x)
+    x[ isnan.(x) .⊻ isinf.(x) ] .= 0.0
+    return nothing
 end
 
 
