@@ -67,7 +67,7 @@ function Base.:*(x::Variable{T}, constant) where T
     if y.backprop
         y.backward = function matMulScalarBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* constant
+                δ(x) .+= δ(y) .* C
             end
             ifNotKeepδThenFreeδ!(y)
         end
