@@ -6,6 +6,7 @@ export L0NormClip
 export LPInfNormClip
 export LNInfNormClip
 export setNanInfZero, setNanInfZero!
+export fillNanInf, fillNanInf!
 export clip!
 
 """
@@ -75,9 +76,74 @@ function setNanInfZero(x)
     return x
 end
 
+"""
+    setNanInfZero!(x)
+```julia
+x = randn(1,4)
+x[1] = Inf;
+x[2] =-Inf;
+x[3] = NaN;
+```
+```
+julia> x
+1×4 Array{Float64,2}:
+ Inf  -Inf  NaN  0.602655
 
+julia> setNanInfZero!(x); x
+1×4 Array{Float64,2}:
+ 0.0  0.0  0.0  0.602655
+```
+ """
 function setNanInfZero!(x)
     x[ isnan.(x) .⊻ isinf.(x) ] .= 0.0
+    return nothing
+end
+
+
+
+"""
+    fillNanInf(x, v)
+```julia
+x = randn(1,4)
+x[1] = Inf;
+x[2] =-Inf;
+x[3] = NaN;
+```
+```
+julia> x
+1×4 Array{Float64,2}:
+ Inf  -Inf  NaN  0.602655
+
+julia> x = fillNanInf(x, 7.0)
+1×4 Array{Float64,2}:
+ 7.0  7.0  7.0  0.602655
+```
+ """
+function fillNanInf(x, v)
+    x[ isnan.(x) .⊻ isinf.(x) ] .= v
+    return x
+end
+
+"""
+    fillNanInf!(x, v)
+```julia
+x = randn(1,4)
+x[1] = Inf;
+x[2] =-Inf;
+x[3] = NaN;
+```
+```
+julia> x
+1×4 Array{Float64,2}:
+ Inf  -Inf  NaN  0.602655
+
+julia> fillNanInf!(x, 7.0); x
+1×4 Array{Float64,2}:
+ 7.0  7.0  7.0  0.602655
+```
+ """
+function fillNanInf!(x, v)
+    x[ isnan.(x) .⊻ isinf.(x) ] .= v
     return nothing
 end
 
