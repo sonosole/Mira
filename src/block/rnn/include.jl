@@ -1,19 +1,27 @@
-include("./1-indrnn.jl")
-include("./2-indlstm.jl")
-include("./3-rnn.jl")
-include("./4-batchrnn.jl")
+include("./1-IndRNN.jl")
+include("./1-RNN.jl")
+include("./2-IndLSTM.jl")
+include("./2-LSTM.jl")
+include("./3-IndGRU.jl")
+include("./3-GRU.jl")
+include("./batchrnn.jl")
 
 export RNN
 export RNNs
 export IndRNN
 export IndRNNs
+export GRU
+export GRUs
+export IndGRU
+export IndGRUs
+export LSTM
+export LSTMs
 export IndLSTM
 export IndLSTMs
 
 export resethidden
 
 
-global RNNLIST = [IndRNN,IndRNNs,
-                  IndLSTM,IndLSTMs,
-                  RNN,RNNs];
-# global RNNLIST = [RNN, rin, lstm, IndRNN, IndLSTM, RNNs, RIN, LSTM, IndLSTMs];
+global RNNLIST = [RNN, RNNs, IndRNN, IndRNNs,
+                  LSTM, LSTMs, IndLSTM, IndLSTMs,
+                  GRU, GRUs, IndGRU, IndGRUs];
