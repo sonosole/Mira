@@ -1,3 +1,13 @@
+"""
+```
+z = tanh(    wc * x + uc * h .+ bc )
+i = sigmoid( wi * x + ui * h .+ bi )
+f = sigmoid( wf * x + uf * h .+ bf )
+o = sigmoid( wo * x + uo * h .+ bo )
+c = f .* c + i .* z
+h = o .* tanh(c)
+```
+"""
 mutable struct LSTM <: Block
     # input control gate params
     wi::VarOrNil
@@ -141,12 +151,12 @@ function forward(model::LSTM, x::Variable{T}) where T
     h = model.h ≠ nothing ? model.h : Variable(Zeros(T, size(wi,1), size(x,2)), type=T)
     c = model.c ≠ nothing ? model.c : Variable(Zeros(T, size(wc,1), size(x,2)), type=T)
 
-    z = tanh(    matAddVec(wc * x + matMulVec(h,uc), bc) )
-    i = sigmoid( matAddVec(wi * x + matMulVec(h,ui), bi) )
-    f = sigmoid( matAddVec(wf * x + matMulVec(h,uf), bf) )
-    o = sigmoid( matAddVec(wo * x + matMulVec(h,uo), bo) )
-    c = dotMul(f, c) + dotMul(i, z)
-    h = dotMul(o, tanh(c))
+    z = tanh(    wc * x + uc * h .+ bc )
+    i = sigmoid( wi * x + ui * h .+ bi )
+    f = sigmoid( wf * x + uf * h .+ bf )
+    o = sigmoid( wo * x + uo * h .+ bo )
+    c = f .* c + i .* z
+    h = o .* tanh(c)
 
     model.c = c
     model.h = h
@@ -164,29 +174,29 @@ end
 
 
 function predict(model::LSTM, x::T) where T
-    wi = model.wi.value
-    ui = model.ui.value
-    bi = model.bi.value
+    wi = ᵛ(model.wi)
+    ui = ᵛ(model.ui)
+    bi = ᵛ(model.bi)
 
-    wf = model.wf.value
-    uf = model.uf.value
-    bf = model.bf.value
+    wf = ᵛ(model.wf)
+    uf = ᵛ(model.uf)
+    bf = ᵛ(model.bf)
 
-    wo = model.wo.value
-    uo = model.uo.value
-    bo = model.bo.value
+    wo = ᵛ(model.wo)
+    uo = ᵛ(model.uo)
+    bo = ᵛ(model.bo)
 
-    wc = model.wc.value
-    uc = model.uc.value
-    bc = model.bc.value
+    wc = ᵛ(model.wc)
+    uc = ᵛ(model.uc)
+    bc = ᵛ(model.bc)
 
     h = model.h ≠ nothing ? model.h : Zeros(T, size(wi,1), size(x,2))
     c = model.c ≠ nothing ? model.c : Zeros(T, size(wc,1), size(x,2))
 
-    z = tanh(    wc * x + h .* uc .+ bc )
-    i = sigmoid( wi * x + h .* ui .+ bi )
-    f = sigmoid( wf * x + h .* uf .+ bf )
-    o = sigmoid( wo * x + h .* uo .+ bo )
+    z = tanh(    wc * x + uc * h .+ bc )
+    i = sigmoid( wi * x + ui * h .+ bi )
+    f = sigmoid( wf * x + uf * h .+ bf )
+    o = sigmoid( wo * x + uo * h .+ bo )
     c = f .* c + i .* z
     h = o .* tanh(c)
 
