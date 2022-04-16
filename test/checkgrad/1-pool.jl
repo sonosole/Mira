@@ -1,3 +1,6 @@
+using Random
+Random.seed!(UInt(time_ns()))
+
 @testset "check pooling op's gradient at single dim" begin
     for d in [1 2 3]
         for pool in [maximum minimum sum mean linearpool exppool]

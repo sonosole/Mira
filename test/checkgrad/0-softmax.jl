@@ -1,4 +1,7 @@
 @testset "check softmax op's gradient" begin
+    using Random
+    Random.seed!(UInt(time_ns()))
+    
     for d in [1 2 3 (1,2) (2,3) (1,3) (1,2,3)]
         @testset "check softmax op's gradient at dim = $d" begin
             DIMS = d

@@ -1,4 +1,7 @@
 @testset "check gradient for Linear block " begin
+    using Random
+    Random.seed!(UInt(time_ns()))
+    
     # [1] prepare input data and its label
     T = Array{Float64}
     x = randn(256, 62)

@@ -8,8 +8,8 @@
 # ochannels = 1
 
 @testset "check gradient for PlainConv1d block" begin
-    # using Random
-    # Random.seed!(1234);
+    using Random
+    Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
 
     # [0] prepare model
