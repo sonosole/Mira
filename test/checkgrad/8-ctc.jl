@@ -5,20 +5,24 @@
     mutable struct AModel
         blocks::Vector
         function AModel(featdims::Int, tones::Int)
-            c1 = PlainConv1d(featdims, 512, 8, stride=3) # m[1]
+            c1 = PlainConv1d(featdims, 256, 8, stride=3) # m[1]
 
-            f1 = Dense(512, 512, relu!) # m[2]
-            f2 = Dense(512, 512, relu!) # m[3]
-            f3 = Dense(512, 512, relu!) # m[4]
-            f4 = Dense(512, 512, relu!) # m[5]
-            f5 = Dense(512, 512, relu!) # m[6]
-            f6 = Dense(512, 512, relu!) # m[7]
-            f7 = Dense(512, 512, relu!) # m[8]
+            f1 = Linear(256, 256, relu!) # m[2]
+            f2 = Affine(256, 256, relu!) # m[3]
+            f3 = Dense(256, 256, relu!) # m[4]
+            f4 = Dense(256, 256, relu!) # m[5]
+            f5 = Dense(256, 256, relu!) # m[6]
+            f6 = Dense(256, 256, relu!) # m[7]
+            f7 = Dense(256, 256, relu!) # m[8]
 
             chain = Chain(
-               RNN(512, 512, relu!),     # m[9][1]
-               RNN(512, 512, relu!),     # m[9][2]
-            IndRNN(512, tones, relux2y)) # m[9][3]
+                GRU(256, 256),                 # m[9][1]
+                IndGRU(256, 256),              # m[9][2]
+                LSTM(256, 256),                # m[9][3]
+                IndLSTM(256, 256),             # m[9][4]
+                RNN(256, 256, relu),           # m[9][5]
+                IndRNN(256, tones, leakyrelu), # m[9][6]
+                PickyRNN(256, 256, relux2y))   # m[9][7]
 
             new([c1, f1, f2, f3, f4, f5, f6, f7, chain])
         end
