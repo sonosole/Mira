@@ -48,10 +48,10 @@ function PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true)
 end
 
 
-function PackedSeqForward(chain::Block, x::Variable{S}) where S
+function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
     T = size(x, 2)
     v = Vector{Variable{S}}(undef, T)
-    resethidden(chain)
+    !keepstate && resethidden(chain)
     for t = 1:T
         v[t] = forward(chain, x[:,t,:])
     end
@@ -80,10 +80,10 @@ function PackedSeqForward(chain::Block, x::Variable{S}) where S
 end
 
 
-function PackedSeqPredict(chain::Block, x::AbstractArray{S}) where S
+function PackedSeqPredict(chain::Block, x::AbstractArray{S}; keepstate=false) where S
     T = size(x,2)
     v = Vector{AbstractArray{S}}(undef,T)
-    resethidden(chain)
+    !keepstate && resethidden(chain)
     for t = 1:T
         v[t] = predict(chain, x[:,t,:])
     end
