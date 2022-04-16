@@ -386,3 +386,24 @@ end
 
 elsizeof(i::GRU) = elsizeof(i.Wr)
 elsizeof(i::GRUs) = elsizeof(i[1].Wr)
+
+
+function nops(gru::GRU)
+    m, n = size(gru.Wz)
+    mops = 3 * m * n + 3 * m * m + 3 * m
+    aops = 3 * m * (n-1) + 3 * m * (m-1) + 8 * m
+    acts = 3 * m
+    return (mops, aops, acts)
+end
+
+
+function nops(grus::GRUs)
+    mops, aops, acts = 0, 0, 0
+    for m in grus
+        mo, ao, ac = nops(m)
+        mops += mo
+        aops += ao
+        acts += ac
+    end
+    return (mops, aops, acts)
+end

@@ -289,13 +289,24 @@ function to!(type::Type, m::RNNs)
 end
 
 
-function nops(r::RNN)
-    m, n = size(r.w)
+function nops(rnn::RNN)
+    m, n = size(rnn.w)
     mops = m * n + m * m
     aops = m * (n-1) + m * (m-1) + m
     acts = m
     return (mops, aops, acts)
 end
 
+
+function nops(rnns::RNNs)
+    mops, aops, acts = 0, 0, 0
+    for m in rnns
+        mo, ao, ac = nops(m)
+        mops += mo
+        aops += ao
+        acts += ac
+    end
+    return (mops, aops, acts)
+end
 
 elsizeof(r::RNN) = elsizeof(r.w)

@@ -62,6 +62,10 @@ function Base.show(io::IO, s::SparseMasking)
 end
 
 
+function nops(l::SparseMasking)
+    return (0, 0, 0) # (mul, add, act)
+end
+
 function paramsof(s::SparseMasking)
     params = Vector{Variable}(undef,1)
     params[1] = s.scale

@@ -386,3 +386,24 @@ end
 
 elsizeof(i::IndGRU) = elsizeof(i.Wr)
 elsizeof(i::IndGRUs) = elsizeof(i[1].Wr)
+
+
+function nops(indgru::IndGRU)
+    m, n = size(indgru.Wz)
+    mops = 3 * m * n + 3 * m + 3 * m
+    aops = 3 * m * (n-1) + 8 * m
+    acts = 3 * m
+    return (mops, aops, acts)
+end
+
+
+function nops(indgrus::IndGRUs)
+    mops, aops, acts = 0, 0, 0
+    for m in indgrus
+        mo, ao, ac = nops(m)
+        mops += mo
+        aops += ao
+        acts += ac
+    end
+    return (mops, aops, acts)
+end
