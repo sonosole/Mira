@@ -5,10 +5,10 @@ Applies a linear transformation to the incoming data: y = w * x
 """
 mutable struct Affine <: Block
     w::VarOrNil # input to hidden weights
-    function Affine(inputSize::Int, hiddenSize::Int; type::Type=Array{Float32})
+    function Affine(isize::Int, hsize::Int; type::Type=Array{Float32})
         T = eltype(type)
-        A = sqrt(T(1/hiddenSize))
-        w = randn(T, hiddenSize, inputSize) .* A
+        A = sqrt(T(1/hsize))
+        w = randn(T, hsize, isize) .* A
         new(Variable{type}(w,true,true,true))
     end
     function Affine()

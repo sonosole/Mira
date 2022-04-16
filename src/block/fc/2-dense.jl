@@ -7,11 +7,11 @@ mutable struct Dense <: Block
     w::VarOrNil
     b::VarOrNil
     f::Function
-    function Dense(inputSize::Int, hiddenSize::Int, fn::Function=relu; type::Type=Array{Float32})
+    function Dense(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
         T = eltype(type)
-        a = sqrt(T(2/inputSize))
-        w = randn(T, hiddenSize, inputSize) .* a
-        b = randn(T, hiddenSize,         1) .* a
+        a = sqrt(T(2/isize))
+        w = randn(T, hsize, isize) .* a
+        b = randn(T, hsize,     1) .* a
         new(Variable{type}(w,true,true,true), Variable{type}(b,true,true,true), fn)
     end
     function Dense(fn::Function)

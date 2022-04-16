@@ -6,11 +6,11 @@ Applies a linear transformation to the incoming data: y = w * x .+ b
 mutable struct Linear <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
-    function Linear(inputSize::Int, hiddenSize::Int; type::Type=Array{Float32})
+    function Linear(isize::Int, hsize::Int; type::Type=Array{Float32})
         T = eltype(type)
-        A = sqrt(T(1/hiddenSize))
-        w = randn(T, hiddenSize, inputSize) .* A
-        b = randn(T, hiddenSize,         1) .* A
+        A = sqrt(T(1/hsize))
+        w = randn(T, hsize, isize) .* A
+        b = randn(T, hsize,     1) .* A
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true))
     end

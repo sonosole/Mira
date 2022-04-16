@@ -3,18 +3,18 @@ mutable struct Maxout <: Block
     b::VarOrNil # bias of middle hidden units
     h::Int
     k::Int
-    function Maxout(inputSize::Int, hiddenSize::Int; k::Int=2, type::Type=Array{Float32})
+    function Maxout(isize::Int, hsize::Int; k::Int=2, type::Type=Array{Float32})
         @assert (k>=2) "# of Affine layers should no less than 2"
         T = eltype(type)
-        d = hiddenSize * k
-        w = randn(T, d, inputSize) .* sqrt( T(1/d) )
+        d = hsize * k
+        w = randn(T, d, isize) .* sqrt( T(1/d) )
         b = zeros(T, d, 1)
         new(Variable{type}(w,true,true,true),
-            Variable{type}(b,true,true,true), hiddenSize, k)
+            Variable{type}(b,true,true,true), hsize, k)
     end
-    function Maxout(hiddenSize::Int; k::Int=2)
+    function Maxout(hsize::Int; k::Int=2)
         @assert (k>=2) "# of Affine layers should no less than 2"
-        new(nothing, nothing, hiddenSize, k)
+        new(nothing, nothing, hsize, k)
     end
 end
 

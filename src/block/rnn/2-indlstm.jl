@@ -17,25 +17,25 @@ mutable struct IndLSTM <: Block
     bc::VarOrNil
     h  # hidden variable
     c  #   cell variable
-    function IndLSTM(inputSize::Int, hiddenSize::Int; type::Type=Array{Float32})
+    function IndLSTM(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
         A  = T(1E-1)
 
-        wi = randn(T, hiddenSize, inputSize) .* sqrt( T(2/inputSize) )
-        ui = randn(T, hiddenSize, 1) .* A
-        bi = 3ones(T, hiddenSize, 1)
+        wi = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        ui = randn(T, hsize, 1) .* A
+        bi = 3ones(T, hsize, 1)
 
-        wf = randn(T, hiddenSize, inputSize) .* sqrt( T(2/inputSize) )
-        uf = randn(T, hiddenSize, 1) .* A
-        bf =-3ones(T, hiddenSize, 1)
+        wf = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        uf = randn(T, hsize, 1) .* A
+        bf =-3ones(T, hsize, 1)
 
-        wo = randn(T, hiddenSize, inputSize) .* sqrt( T(2/inputSize) )
-        uo = randn(T, hiddenSize, 1) .* A
-        bo = 3ones(T, hiddenSize, 1)
+        wo = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        uo = randn(T, hsize, 1) .* A
+        bo = 3ones(T, hsize, 1)
 
-        wc = randn(T, hiddenSize, inputSize) .* sqrt( T(2/inputSize) )
-        uc = randn(T, hiddenSize, 1) .* A
-        bc = zeros(T, hiddenSize, 1)
+        wc = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        uc = randn(T, hsize, 1) .* A
+        bc = zeros(T, hsize, 1)
 
         new(Variable{type}(wi,true,true,true), Variable{type}(ui,true,true,true), Variable{type}(bi,true,true,true),
             Variable{type}(wf,true,true,true), Variable{type}(uf,true,true,true), Variable{type}(bf,true,true,true),

@@ -8,11 +8,11 @@ mutable struct RNN <: Block
     u::VarOrNil # recurrent weights
     f::Function # activation function
     h::Any      # hidden variable
-    function RNN(inputSize::Int, hiddenSize::Int, fn::Function=relu; type::Type=Array{Float32})
+    function RNN(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
         T = eltype(type)
-        w = randn(T, hiddenSize, inputSize) .* sqrt( T(2/inputSize) )
-        b = zeros(T, hiddenSize, 1)
-        u = randdiagonal(T, hiddenSize; from=-0.1990, to=0.1997)
+        w = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        b = zeros(T, hsize, 1)
+        u = randdiagonal(T, hsize; from=-0.1990, to=0.1997)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
             Variable{type}(u,true,true,true), fn, nothing)
