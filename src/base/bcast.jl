@@ -138,7 +138,7 @@ function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
 end
 
 
-function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T2}) where T
+function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .- ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function DotMinusBackward()
