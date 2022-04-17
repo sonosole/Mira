@@ -42,7 +42,7 @@ mutable struct Variable{T}
     children  :: Vector{Variable{T}} # children Variables
     function Variable{T}(x, backprop  :: Bool=true,
                             keepsgrad :: Bool=false,
-                            isleaf    :: Bool=false) where T
+                            isleaf    :: Bool=false) where T <: AbstractArray
         delta    = nothing
         shape    = size(x)
         visited  = false
