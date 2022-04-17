@@ -79,7 +79,7 @@ function nops(p::PickyRNN)
 end
 
 
-function Mira.forward(p::PickyRNN, x::Variable{T}) where T
+function forward(p::PickyRNN, x::Variable{T}) where T
     f = p.f  # activition function
     w = p.w  # input's weights
     b = p.b  # input's bias
@@ -90,8 +90,9 @@ function Mira.forward(p::PickyRNN, x::Variable{T}) where T
     z = w * x .+ b                                             # new info
     h = p.h ≠ nothing ? p.h : Variable(Zeros(T, F, B), type=T) # old info
     σ = sigmoid(sum(h .* z, dims=1))
-    y   = f(h +       σ  .* z)
-    p.h =   h + (𝟏 .- σ) .* z
+    γ = 𝟏 .- σ
+    y   = f(h + σ .* z)
+    p.h =   h + γ .* z
     return y
 end
 
@@ -106,7 +107,8 @@ function predict(p::PickyRNN, x::T) where T
     z = w * x .+ b                           # new info
     h = p.h ≠ nothing ? p.h : Zeros(T, F, B) # old info
     σ = sigmoid(sum(h .* z, dims=1)) # corr of old-info and new-info
-    y   = f(h +       σ  .* z)
-    p.h =   h + (𝟏 .- σ) .* z
+    γ = 𝟏 .- σ
+    y   = f(h + σ .* z)
+    p.h =   h + γ .* z
     return y
 end
