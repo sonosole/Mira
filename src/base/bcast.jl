@@ -194,7 +194,7 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::T2) where {T1,T2}
     if z.backprop
         z.backward = function DotMulBackward()
             if need2computeδ!(x)
-                δx = δ(z) .* ᵛ(y)
+                δx = δ(z) .* y
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
@@ -212,7 +212,7 @@ function broadcasted(::typeof(*), x::T1, y::Variable{T2}) where {T1,T2}
     if z.backprop
         z.backward = function DotMulBackward()
             if need2computeδ!(y)
-                δy = δ(z) .* ᵛ(x)
+                δy = δ(z) .* x
                 δ(y) .+= unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
@@ -253,7 +253,7 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::T2) where {T1,T2}
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
         z.backward = function DotDivBackward()
-            δx = δ(z) ./ ᵛ(y)
+            δx = δ(z) ./ y
             if need2computeδ!(x)
                 δ(x) .+= unbcast(δx, ᵛ(x))
             end
