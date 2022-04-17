@@ -25,8 +25,8 @@ mutable struct LSTM <: Block
     wc::VarOrNil
     uc::VarOrNil
     bc::VarOrNil
-    h  # hidden variable
-    c  #   cell variable
+    h::Any  # hidden variable
+    c::Any  #   cell variable
     function LSTM(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
 

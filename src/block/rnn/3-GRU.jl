@@ -11,7 +11,7 @@ mutable struct GRU <: Block
     Wc::VarOrNil
     Uc::VarOrNil
     bc::VarOrNil
-    h  # hidden variable
+    h::Any  # hidden variable
     function GRU(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
 
