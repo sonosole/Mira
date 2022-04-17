@@ -101,8 +101,7 @@ end
 
 function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     # a matrix add a matrix element by element: z = x + y
-   @assert T1 <: T2 || T1 >: T2
-   T = T1 <: T2 ? T1 : T2
+   T = vartype(T1, T2)
    @assert (x.shape == y.shape) "2 inputs shall be the same size"
    backprop = (x.backprop || y.backprop)
    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
@@ -121,10 +120,9 @@ end
 
 function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     # a matrix minus a matrix element by element : z = x - y
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
     @assert (x.shape == y.shape) "2 inputs shall be the same size"
     backprop = (x.backprop || y.backprop)
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
     if backprop
         z.backward = function minus2varBackward()
@@ -145,10 +143,9 @@ a tensor add a tensor element by element
 """
 function dotAdd(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     # a tensor add a tensor element by element: z = x .+ y
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
     @assert (x.shape == y.shape) "2 inputs shall be the same size"
     backprop = (x.backprop || y.backprop)
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), backprop)
     if backprop
         z.backward = function dotAddBackward()
@@ -169,10 +166,9 @@ a tensor multiplies a tensor element by element
 """
 function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     # a tensor multiplies a tensor element by element: z = x .* y
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
     @assert (x.shape == y.shape) "2 inputs shall be the same size"
     backprop = (x.backprop || y.backprop)
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
         z.backward = function dotMulBackward()
@@ -193,9 +189,8 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
     # W -- 权重矩阵
     # X -- n个输入列向量组成的矩阵
     # Y -- n个输出列向量组成的矩阵
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
     backprop = (W.backprop || X.backprop)
+    T = vartype(T1, T2)
     Y = Variable{T}(ᵛ(W) * ᵛ(X), backprop)
     if backprop
         Y.backward = function matMulBackward()
@@ -218,10 +213,9 @@ function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     # M -- 充当和节点，非学习的参数
     # V -- 偏置列向量，要学习的参数
     # Z = M .+ V
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
     @assert (M.shape[1]==V.shape[1] && V.shape[2]==1)
     backprop = (M.backprop || V.backprop)
+    T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
     if backprop
         Z.backward = function matAddVecBackward()
@@ -244,10 +238,9 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     # M -- 一般充当激活节点，非网络需要学习的参数
     # V -- 列向量，循环权重，是网络需要学习的参数
     # Z = M .* V
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
     @assert (M.shape[1]==V.shape[1] && V.shape[2]==1)
     backprop = (M.backprop || V.backprop)
+    T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)
     if backprop
         Z.backward = function matMulVecBackward()

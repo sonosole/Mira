@@ -1,5 +1,6 @@
 export Zeros
 export Ones
+export vartype
 
 """
     Zeros(::Type{T}, shape...) where T
@@ -28,4 +29,11 @@ return an all-one-elements-array of type T which has shape `shape...`
  """
 function Ones(::Type{T}, shape...) where T
     return fill!(T(undef, shape...), 1.0)
+end
+
+
+@inline function vartype(T1::Type, T2::Type)
+    @assert T1 <: T2 || T1 >: T2
+    T = T1 <: T2 ? T2 : T1
+    return T
 end

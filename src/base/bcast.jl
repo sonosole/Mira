@@ -41,11 +41,11 @@ function unbcast(δx::AbstractArray, x::AbstractArray)
 end
 
 import Base.Broadcast.broadcasted
+const TensorOrReal = Union{AbstractArray, Real}
 
 # z = x .+ y
 function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function DotAddBackward()
@@ -67,9 +67,7 @@ function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2
 end
 
 
-function broadcasted(::typeof(+), x::Variable{T1}, y::T2) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(+), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .+ y, x.backprop)
     if z.backprop
         z.backward = function DotAddBackward()
@@ -85,9 +83,7 @@ function broadcasted(::typeof(+), x::Variable{T1}, y::T2) where {T1,T2}
 end
 
 
-function broadcasted(::typeof(+), x::T1, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(+), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .+ ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function DotAddBackward()
@@ -105,8 +101,7 @@ end
 
 # z = x .- y
 function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .- ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function DotMinusBackward()
@@ -127,9 +122,7 @@ function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2
 end
 
 
-function broadcasted(::typeof(-), x::Variable{T1}, y::T2) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .- y, x.backprop)
     if z.backprop
         z.backward = function DotMinusBackward()
@@ -145,9 +138,7 @@ function broadcasted(::typeof(-), x::Variable{T1}, y::T2) where {T1,T2}
 end
 
 
-function broadcasted(::typeof(-), x::T1, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T2}) where T
     z = Variable{T}(x .- ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function DotMinusBackward()
@@ -165,8 +156,7 @@ end
 
 # z = x .* y
 function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function DotMulBackward()
@@ -187,9 +177,7 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2
 end
 
 
-function broadcasted(::typeof(*), x::Variable{T1}, y::T2) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if z.backprop
         z.backward = function DotMulBackward()
@@ -205,9 +193,7 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::T2) where {T1,T2}
 end
 
 
-function broadcasted(::typeof(*), x::T1, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .* ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function DotMulBackward()
@@ -225,8 +211,7 @@ end
 
 # z = x ./ y
 function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+    T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) ./ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function DotDivBackward()
@@ -247,9 +232,7 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2
 end
 
 
-function broadcasted(::typeof(/), x::Variable{T1}, y::T2) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(/), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
         z.backward = function DotDivBackward()
@@ -265,9 +248,7 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::T2) where {T1,T2}
 end
 
 
-function broadcasted(::typeof(/), x::T1, y::Variable{T2}) where {T1,T2}
-    @assert T1 <: T2 || T1 >: T2
-    T = T1 <: T2 ? T1 : T2
+function broadcasted(::typeof(/), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x ./ ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function DotDivBackward()
