@@ -444,7 +444,7 @@ elsizeof(i::IndLSTMs) = elsizeof(i[1].wi)
 
 
 function nops(indlstm::IndLSTM)
-    m, n = size(indlstm.w)
+    m, n = size(indlstm.wi)
     mops = 4 * m * n + 7 * m
     aops = 4 * m * (n-1) + 9 * m
     acts = 5 * m
