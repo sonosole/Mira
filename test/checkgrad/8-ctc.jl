@@ -7,22 +7,22 @@
         function AModel(featdims::Int, tones::Int)
             c1 = PlainConv1d(featdims, 256, 8, stride=3) # m[1]
 
-            f1 = Linear(256, 256, relu!) # m[2]
-            f2 = Affine(256, 256, relu!) # m[3]
-            f3 = Dense(256, 256, relu!) # m[4]
-            f4 = Dense(256, 256, relu!) # m[5]
-            f5 = Dense(256, 256, relu!) # m[6]
-            f6 = Dense(256, 256, relu!) # m[7]
-            f7 = Dense(256, 256, relu!) # m[8]
+            f1 = Linear(256, 256)          # m[2]
+            f2 = Affine(256, 256)          # m[3]
+            f3 = Dense(256, 256, relu)     # m[4]
+            f4 = Dense(256, 256, sin)      # m[5]
+            f5 = Dense(256, 256, sigmoid)  # m[6]
+            f6 = Dense(256, 256, softplus) # m[7]
+            f7 = Dense(256, 256, abs)      # m[8]
 
             chain = Chain(
                 GRU(256, 256),                 # m[9][1]
                 IndGRU(256, 256),              # m[9][2]
                 LSTM(256, 256),                # m[9][3]
                 IndLSTM(256, 256),             # m[9][4]
-                RNN(256, 256, relu),           # m[9][5]
-                IndRNN(256, tones, leakyrelu), # m[9][6]
-                PickyRNN(256, 256, relux2y))   # m[9][7]
+                RNN(256, 256, leakyrelu),           # m[9][5]
+                IndRNN(256, 256, relu),   # m[9][6]
+                RNN(256, tones, relux2y)) # m[9][7]
 
             new([c1, f1, f2, f3, f4, f5, f6, f7, chain])
         end
@@ -77,7 +77,7 @@
     RE = "nil"
     KG = false
     BY = "dfs"
-
+resethidden(model[9])
     # [2] forward and backward propagation
     y1 = forward(model, x);
     c1 = CRNN_Batch_CTC_With_Softmax(y1, l, blank=1, weight=1.0, reduction=RE);
@@ -87,7 +87,7 @@
     # [3] with a samll change of a weight
     DELTA = 1e-7;
     model[1].w.value[1] += DELTA;
-
+resethidden(model[9])
     # [4] forward and backward propagation
     y2 = forward(model, x);
     c2 = CRNN_Batch_CTC_With_Softmax(y2, l, blank=1, weight=1.0, reduction=RE);
