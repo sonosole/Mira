@@ -126,7 +126,7 @@ Base.setindex!(x::Variable, v::AbstractArray, k...) = (x.value[k...]  = v)
 
 
 
-function Base.getindex(x::Variable{T}, k::Vararg{Int,N}) where {T,N}
+function Base.getindex(x::Variable{T}, k...) where T
     !x.backprop && return x.value[k...]
     y = Variable{T}(x.value[k...], x.backprop, x.keepsgrad, x.isleaf)
     if y.backprop
