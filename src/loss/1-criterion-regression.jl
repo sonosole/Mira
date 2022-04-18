@@ -34,7 +34,7 @@ function mae(x::Variable{T}, label::Variable{T}) where T
 end
 
 
-function mae(x::Variable{T}, label::T) where T
+function mae(x::Variable{T}, label::AbstractArray) where T
     @assert x.shape == size(label)
     y = Variable{T}(abs.(ᵛ(x) - label), x.backprop)
     if y.backprop
@@ -53,8 +53,8 @@ end
 maeLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
 L1Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
 
-maeLoss(x::Variable{T}, label::T; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-L1Loss(x::Variable{T},  label::T; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
+maeLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
+L1Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
 
 
 """

@@ -33,7 +33,7 @@ end
     crossEntropy(̂p::Variable{T}, p::Variable{T}) -> y::Variable{T}
 cross entropy is `y = - p * log(̂p)` where p is target and ̂p is the output of the network.
 """
-function crossEntropy(p::Variable{T}, 𝜌::T) where T
+function crossEntropy(p::Variable{T}, 𝜌::AbstractArray) where T
     @assert p.shape == size(𝜌)
     ϵ = eltype(p)(1e-38)
     y = Variable{T}(- 𝜌 .* log.(ᵛ(p) .+ ϵ), p.backprop)
@@ -86,8 +86,8 @@ end
     binaryCrossEntropy(̂p::Variable{T}, p::Variable{T}) -> y::Variable{T}
 binary cross entropy is `y = - plog(̂p) - (1-p)log(1-̂p)` where p is target and ̂p is the output of the network.
 """
-function binaryCrossEntropy(p::Variable{T}, 𝜌::T) where T
-    @assert p.shape == size(𝜌.shape)
+function binaryCrossEntropy(p::Variable{T}, 𝜌::AbstractArray) where T
+    @assert p.shape == size(𝜌)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
@@ -109,5 +109,5 @@ function binaryCrossEntropy(p::Variable{T}, 𝜌::T) where T
 end
 
 
-binaryCrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( binaryCrossEntropy(x, label), reduction=reduction)
-binaryCrossEntropyLoss(x::Variable{T}, label::T; reduction::String="sum") where T = loss( binaryCrossEntropy(x, label), reduction=reduction)
+binaryCrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss(binaryCrossEntropy(x, label), reduction=reduction)
+binaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss(binaryCrossEntropy(x, label), reduction=reduction)
