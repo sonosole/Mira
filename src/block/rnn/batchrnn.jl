@@ -74,7 +74,9 @@ function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
             end
             ifNotKeepδThenFreeδ!(y)
         end
-        addchild(y, v[T])
+        for t = 1:T
+            addchild(y, v[t])
+        end
     end
     return y
 end
