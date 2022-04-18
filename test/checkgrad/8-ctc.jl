@@ -22,7 +22,7 @@
                 IndLSTM(256, 256),             # m[9][4]
                 RNN(256, 256, leakyrelu),           # m[9][5]
                 IndRNN(256, 256, relu),   # m[9][6]
-                RNN(256, tones, relux2y)) # m[9][7]
+                PickyRNN(256, tones, relux2y)) # m[9][7]
 
             new([c1, f1, f2, f3, f4, f5, f6, f7, chain])
         end
@@ -77,23 +77,26 @@
     RE = "nil"
     KG = false
     BY = "dfs"
-resethidden(model[9])
+
     # [2] forward and backward propagation
     y1 = forward(model, x);
     c1 = CRNN_Batch_CTC_With_Softmax(y1, l, blank=1, weight=1.0, reduction=RE);
     backward(c1, by=BY, keepgraph=KG)
-    GRAD = model[1].w.delta[1];
+    GRAD1 = model[1].w.delta[1];
+    zerograds!(param)
 
     # [3] with a samll change of a weight
     DELTA = 1e-7;
     model[1].w.value[1] += DELTA;
-resethidden(model[9])
+
     # [4] forward and backward propagation
     y2 = forward(model, x);
     c2 = CRNN_Batch_CTC_With_Softmax(y2, l, blank=1, weight=1.0, reduction=RE);
     backward(c2, by=BY, keepgraph=KG)
+    GRAD2 = model[1].w.delta[1];
     zerograds!(param)
-
+    
+    GRAD = (GRAD1 + GRAD2)/2
     dLdW = (cost(c2) - cost(c1))/DELTA;   # numerical gradient
     err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
     @test err < 1e-1
