@@ -81,7 +81,7 @@ function mse(x::Variable{T}, label::Variable{T}) where T
 end
 
 
-function mse(x::Variable{T}, label::T) where T
+function mse(x::Variable{T}, label::AbstractArray) where T
     @assert x.shape == size(label)
     𝟚 = eltype(x)(2.0)
     y = Variable{T}((ᵛ(x) - label).^𝟚, X.backprop)
@@ -101,8 +101,8 @@ end
 mseLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
 L2Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
 
-mseLoss(x::Variable{T}, label::T; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
-L2Loss(x::Variable{T},  label::T; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
+mseLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
+L2Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
 
 
 """
@@ -131,7 +131,7 @@ function Lp(x::Variable{T}, label::Variable{T}; p=3) where T
 end
 
 
-function Lp(x::Variable{T}, label::T; p=3) where T
+function Lp(x::Variable{T}, label::AbstractArray; p=3) where T
     @assert x.shape == size(label.shape)
     Δ = ᵛ(x) - label
     y = Variable{T}(Δ .^ p, x.backprop)
@@ -150,4 +150,4 @@ end
 
 
 LpLoss(x::Variable{T}, label::Variable{T}; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
-LpLoss(x::Variable{T}, label::T; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
+LpLoss(x::Variable{T}, label::AbstractArray; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
