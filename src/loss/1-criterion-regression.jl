@@ -84,7 +84,7 @@ end
 function mse(x::Variable{T}, label::AbstractArray) where T
     @assert x.shape == size(label)
     𝟚 = eltype(x)(2.0)
-    y = Variable{T}((ᵛ(x) - label).^𝟚, X.backprop)
+    y = Variable{T}((ᵛ(x) - label).^𝟚, x.backprop)
     if y.backprop
         y.backward = function mseBackward()
             if need2computeδ!(x)
