@@ -15,15 +15,15 @@ If the `input` has size (C,H,W,B), then you should use :
 mutable struct AffinePath <: Scaler
     scale::VarOrNil
     bias::VarOrNil
-    function AffinePath(k::Real=1.0, b::Real=0.0; ndims::Int, type::Type=Array{Float32})
+    function AffinePath(k::Real, b::Real; ndims::Int, type::Type=Array{Float32})
         @assert ndims >= 1 "ndims >= 1 shall be met, but got ndims=$ndims"
         shape = ntuple(i->1, ndims)
         scale = Variable{type}(Zeros(type, shape) .+ eltype(type)(k), true, true, true);
         bias  = Variable{type}(Zeros(type, shape) .+ eltype(type)(b), true, true, true);
         new(scale, bias)
     end
-    function AffinePath(k::VarOrNil=nothing, b::VarOrNil=nothing)
-        new(k, b)
+    function AffinePath()
+        new(nothing, nothing)
     end
 end
 
