@@ -9,7 +9,7 @@ mutable struct LogLinear <: Block
     b::VarOrNil
     function LogLinear(; type::Type=Array{Float32})
         T = eltype(type)
-        w = zeros(T, 1)
+        w = ones(T, 1)
         b = zeros(T, 1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true))
@@ -113,10 +113,10 @@ function forward(m::LogLinear, x::Variable)
         y.backward = function LogLinearBackward()
             c⁻¹ = 1 ./ c
             if need2computeδ!(w)
-                δ(w) .+= ᵛ(x) .* c⁻¹
+                δ(w) .+= sum(ᵛ(x) .* c⁻¹)
             end
             if need2computeδ!(b)
-                δ(b) .+= c⁻¹
+                δ(b) .+= sum(c⁻¹)
             end
             ifNotKeepδThenFreeδ!(y)
         end

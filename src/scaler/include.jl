@@ -8,3 +8,6 @@ include("./SwitchPath.jl")
 
 export ScaleChannels
 include("./ScaleChannels.jl")
+
+export AffinePath
+include("./AffinePath.jl")
