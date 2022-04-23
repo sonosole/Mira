@@ -36,7 +36,9 @@ function clone(this::AffinePath; type::Type=Array{Float32})
 end
 
 function Base.show(io::IO, m::AffinePath)
-    print(io, "AffinePath(scale=$(m.scale.value[1]), bias=$(m.bias.value[1]); type=$(typeof(m.scale.value)))")
+    k = Array(m.scale.value)[1]
+    b = Array(m.bias.value)[1]
+    print(io, "AffinePath(scale=$k, bias=$b; type=$(typeof(m.scale.value)))")
 end
 
 function paramsof(m::AffinePath)
@@ -57,10 +59,13 @@ function nparamsof(m::AffinePath)
     return 2
 end
 
+elsizeof(a::AffinePath) = elsizeof(a.scale)
+
 function bytesof(m::AffinePath, unit::String="MB")
     return blocksize(2*sizeof(m.scale), uppercase(unit))
 end
 
+nops(a::AffinePath) = (0, 0, 0)
 
 function forward(m::AffinePath, x::Variable{T}) where T
     k = m.scale
