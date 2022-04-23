@@ -85,5 +85,5 @@ end
 function predict(m::AffinePath, x::AbstractArray)
     k = ᵛ(m.scale)
     b = ᵛ(m.bias)
-    return k .* ᵛ(x) .+ b
+    return k .* x .+ b
 end
