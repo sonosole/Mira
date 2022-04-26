@@ -19,6 +19,7 @@ include("./normalizer/include.jl")
 include("./optimizer/include.jl")
 include("./loss/include.jl")
 include("./engine/include.jl")
+include("./quant/include.jl")
 
 
 
