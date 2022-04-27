@@ -37,7 +37,12 @@ end
 
 
 function quantize(Q::Quant, x::AbstractArray)
-    return clamp.(x .* (1 / Q.S)) .+ Q.Z, Q.Qmin, Q.Qmax)
+    S = Q.S
+    Z = Q.Z
+    K = 1/S
+    x = clamp(x, Q.Xmin, Q.Xmax)
+    q = round.(eltype(Z), x .* K) .+ Z
+    return q
 end
 
 
@@ -48,6 +53,10 @@ end
 
 
 function xqx(Q::Quant, x::AbstractArray)
-    q = clamp.(x .* (1 / Q.S)) .+ Q.Z, Q.Qmin, Q.Qmax)
-    return Q.S .* (q .- Q.Z)
+    S = Q.S
+    Z = Q.Z
+    K = 1/S
+    x = clamp(x, Q.Xmin, Q.Xmax)
+    q = round.(eltype(Z), x .* K) .+ Z
+    return S .* (q .- Z)
 end
