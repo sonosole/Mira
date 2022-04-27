@@ -17,8 +17,8 @@ mutable struct Quant
     S::Real
     Z::Integer
     function Quant(Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer)
-        @assert 0 ≤ Xmin ≤ Xmax "0 ≤ Xmin ≤ Xmax, but got Xmin=$Xmin Xmax=$Xmax"
-        @assert 0 ≤ Qmin ≤ Qmax "0 ≤ Qmin ≤ Qmax, but got Qmin=$Qmin Qmax=$Qmax"
+        @assert Xmin ≤ Xmax "Xmin ≤ Xmax, but got Xmin=$Xmin Xmax=$Xmax"
+        @assert Qmin ≤ Qmax "Qmin ≤ Qmax, but got Qmin=$Qmin Qmax=$Qmax"
         scale, zeropoint = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
         new(Xmin, Xmax, Qmin, Qmax, scale, zeropoint)
     end
