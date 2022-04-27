@@ -5,6 +5,7 @@ include("./2-LSTM.jl")
 include("./3-IndGRU.jl")
 include("./3-GRU.jl")
 include("./4-PickyRNN.jl")
+include("./5-IIRMeanNorm.jl")
 
 include("./batchrnn.jl")
 
