@@ -7,10 +7,10 @@ y = log(w .* x .+ b) where w and b are 0-dim tensors
 mutable struct LogLinear <: Block
     w::VarOrNil
     b::VarOrNil
-    function LogLinear(; type::Type=Array{Float32})
+    function LogLinear(slope::Real, bias::Real; type::Type=Array{Float32})
         T = eltype(type)
-        w = ones(T, 1)
-        b = zeros(T, 1)
+        w = zeros(T, 1) .+ T(slope)
+        b = zeros(T, 1) .+ T(bias)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true))
     end
@@ -31,7 +31,7 @@ end
 function Base.show(io::IO, m::LogLinear)
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    print(io, "Linear($(m.w[1]), $(m.b[1]); type=$TYPE)")
+    print(io, "Linear($(abs(m.w[1])), $(abs(m.b[1])); type=$TYPE)")
 end
 
 
@@ -101,36 +101,13 @@ end
 function forward(m::LogLinear, x::Variable)
     w = m.w
     b = m.b
-    c = log.(ᵛ(w) .* ᵛ(x) .+ ᵛ(b))
-    y = Variable{T}(c, x.backprop)
-    if y.backprop
-        if w.value[1] < 0.0f0
-            w.value[1] = 1e-3
-        end
-        if b.value[1] < 0.0f0
-            b.value[1] = 1e-3
-        end
-        y.backward = function LogLinearBackward()
-            c⁻¹ = 1 ./ c
-            if need2computeδ!(w)
-                δ(w) .+= sum(ᵛ(x) .* c⁻¹)
-            end
-            if need2computeδ!(b)
-                δ(b) .+= sum(c⁻¹)
-            end
-            ifNotKeepδThenFreeδ!(y)
-        end
-        addchild(y, x)
-        addchild(y, w)
-        addchild(y, b)
-    end
-    return y
+    return log(abs(w) .* x .+ abs(b))
 end
 
 
 function predict(m::LogLinear, x)
-    w = m.w.value
-    b = m.b.value
+    w = abs.(m.w.value)
+    b = abs.(m.b.value)
     return log.(w .* x .+ b)
 end
 
