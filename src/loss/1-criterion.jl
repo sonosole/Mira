@@ -61,5 +61,31 @@ function cost(x::Variable)
 end
 
 
+
+
+function _sum(x::AbstractArray)
+    return sum(x)
+end
+
+function _mean(x::AbstractArray)
+    return sum(x) / length(x)
+end
+
+
+"""
+    loss(x::AbstractArray; reduction::String="sum") -> y::Variable{T}
+
+Sums or takes mean over all elements in `value` of `x` as the loss `Variable`, i.e. ⤦\n
++ `y = sum(x)`, if reduction="sum"
++ `y = sum(x)/length(x)`, if reduction="mean"
+"""
+function loss(x::AbstractArray; reduction::String="sum") where T
+    by = lowercase(reduction)
+    by=="sum" && return _sum(x)
+    by=="mean" && return _mean(x)
+    @error "wrong reduction method" reduction=="sum" || reduction=="mean"
+end
+
+
 include("./1-criterion-regression.jl")
 include("./1-criterion-probabilistic.jl")

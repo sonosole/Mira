@@ -110,3 +110,44 @@ crossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") 
 
 binaryCrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss(binaryCrossEntropy(x, label), reduction=reduction)
 binaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss(binaryCrossEntropy(x, label), reduction=reduction)
+
+
+
+"""
+    binaryCrossEntropyLoss(p::AbstractArray, label::AbstractArray) -> lossvalue::Real
+binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where p is the output of the network.
+"""
+function binaryCrossEntropyLoss(p::AbstractArray, label::AbstractArray; reduction::String="sum")
+    @assert size(p) == size(label)
+    TO = eltype(p)
+    ϵ  = TO(1e-38)
+    𝟙  = TO(1.0f0)
+    t₁ = -       label  .* log.(     p .+ ϵ)
+    t₂ = - (𝟙 .- label) .* log.(𝟙 .- p .+ ϵ)
+    if reduction=="mean"
+        return sum(t₁ + t₂) / length(p)
+    elseif reduction=="sum"
+        return sum(t₁ + t₂)
+    else
+        @error "reduction = $reduction is not allowed, only mean or sum"
+    end
+end
+
+
+"""
+    crossEntropyLoss(p::AbstractArray, label::AbstractArray) -> lossvalue::Real
+cross entropy is `y = - label * log(p) where p is the output of the network.
+"""
+function crossEntropyLoss(p::AbstractArray, label::AbstractArray; reduction::String="sum")
+    @assert size(p) == size(label)
+    ϵ = eltype(p)(1e-38)
+    y = - label .* log.(p .+ ϵ)
+
+    if reduction=="mean"
+        return sum(y) / length(p)
+    elseif reduction=="sum"
+        return sum(y)
+    else
+        @error "reduction = $reduction is not allowed, only mean or sum"
+    end
+end
