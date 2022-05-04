@@ -156,15 +156,15 @@ end
 
 maeLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
 maeLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-maeLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
+maeLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( mae(x, label), reduction=reduction )
 
 L1Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
 L1Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-L1Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
+L1Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") = loss( mae(x, label), reduction=reduction )
 
 mseLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
 mseLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
-mseLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
+mseLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( mse(x, label), reduction=reduction )
 
 L2Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
 L2Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
@@ -172,4 +172,4 @@ L2Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") where T
 
 LpLoss(x::Variable{T}, label::Variable{T}; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
 LpLoss(x::Variable{T}, label::AbstractArray; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
-LpLoss(x::AbstractArray, label::AbstractArray; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
+LpLoss(x::AbstractArray, label::AbstractArray; p=3, reduction::String="sum") = loss( Lp(x, label; p=p), reduction=reduction )
