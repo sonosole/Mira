@@ -26,4 +26,4 @@ include("./5-misc.jl")
 include("./conv/include.jl")
 include("./fc/include.jl")
 include("./rnn/include.jl")
-
+include("./pfun/include.jl")
