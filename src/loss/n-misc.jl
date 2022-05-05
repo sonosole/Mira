@@ -1,6 +1,7 @@
 export timeslotmat
 export adjustLossWeights
 export reduce3d
+export reduce3dSeqGrad
 
 """
     timeslotmat(matrix::AbstractMatrix, timestamp::AbstractVector; dim=2, slotvalue=1.0)
@@ -81,6 +82,40 @@ function reduce3d(Δ::AbstractArray, loglikely::AbstractVector, seqlabels::Vecto
         batchsize⁻¹ = 1 / batchsize
         Δ         .*= batchsize⁻¹
         loglikely .*= batchsize⁻¹
+    # 无归一化 ⤦
+    elseif isequal(reduction, "nil")
+        return nothing
+    else
+        @warn "reduction is one of seqlen/timesteps/trellis/normal/nil, but got $reduction"
+    end
+    return nothing
+end
+
+
+function reduce3dSeqGrad(Δ::AbstractArray, seqlabels::Vector, reduction::String)
+    featdims, timesteps, batchsize = size(Δ)
+    # 标签长度归一化 ⤦
+    if isequal(reduction, "seqlen")
+        Threads.@threads for b = 1:batchsize
+            seqlen     = length(seqlabels[b]) * batchsize
+            seqlen⁻¹   = 1 / ifelse(seqlen≠0, seqlen, batchsize)
+            Δ[:,:,b] .*= seqlen⁻¹
+        end
+    # 时间长度归一化 ⤦
+    elseif isequal(reduction, "timesteps")
+        timesteps⁻¹ = 1 / (timesteps * batchsize)
+        Δ         .*= timesteps⁻¹
+    # 网格归一化 ⤦
+    elseif isequal(reduction, "trellis")
+        Threads.@threads for b = 1:batchsize
+            volume     = length(seqlabels[b]) * timesteps * batchsize
+            volume⁻¹   = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
+            Δ[:,:,b] .*= volume⁻¹
+        end
+    # 只是 batchsize 归一化 ⤦
+    elseif isequal(reduction, "normal")
+        batchsize⁻¹ = 1 / batchsize
+        Δ         .*= batchsize⁻¹
     # 无归一化 ⤦
     elseif isequal(reduction, "nil")
         return nothing
