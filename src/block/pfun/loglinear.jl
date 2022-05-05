@@ -1,3 +1,5 @@
+export LogLinear
+
 """
     mutable struct LogLinear <: Block
 
