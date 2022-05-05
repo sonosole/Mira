@@ -59,9 +59,10 @@ end
 
 where [Xmin, Xmax] denotes the range of the input data while Qmin and Qmax are
 respectively the minimum and maximum values of the quantized data type.
-
+```
 julia> quantize(0.5, 0.0, 1.0, 0, 5)
 2
+```
 """
 function quantize(x::Real, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
     S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
@@ -77,9 +78,10 @@ end
 
 where [Xmin, Xmax] denotes the range of the input data while Qmin and Qmax are
 respectively the minimum and maximum values of the quantized data type.
-
+```
 julia> dequantize(0.5, 0.0, 1.0, 0, 5)
 0.4
+```
 """
 function dequantize(q::I, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
     S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
@@ -91,9 +93,10 @@ end
     xqx(X::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> Xq
 
     Xq = DeQuantize( Quantize( X ) )
-
+```
 julia> xqx(0.5, 0.0, 1.0, 0, 5)
 0.4
+```
 """
 function xqx(x::Real, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
     S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
