@@ -1,3 +1,5 @@
+export HardSigmoid
+
 """
     min2max(k .* x .+ 0.5)
 """
