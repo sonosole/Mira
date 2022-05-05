@@ -12,7 +12,7 @@ export focalBCELoss
 
 """
     crossEntropy(p::Variable{T}, 𝜌::Variable{T}) -> y::Variable{T}
-cross entropy is `y = - 𝜌 * log(p) where 𝜌 is the target and p is the output of the network.
+cross entropy is `y = - 𝜌 * log(p)` where 𝜌 is the target and p is the output of the network.
 """
 function crossEntropy(p::Variable{T}, 𝜌::Variable{T}) where T
     @assert (p.shape == 𝜌.shape)
@@ -34,7 +34,7 @@ end
 
 """
     crossEntropy(p::Variable{T}, 𝜌::AbstractArray) -> y::Variable{T}
-cross entropy is `y = - 𝜌 * log(p) where 𝜌 is the target and p is the output of the network.
+cross entropy is `y = - 𝜌 * log(p)` where 𝜌 is the target and p is the output of the network.
 """
 function crossEntropy(p::Variable{T}, 𝜌::AbstractArray) where T
     @assert p.shape == size(𝜌)
@@ -49,6 +49,18 @@ function crossEntropy(p::Variable{T}, 𝜌::AbstractArray) where T
         end
         addchild(y, p)
     end
+    return y
+end
+
+
+"""
+    crossEntropy(p::AbstractArray, label::AbstractArray) -> lossvalue::AbstractArray
+cross entropy is `y = - label * log(p)` where p is the output of the network.
+"""
+function crossEntropy(p::AbstractArray, label::AbstractArray)
+    @assert size(p) == size(label)
+    ϵ = eltype(p)(1e-38)
+    y = - label .* log.(p .+ ϵ)
     return y
 end
 
@@ -120,18 +132,6 @@ function binaryCrossEntropy(p::AbstractArray, label::AbstractArray)
     t₁ = -       label  .* log.(     p .+ ϵ)
     t₂ = - (𝟙 .- label) .* log.(𝟙 .- p .+ ϵ)
     return t₁ + t₂
-end
-
-
-"""
-    crossEntropyLoss(p::AbstractArray, label::AbstractArray) -> lossvalue::AbstractArray
-cross entropy is `y = - label * log(p) where p is the output of the network.
-"""
-function crossEntropyLoss(p::AbstractArray, label::AbstractArray)
-    @assert size(p) == size(label)
-    ϵ = eltype(p)(1e-38)
-    y = - label .* log.(p .+ ϵ)
-    return y
 end
 
 
