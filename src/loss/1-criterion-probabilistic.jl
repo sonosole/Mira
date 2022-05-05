@@ -10,6 +10,7 @@ export focalCE
 export focalCELoss
 export focalBCE
 export focalBCELoss
+export seqfocalCE
 
 
 """
@@ -155,7 +156,7 @@ binaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String
 
 
 function focalBCE(p::Variable{T}, label::AbstractArray; gamma::Real=2, alpha::Real=0.5) where T
-    @assert p.shape == size(𝜌)
+    @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
@@ -188,7 +189,7 @@ end
 
 
 function focalCE(p::Variable{T}, label::AbstractArray; gamma::Real=2) where T
-    @assert p.shape == size(𝜌)
+    @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
@@ -215,3 +216,35 @@ end
 
 focalCELoss(x::Variable{T}, label::AbstractArray; gamma::Real=2, reduction::String="sum") where T = loss(focalCE(x, label, gamma=gamma), reduction=reduction)
 focalBCELoss(x::Variable{T}, label::AbstractArray; gamma::Real=2, reduction::String="sum") where T = loss(focalBCE(x, label, gamma=gamma), reduction=reduction)
+
+
+function seqfocalCE(p::Variable{T},
+                    label::AbstractArray,
+                    seqlabels::Vector;
+                    gamma::Real=2,
+                    reduction::String="seqlen") where T
+
+    @assert p.shape == size(label)
+    TO = eltype(p)
+    ϵ  = TO(1e-38)
+    𝟙  = TO(1.0f0)
+    γ  = TO(gamma)
+    𝝆  = label
+    𝒑  = ᵛ(p)
+
+    t = @. 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑 + ϵ)
+    y = Variable{T}(t, p.backprop)
+
+    if y.backprop
+        y.backward = function focalCEBackward()
+            if need2computeδ!(p)
+                δ = @. 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (𝟙 / 𝒑 - γ * log(𝒑) - 𝟙)
+                reduce3dSeqGrad(δ, seqlabels, reduction)
+                δ(p) .+= δ(y) .* δ
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
+    end
+    return y
+end
