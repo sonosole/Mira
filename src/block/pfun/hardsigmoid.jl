@@ -1,7 +1,7 @@
 """
     min2max(k .* x .+ 0.5)
 """
-mutable struct HardSigmoid <: Normalizer
+mutable struct HardSigmoid
     k     :: VarOrNil # scaling params
     views :: NTuple   # views to collect elements
     function HardSigmoid(slope::Real;
