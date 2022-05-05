@@ -30,9 +30,10 @@ end
 
 
 function Base.show(io::IO, h::HardSigmoid)
-    TYPE = typeof(h.k.value)
-    print(io, "HardSigmoid(type=$TYPE)")
-    display(io, h.k.value)
+    k = value(h.k)
+    println(io, "═════════ HardSigmoid ═════════")
+    print(io, cyan!(" slope k "))
+    display(k)
 end
 
 
