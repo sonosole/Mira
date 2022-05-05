@@ -20,7 +20,6 @@ include("./optimizer/include.jl")
 include("./quant/include.jl")
 include("./loss/include.jl")
 include("./engine/include.jl")
-include("./quant/include.jl")
 include("./metrics/include.jl")
 
 
