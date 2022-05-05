@@ -222,3 +222,32 @@ function CRNN_Batch_CTC(p::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) 
     end
     return y
 end
+
+
+"""
+    CRNN_Focal_CTC(p::Variable{T}, seqlabels::Vector; blank=1, gamma=2, reduction="seqlen")
+
+# Inputs
+`p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability\n
+`seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
+`weight`    : weight for CTC loss
+
+# Structure
+
+    ┌───┐          ┌───┐
+    │ │ │ softmax  │ │ │   ┌─────────────┐
+    │ X ├─────────►│ P ├──►│Focal CTCLOSS│◄── (seqLabel)
+    │ │ │          │ │ │   └─────────────┘
+    └───┘          └───┘
+"""
+function CRNN_Focal_CTC(p::Variable{T}, seqlabels::Vector; blank=1, gamma=2, reduction="seqlen") where T
+    featdims, timesteps, batchsize = size(p)
+    loglikely = zeros(eltype(x), batchsize)
+    r = zero(ᵛ(p))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+    y = seqfocalCE(p, r, seqlabels, gamma=gamma, reduction=reduction)
+    return loss(y)
+end
