@@ -15,7 +15,7 @@ export seqfocalCE
 
 """
     crossEntropy(p::Variable{T}, label::Variable{T}) -> y::Variable{T}
-cross entropy is `y = - label * log(p)` where label is the target and p is the output of the network.
+cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 """
 function crossEntropy(p::Variable{T}, label::Variable{T}) where T
     @assert (p.shape == label.shape)
@@ -39,7 +39,7 @@ end
 
 """
     crossEntropy(p::Variable{T}, label::AbstractArray) -> y::Variable{T}
-cross entropy is `y = - label * log(p)` where label is the target and p is the output of the network.
+cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 """
 function crossEntropy(p::Variable{T}, label::AbstractArray) where T
     @assert p.shape == size(label)
@@ -62,7 +62,7 @@ end
 
 """
     crossEntropy(p::AbstractArray, label::AbstractArray) -> lossvalue::AbstractArray
-cross entropy is `y = - label * log(p)` where p is the output of the network.
+cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 """
 function crossEntropy(p::AbstractArray, label::AbstractArray)
     @assert size(p) == size(label)
@@ -74,7 +74,7 @@ end
 
 """
     binaryCrossEntropy(p::Variable{T}, label::Variable{T}) -> y::Variable{T}
-binary cross entropy is `y = - label*log(p) - (1-label)log(1-p)` where 𝜌 is the target and p is the output of the network.
+binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function binaryCrossEntropy(p::Variable{T}, label::Variable{T}) where T
     @assert (p.shape == label.shape)
@@ -104,7 +104,7 @@ end
 
 """
     binaryCrossEntropy(p::Variable{T}, 𝜌::AbstractArray) -> y::Variable{T}
-binary cross entropy is `y = - label*log(p) - (1-label)log(1-p)` where 𝜌 is the target and p is the output of the network.
+binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function binaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
     @assert p.shape == size(label)
@@ -133,7 +133,7 @@ end
 
 """
     binaryCrossEntropy(p::AbstractArray, label::AbstractArray) -> lossvalue::AbstractArray
-binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where p is the output of the network.
+binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function binaryCrossEntropy(p::AbstractArray, label::AbstractArray)
     @assert size(p) == size(label)
@@ -203,8 +203,7 @@ function focalCE(p::Variable{T}, label::AbstractArray; gamma::Real=2) where T
     if y.backprop
         y.backward = function focalCEBackward()
             if need2computeδ!(p)
-                δ = @. 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (𝟙 / 𝒑 - γ * log(𝒑) - 𝟙)
-                δ(p) .+= δ(y) .* δ
+                δ(p) .+= δ(y) .* 𝝆 .* (𝟙 .- 𝒑).^(γ - 𝟙) .* (𝟙 ./ 𝒑 .- γ .* log.(𝒑) .- 𝟙)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -238,9 +237,9 @@ function seqfocalCE(p::Variable{T},
     if y.backprop
         y.backward = function focalCEBackward()
             if need2computeδ!(p)
-                δ = @. 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (𝟙 / 𝒑 - γ * log(𝒑) - 𝟙)
-                reduce3dSeqGrad(δ, seqlabels, reduction)
-                δ(p) .+= δ(y) .* δ
+                Δ = @. 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (𝟙 / 𝒑 - γ * log(𝒑) - 𝟙)
+                reduce3dSeqGrad(Δ, seqlabels, reduction)
+                δ(p) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
