@@ -41,13 +41,13 @@ function DNN_CTC(p::Variable{T}, seq; blank=1, weight=1.0) where T
         y.backward = function DNN_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* weight
                 end
             end
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
@@ -84,7 +84,7 @@ a batch of concatenated input sequence is processed by neural networks into `p`
 """
 function DNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
     batchsize = length(inputLengths)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(eltype(p), batchsize)
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
@@ -94,18 +94,18 @@ function DNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, we
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function DNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* weight
                 end
             end
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
@@ -142,7 +142,7 @@ a batch of padded input sequence is processed by neural networks into `p`
 """
 function RNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
     batchsize = length(inputlens)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(eltype(p), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -152,18 +152,18 @@ function RNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, we
         loglikely[b] /= Lᵇ * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function RNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* weight
                 end
             end
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
@@ -199,7 +199,7 @@ a batch of padded input sequence is processed by neural networks into `p`
 """
 function CRNN_Batch_CTC(p::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) where T
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(eltype(p), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -207,18 +207,18 @@ function CRNN_Batch_CTC(p::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) 
         loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
     if y.backprop
         y.backward = function CRNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* weight
                 end
             end
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
@@ -242,7 +242,7 @@ end
 """
 function CRNN_Focal_CTC(p::Variable{T}, seqlabels::Vector; blank=1, gamma=2, reduction="seqlen") where T
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(eltype(p), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
