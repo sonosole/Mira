@@ -197,13 +197,13 @@ function focalCE(p::Variable{T}, label::AbstractArray; gamma::Real=2) where T
     𝝆  = label
     𝒑  = ᵛ(p)
 
-    t = @. 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑 + ϵ)
+    t = @. - 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑 + ϵ)
     y = Variable{T}(t, p.backprop)
 
     if y.backprop
         y.backward = function focalCEBackward()
             if need2computeδ!(p)
-                δ(p) .+= δ(y) .* 𝝆 .* (𝟙 .- 𝒑).^(γ - 𝟙) .* (𝟙 ./ 𝒑 .- γ .* log.(𝒑) .- 𝟙)
+                δ(p) .+= δ(y) .* 𝝆 .* (𝟙 .- 𝒑).^(γ - 𝟙) .* (γ .* log.(𝒑) .+ 𝟙 .- 𝟙 ./ 𝒑)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -231,13 +231,13 @@ function seqfocalCE(p::Variable{T},
     𝝆  = label
     𝒑  = ᵛ(p)
 
-    t = @. 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑 + ϵ)
+    t = @. - 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑 + ϵ)
     y = Variable{T}(t, p.backprop)
 
     if y.backprop
         y.backward = function focalCEBackward()
             if need2computeδ!(p)
-                Δ = @. 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (𝟙 / 𝒑 - γ * log(𝒑) - 𝟙)
+                Δ = @. 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (γ * log(𝒑) + 𝟙 - 𝟙 / 𝒑)
                 reduce3dSeqGrad(Δ, seqlabels, reduction)
                 δ(p) .+= δ(y) .* Δ
             end
