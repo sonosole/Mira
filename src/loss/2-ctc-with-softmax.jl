@@ -49,6 +49,7 @@ function DNN_CTC_With_Softmax(x::Variable{T}, seq; blank::Int=1, weight=1.0) whe
                     δ(x) .+= Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -114,6 +115,7 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{T},
                     δ(x) .+= Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -180,6 +182,7 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{T},
                     δ(x) .+= Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -242,6 +245,7 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{T},
                     δ(x) .+= Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
