@@ -2,7 +2,7 @@ export DNN_CTC_With_Softmax
 export DNN_Batch_CTC_With_Softmax
 export RNN_Batch_CTC_With_Softmax
 export CRNN_Batch_CTC_With_Softmax
-
+export CRNN_Focal_CTC_With_Softmax
 
 """
     DNN_CTC_With_Softmax(x::Variable{T}, seq; blank=1, weight=1.0)
@@ -243,6 +243,50 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{T},
                     δ(x) .+= Δ
                 else
                     δ(x) .+= Δ .* weight
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+
+function CRNN_Focal_CTC_With_Softmax(x::Variable{T},
+                                     seqlabels::Vector;
+                                     blank::Int=1,
+                                     gamma::Real=2,
+                                     weight::Float64=1.0,
+                                     reduction::String="seqlen") where T
+    featdims, timesteps, batchsize = size(x)
+    S = eltype(x)
+    loglikely = zeros(S, 1, 1, batchsize)
+    p = softmax(ᵛ(x); dims=1)
+    r = zero(ᵛ(x))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    𝒍𝒏𝒑 = T(-loglikely)
+    𝒑 = exp(𝒍𝒏𝒑)
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑)
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+    Δ = p - r
+    reduce3d(Δ, t, seqlabels, reduction)
+    y = Variable{T}([sum(t)], x.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_Focal_CTC_With_Softmax_Backward()
+            if need2computeδ!(x)
+                if weight==1.0
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ
+                else
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)

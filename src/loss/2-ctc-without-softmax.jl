@@ -2,7 +2,7 @@ export DNN_CTC
 export DNN_Batch_CTC
 export RNN_Batch_CTC
 export CRNN_Batch_CTC
-
+export CRNN_Focal_CTC
 
 """
     DNN_CTC(p::Variable{T}, seq; blank=1, weight=1.0)
@@ -241,7 +241,12 @@ end
 
 
 """
-    CRNN_Focal_CTC(p::Variable{T}, seqlabels::Vector; blank=1, gamma=2, reduction="seqlen")
+    CRNN_Focal_CTC(p::Variable{T},
+                   seqlabels::Vector;
+                   blank=1,
+                   gamma=2,
+                   weight::Float64=1.0,
+                   reduction="seqlen") where T
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability\n
@@ -256,14 +261,43 @@ end
     │ │ │          │ │ │   └─────────────┘
     └───┘          └───┘
 """
-function CRNN_Focal_CTC(p::Variable{T}, seqlabels::Vector; blank=1, gamma=2, reduction="seqlen") where T
+function CRNN_Focal_CTC(p::Variable{T},
+                        seqlabels::Vector;
+                        blank::Int=1,
+                        gamma::Real=2,
+                        weight::Float64=1.0,
+                        reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(eltype(p), batchsize)
+    S = eltype(p)
+    loglikely = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
-    y = seqfocalCE(p, r, seqlabels, gamma=gamma, reduction=reduction)
-    return loss(y)
+
+    𝒍𝒏𝒑 = T(-loglikely)
+    𝒑 = exp(𝒍𝒏𝒑)
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝜸*𝒑*𝒍𝒏𝒑 + 𝒑 - 𝟙)
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+
+    reduce3d(r, t, seqlabels, reduction)
+    y = Variable{T}([sum(t)], p.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_Focal_CTC_Backward()
+            if need2computeδ!(p)
+                if weight==1.0
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
+                else
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* S(weight)
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
+    end
+    return y
 end

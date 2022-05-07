@@ -2,7 +2,9 @@ export FastCTC, seqfastctc
 export FastCTCGreedySearch
 export FastCTCGreedySearchWithTimestamp
 export CRNN_FastCTC_With_Softmax
-
+export CRNN_FastCTC
+export CRNN_Focal_FastCTC_With_Softmax
+export CRNN_Focal_FastCTC
 
 function seqfastctc(seq, blank::Int=1)
     L = length(seq)       # sequence length
@@ -158,6 +160,125 @@ function CRNN_FastCTC_With_Softmax(x::Variable{T},
             ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
+    end
+    return y
+end
+
+
+function CRNN_FastCTC(p::Variable{T},
+                      seqlabels::Vector;
+                      blank::Int=1,
+                      weight::Float64=1.0,
+                      reduction::String="seqlen") where T
+
+    featdims, timesteps, batchsize = size(p)
+    loglikely = zeros(eltype(p), batchsize)
+    r = zero(ᵛ(p))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = FastCTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    reduce3d(r, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], p.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_FastCTC_Backward()
+            if need2computeδ!(p)
+                if weight==1.0
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p)
+                else
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* S(weight)
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
+    end
+    return y
+end
+
+
+function CRNN_Focal_FastCTC_With_Softmax(x::Variable{T},
+                                         seqlabels::Vector;
+                                         blank::Int=1,
+                                         gamma::Real=2,
+                                         weight::Float64=1.0,
+                                         reduction::String="seqlen") where T
+    featdims, timesteps, batchsize = size(x)
+    S = eltype(x)
+    loglikely = zeros(S, 1, 1, batchsize)
+    p = softmax(ᵛ(x); dims=1)
+    r = zero(ᵛ(x))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = FastCTC(p[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    𝒍𝒏𝒑 = T(-loglikely)
+    𝒑 = exp(𝒍𝒏𝒑)
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑)
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+    Δ = p - r
+    reduce3d(Δ, t, seqlabels, reduction)
+    y = Variable{T}([sum(t)], x.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_Focal_FastCTC_With_Softmax_Backward()
+            if need2computeδ!(x)
+                if weight==1.0
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ
+                else
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* S(weight)
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function CRNN_Focal_FastCTC(p::Variable{T},
+                            seqlabels::Vector;
+                            blank::Int=1,
+                            gamma::Real=2,
+                            weight::Float64=1.0,
+                            reduction::String="seqlen") where T
+    featdims, timesteps, batchsize = size(p)
+    S = eltype(p)
+    loglikely = zeros(S, 1, 1, batchsize)
+    r = zero(ᵛ(p))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = FastCTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    𝒍𝒏𝒑 = T(-loglikely)
+    𝒑 = exp(𝒍𝒏𝒑)
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝜸*𝒑*𝒍𝒏𝒑 + 𝒑 - 𝟙)
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+
+    reduce3d(r, t, seqlabels, reduction)
+    y = Variable{T}([sum(t)], p.backprop)
+
+    if y.backprop
+        y.backward = function CRNN_Focal_FastCTC_Backward()
+            if need2computeδ!(p)
+                if weight==1.0
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
+                else
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* S(weight)
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
     end
     return y
 end
