@@ -64,6 +64,7 @@ function DNN_Batch_TCS(p::Variable{T},
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -132,6 +133,7 @@ function RNN_Batch_TCS(p::Variable{T},
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -194,6 +196,7 @@ function CRNN_Batch_TCS(p::Variable{T},
                     δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

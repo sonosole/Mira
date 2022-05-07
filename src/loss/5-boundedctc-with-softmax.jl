@@ -18,18 +18,20 @@ function CRNN_BoundedCTC_With_Softmax(x::Variable{Array{T}},
 
     Δ = p - r
     reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
 
-    if x.backprop
-        function CRNN_BoundedCTC_With_Softmax_Backward()
+    if y.backprop
+        y.backward = function CRNN_BoundedCTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
-        push!(graph.backward, CRNN_BoundedCTC_With_Softmax_Backward)
+        addchild(y, x)
     end
-    return sum(loglikely)
+    return y
 end

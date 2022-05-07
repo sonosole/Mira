@@ -35,17 +35,18 @@ case batchsize==1 for test case, `p` here is probability or weighted probability
 function DNN_CTC(p::Variable{T}, seq; blank=1, weight=1.0) where T
     L = length(seq) * 2 + 1
     r, loglikely = CTC(ᵛ(p), seq, blank=blank)
-    y = Variable{T}([loglikely / L], p.backprop)
+    y = Variable{T}([loglikely], p.backprop)
 
     if y.backprop
         y.backward = function DNN_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ ᵛ(p) .* weight
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -91,19 +92,21 @@ function DNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, we
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], loglikely[b] = CTC(p.value[:,span], seqlabels[b], blank=blank)
-        loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    reduce3d(r, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], p.backprop)
+
     if y.backprop
         y.backward = function DNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ ᵛ(p) .* weight
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -140,7 +143,12 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function RNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+function RNN_Batch_CTC(p::Variable{T},
+                       seqlabels::Vector,
+                       inputlens;
+                       blank=1,
+                       weight=1.0,
+                       reduction::String="seqlen") where T
     batchsize = length(inputlens)
     loglikely = zeros(eltype(p), batchsize)
     r = zero(ᵛ(p))
@@ -149,19 +157,21 @@ function RNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, we
         Tᵇ = inputlens[b]
         Lᵇ = length(seqlabels[b])
         r[:,1:Tᵇ,b], loglikely[b] = CTC(p.value[:,1:Tᵇ,b], seqlabels[b], blank=blank)
-        loglikely[b] /= Lᵇ * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    reduce3d(r, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], p.backprop)
+
     if y.backprop
         y.backward = function RNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ ᵛ(p) .* weight
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -197,26 +207,32 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function CRNN_Batch_CTC(p::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) where T
+function CRNN_Batch_CTC(p::Variable{T},
+                        seqlabels::Vector;
+                        blank::Int=1,
+                        weight::Float64=1.0,
+                        reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(p)
     loglikely = zeros(eltype(p), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
-        loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    reduce3d(r, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], p.backprop)
+
     if y.backprop
         y.backward = function CRNN_Batch_CTC_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ ᵛ(p) .* weight
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end

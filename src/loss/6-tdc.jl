@@ -184,11 +184,12 @@ function CRNN_TDC_With_Softmax(x::Variable{T},
         y.backward = function CRNN_TDC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -9,6 +9,7 @@ export CRNN_Batch_TCS_With_Softmax
                                inputlens;
                                background::Int=1,
                                foreground::Int=2,
+                               reduction::String="seqlen",
                                weight=1.0) where T
 
 a batch of concatenated input sequence is processed by neural networks into `x`
@@ -42,6 +43,7 @@ function DNN_Batch_TCS_With_Softmax(x::Variable{T},
                                     inputlens;
                                     background::Int=1,
                                     foreground::Int=2,
+                                    reduction::String="seqlen",
                                     weight=1.0) where T
     batchsize = length(seqlabels)
     loglikely = zeros(eltype(x), batchsize)
@@ -52,20 +54,22 @@ function DNN_Batch_TCS_With_Softmax(x::Variable{T},
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], loglikely[b] = TCS(p[:,span], seqlabels[b], background=background, foreground=foreground)
-        loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
     Δ = p - r
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
+
     if y.backprop
         y.backward = function DNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -79,6 +83,7 @@ end
                                inputlens;
                                background::Int=1,
                                foreground::Int=2,
+                               reduction::String="seqlen",
                                weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
@@ -112,6 +117,7 @@ function RNN_Batch_TCS_With_Softmax(x::Variable{T},
                                     inputlens;
                                     background::Int=1,
                                     foreground::Int=2,
+                                    reduction::String="seqlen",
                                     weight=1.0) where T
     batchsize = length(seqlabels)
     loglikely = zeros(eltype(x), batchsize)
@@ -123,20 +129,22 @@ function RNN_Batch_TCS_With_Softmax(x::Variable{T},
         Lᵇ = length(seqlabels[b])
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
         r[:,1:Tᵇ,b], loglikely[b] = TCS(p[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
-        loglikely[b] /= Lᵇ * 3 + 1
     end
 
     Δ = p - r
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
+
     if y.backprop
         y.backward = function RNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -148,6 +156,7 @@ end
                                 seqlabels::Vector;
                                 background::Int=1,
                                 foreground::Int=2,
+                                reduction::String="seqlen",
                                 weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
@@ -198,11 +207,12 @@ function CRNN_Batch_TCS_With_Softmax(x::Variable{T},
         y.backward = function CRNN_Batch_TCS_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
+            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
