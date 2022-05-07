@@ -54,33 +54,33 @@ function adjustLossWeights(x...)
 end
 
 
-function reduce3d(Δ::AbstractArray, loglikely::AbstractVector, seqlabels::Vector, reduction::String)
-    featdims, timesteps, batchsize = size(Δ)
+function reduce3d(x::AbstractArray, loglikely::AbstractVector, seqlabels::Vector, reduction::String)
+    featdims, timesteps, batchsize = size(x)
     # 标签长度归一化 ⤦
     if isequal(reduction, "seqlen")
         Threads.@threads for b = 1:batchsize
             seqlen   = length(seqlabels[b]) * batchsize
             seqlen⁻¹ = 1 / ifelse(seqlen≠0, seqlen, batchsize)
-            Δ[:,:,b]    .*= seqlen⁻¹
+            x[:,:,b]    .*= seqlen⁻¹
             loglikely[b] *= seqlen⁻¹
         end
     # 时间长度归一化 ⤦
     elseif isequal(reduction, "timesteps")
         timesteps⁻¹ = 1 / (timesteps * batchsize)
-        Δ         .*= timesteps⁻¹
+        x         .*= timesteps⁻¹
         loglikely .*= timesteps⁻¹
     # 网格归一化 ⤦
     elseif isequal(reduction, "trellis")
         Threads.@threads for b = 1:batchsize
             volume   = length(seqlabels[b]) * timesteps * batchsize
             volume⁻¹ = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
-            Δ[:,:,b]    .*= volume⁻¹
+            x[:,:,b]    .*= volume⁻¹
             loglikely[b] *= volume⁻¹
         end
     # 只是 batchsize 归一化 ⤦
     elseif isequal(reduction, "normal")
         batchsize⁻¹ = 1 / batchsize
-        Δ         .*= batchsize⁻¹
+        x         .*= batchsize⁻¹
         loglikely .*= batchsize⁻¹
     # 无归一化 ⤦
     elseif isequal(reduction, "nil")
@@ -92,30 +92,30 @@ function reduce3d(Δ::AbstractArray, loglikely::AbstractVector, seqlabels::Vecto
 end
 
 
-function reduce3dSeqGrad(Δ::AbstractArray, seqlabels::Vector, reduction::String)
-    featdims, timesteps, batchsize = size(Δ)
+function reduce3dSeqGrad(x::AbstractArray, seqlabels::Vector, reduction::String)
+    featdims, timesteps, batchsize = size(x)
     # 标签长度归一化 ⤦
     if isequal(reduction, "seqlen")
         Threads.@threads for b = 1:batchsize
             seqlen     = length(seqlabels[b]) * batchsize
             seqlen⁻¹   = 1 / ifelse(seqlen≠0, seqlen, batchsize)
-            Δ[:,:,b] .*= seqlen⁻¹
+            x[:,:,b] .*= seqlen⁻¹
         end
     # 时间长度归一化 ⤦
     elseif isequal(reduction, "timesteps")
         timesteps⁻¹ = 1 / (timesteps * batchsize)
-        Δ         .*= timesteps⁻¹
+        x         .*= timesteps⁻¹
     # 网格归一化 ⤦
     elseif isequal(reduction, "trellis")
         Threads.@threads for b = 1:batchsize
             volume     = length(seqlabels[b]) * timesteps * batchsize
             volume⁻¹   = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
-            Δ[:,:,b] .*= volume⁻¹
+            x[:,:,b] .*= volume⁻¹
         end
     # 只是 batchsize 归一化 ⤦
     elseif isequal(reduction, "normal")
         batchsize⁻¹ = 1 / batchsize
-        Δ         .*= batchsize⁻¹
+        x         .*= batchsize⁻¹
     # 无归一化 ⤦
     elseif isequal(reduction, "nil")
         return nothing
