@@ -9,6 +9,7 @@ export CRNN_Batch_TCS
                   inputlens;
                   background::Int=1,
                   foreground::Int=2,
+                  reduction::String="seqlen"
                   weight=1.0) where T
 
 a batch of concatenated input sequence is processed by neural networks into `p`
@@ -42,31 +43,34 @@ function DNN_Batch_TCS(p::Variable{T},
                        inputlens;
                        background::Int=1,
                        foreground::Int=2,
+                       reduction::String="seqlen"
                        weight=1.0) where T
+    S = eltype(p)
     batchsize = length(seqlabels)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(S, batchsize)
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], loglikely[b] = TCS(p.value[:,span], seqlabels[b], background=background, foreground=foreground)
-        loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
+    reduce3d(r, loglikely, seqlabels, reduction)
     y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+
     if y.backprop
         y.backward = function DNN_Batch_TCS_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
@@ -78,6 +82,7 @@ end
                   inputlens;
                   background::Int=1,
                   foreground::Int=2,
+                  reduction::String="seqlen"
                   weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `p`
@@ -111,31 +116,34 @@ function RNN_Batch_TCS(p::Variable{T},
                        inputlens;
                        background::Int=1,
                        foreground::Int=2,
+                       reduction::String="seqlen"
                        weight=1.0) where T
+    S = eltype(p)
     batchsize = length(seqlabels)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         Tᵇ = inputlens[b]
         Lᵇ = length(seqlabels[b])
         r[:,1:Tᵇ,b], loglikely[b] = TCS(p.value[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
-        loglikely[b] /= Lᵇ * 3 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    reduce3d(r, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], p.backprop)
+
     if y.backprop
         y.backward = function RNN_Batch_TCS_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
@@ -145,6 +153,7 @@ end
                    seqlabels::Vector;
                    background::Int=1,
                    foreground::Int=2,
+                   reduction::String="seqlen"
                    weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `p`
@@ -176,29 +185,32 @@ function CRNN_Batch_TCS(p::Variable{T},
                         seqlabels::Vector;
                         background::Int=1,
                         foreground::Int=2,
+                        reduction::String="seqlen"
                         weight=1.0) where T
+    S = eltype(p)
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(eltype(x), batchsize)
+    loglikely = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         r[:,:,b], loglikely[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
-        loglikely[b] /= length(seqlabels[b]) * 3 + 1
     end
 
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    reduce3d(r, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], p.backprop)
+
     if y.backprop
         y.backward = function CRNN_Batch_TCS_Backward()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T))
+                    δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ (ᵛ(p) .+ eps(T)) .* weight
+                    δ(p) .-= r ./ ᵛ(p) .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)
         end
-        addchild(y, x)
+        addchild(y, p)
     end
     return y
 end
