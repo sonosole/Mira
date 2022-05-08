@@ -149,8 +149,9 @@ function RNN_Batch_CTC(p::Variable{T},
                        blank=1,
                        weight=1.0,
                        reduction::String="seqlen") where T
+    S = eltype(p)
     batchsize = length(inputlens)
-    loglikely = zeros(eltype(p), batchsize)
+    loglikely = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -168,7 +169,7 @@ function RNN_Batch_CTC(p::Variable{T},
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -212,8 +213,9 @@ function CRNN_Batch_CTC(p::Variable{T},
                         blank::Int=1,
                         weight::Float64=1.0,
                         reduction::String="seqlen") where T
+    S = eltype(p)
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(eltype(p), batchsize)
+    loglikely = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -229,7 +231,7 @@ function CRNN_Batch_CTC(p::Variable{T},
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -267,8 +269,9 @@ function CRNN_Focal_CTC(p::Variable{T},
                         gamma::Real=2,
                         weight::Float64=1.0,
                         reduction::String="seqlen") where T
-    featdims, timesteps, batchsize = size(p)
+
     S = eltype(p)
+    featdims, timesteps, batchsize = size(p)
     loglikely = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
     𝜸 = S(gamma)
@@ -300,4 +303,40 @@ function CRNN_Focal_CTC(p::Variable{T},
         addchild(y, p)
     end
     return y
+end
+
+
+# naive implementation, more ops needed, good for learning
+function CRNN_Focal_CTC_Naive(p::Variable{T},
+                        seqlabels::Vector;
+                        blank::Int=1,
+                        gamma::Real=2,
+                        weight::Float64=1.0,
+                        reduction::String="seqlen") where T
+    featdims, timesteps, batchsize = size(p)
+    S = eltype(p)
+    loglikely = zeros(S, 1, 1, batchsize)
+    r = zero(ᵛ(p))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    𝒍𝒏𝒑 = T(-loglikely)
+    𝒑 = Variable{T}(exp(𝒍𝒏𝒑), p.backprop)
+    y = (-(1 - 𝒑)^𝜸) .* log(𝒑)
+    reduce3d(r, y.value, seqlabels, reduction)
+
+    if 𝒑.backprop
+        𝒑.backward = function _CRNN_Focal_CTC_Backward()
+            if need2computeδ!(p)
+                δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
+            end
+            ifNotKeepδThenFreeδ!(𝒑)
+        end
+        addchild(𝒑, p)
+    end
+    return loss(y)
 end
