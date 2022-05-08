@@ -1,11 +1,12 @@
-export DNN_CTC
-export DNN_Batch_CTC
-export RNN_Batch_CTC
-export CRNN_Batch_CTC
-export CRNN_Focal_CTC
+export DNNCTCLoss
+export FNNCTCLoss
+export RNNCTCLoss
+export FRNNCTCLoss
+export FRNNFocalCTCLoss
+export FRNNCTCProbs
 
 """
-    DNN_CTC(p::Variable{T}, seq; blank=1, weight=1.0)
+    DNNCTCLoss(p::Variable{T}, seq; blank::Int=1, weight=1.0)
 
 case batchsize==1 for test case, `p` here is probability or weighted probability
 
@@ -32,13 +33,12 @@ case batchsize==1 for test case, `p` here is probability or weighted probability
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function DNN_CTC(p::Variable{T}, seq; blank=1, weight=1.0) where T
-    L = length(seq) * 2 + 1
+function DNNCTCLoss(p::Variable{T}, seq; blank::Int=1, weight=1.0) where T
     r, loglikely = CTC(ᵛ(p), seq, blank=blank)
     y = Variable{T}([loglikely], p.backprop)
 
     if y.backprop
-        y.backward = function DNN_CTC_Backward()
+        y.backward = function DNNCTCLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -55,9 +55,7 @@ end
 
 
 """
-    DNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
-
-a batch of concatenated input sequence is processed by neural networks into `p`
+    FNNCTCLoss(p::Variable, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0)
 
 # Inputs
 `p`         : 2-D Variable, probability or weighted probability\n
@@ -83,9 +81,10 @@ a batch of concatenated input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function DNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+function FNNCTCLoss(p::Variable{T}, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0) where T
+    S = eltype(p)
     batchsize = length(inputLengths)
-    loglikely = zeros(eltype(p), batchsize)
+    loglikely = zeros(S, batchsize)
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
@@ -94,11 +93,10 @@ function DNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, we
         r[:,span], loglikely[b] = CTC(p.value[:,span], seqlabels[b], blank=blank)
     end
 
-    reduce3d(r, loglikely, seqlabels, reduction)
     y = Variable{T}([sum(loglikely)], p.backprop)
 
     if y.backprop
-        y.backward = function DNN_Batch_CTC_Backward()
+        y.backward = function FNNCTCLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -115,9 +113,7 @@ end
 
 
 """
-    RNN_Batch_CTC(p::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
-
-a batch of padded input sequence is processed by neural networks into `p`
+    RNNCTCLoss(p::Variable, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0)
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
@@ -143,12 +139,12 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function RNN_Batch_CTC(p::Variable{T},
-                       seqlabels::Vector,
-                       inputlens;
-                       blank=1,
-                       weight=1.0,
-                       reduction::String="seqlen") where T
+function RNNCTCLoss(p::Variable{T},
+                    seqlabels::Vector,
+                    inputlens;
+                    blank::Int=1,
+                    weight=1.0,
+                    reduction::String="seqlen") where T
     S = eltype(p)
     batchsize = length(inputlens)
     loglikely = zeros(S, batchsize)
@@ -156,7 +152,6 @@ function RNN_Batch_CTC(p::Variable{T},
 
     Threads.@threads for b = 1:batchsize
         Tᵇ = inputlens[b]
-        Lᵇ = length(seqlabels[b])
         r[:,1:Tᵇ,b], loglikely[b] = CTC(p.value[:,1:Tᵇ,b], seqlabels[b], blank=blank)
     end
 
@@ -164,7 +159,7 @@ function RNN_Batch_CTC(p::Variable{T},
     y = Variable{T}([sum(loglikely)], p.backprop)
 
     if y.backprop
-        y.backward = function RNN_Batch_CTC_Backward()
+        y.backward = function RNNCTCLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -181,9 +176,11 @@ end
 
 
 """
-    CRNN_Batch_CTC(p::Variable{T}, seqlabels::Vector) where T -> LogLikely
-
-a batch of padded input sequence is processed by neural networks into `p`
+    FRNNCTCLoss(p::Variable,
+                seqlabels::Vector;
+                blank::Int=1,
+                weight=1.0,
+                reduction::String="seqlen")
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
@@ -208,11 +205,11 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function CRNN_Batch_CTC(p::Variable{T},
-                        seqlabels::Vector;
-                        blank::Int=1,
-                        weight::Float64=1.0,
-                        reduction::String="seqlen") where T
+function FRNNCTCLoss(p::Variable{T},
+                     seqlabels::Vector;
+                     blank::Int=1,
+                     weight=1.0,
+                     reduction::String="seqlen") where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
     loglikely = zeros(S, batchsize)
@@ -226,12 +223,12 @@ function CRNN_Batch_CTC(p::Variable{T},
     y = Variable{T}([sum(loglikely)], p.backprop)
 
     if y.backprop
-        y.backward = function CRNN_Batch_CTC_Backward()
+        y.backward = function FRNNCTCLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* S(weight)
+                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -243,12 +240,12 @@ end
 
 
 """
-    CRNN_Focal_CTC(p::Variable{T},
-                   seqlabels::Vector;
-                   blank=1,
-                   gamma=2,
-                   weight::Float64=1.0,
-                   reduction="seqlen") where T
+    FRNNFocalCTCLoss(p::Variable,
+                     seqlabels::Vector;
+                     blank::Int=1,
+                     gamma=2,
+                     weight::Float64=1.0,
+                     reduction="seqlen")
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability\n
@@ -263,12 +260,12 @@ end
     │ │ │          │ │ │   └─────────────┘
     └───┘          └───┘
 """
-function CRNN_Focal_CTC(p::Variable{T},
-                        seqlabels::Vector;
-                        blank::Int=1,
-                        gamma::Real=2,
-                        weight::Float64=1.0,
-                        reduction::String="seqlen") where T
+function FRNNFocalCTCLoss(p::Variable{T},
+                          seqlabels::Vector;
+                          blank::Int=1,
+                          gamma::Real=2,
+                          weight=1.0,
+                          reduction::String="seqlen") where T
 
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
@@ -290,12 +287,12 @@ function CRNN_Focal_CTC(p::Variable{T},
     y = Variable{T}([sum(t)], p.backprop)
 
     if y.backprop
-        y.backward = function CRNN_Focal_CTC_Backward()
+        y.backward = function FRNNFocalCTCLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
                 else
-                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* S(weight)
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -307,12 +304,12 @@ end
 
 
 # naive implementation, more ops needed, good for learning
-function CRNN_Focal_CTC_Naive(p::Variable{T},
-                        seqlabels::Vector;
-                        blank::Int=1,
-                        gamma::Real=2,
-                        weight::Float64=1.0,
-                        reduction::String="seqlen") where T
+function FRNNFocalCTCLoss_Naive(p::Variable{T},
+                                seqlabels::Vector;
+                                blank::Int=1,
+                                gamma::Real=2,
+                                weight=1.0,
+                                reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(p)
     S = eltype(p)
     loglikely = zeros(S, 1, 1, batchsize)
@@ -327,16 +324,55 @@ function CRNN_Focal_CTC_Naive(p::Variable{T},
     𝒍𝒏𝒑 = T(-loglikely)
     𝒑 = Variable{T}(exp(𝒍𝒏𝒑), p.backprop)
     y = (-(1 - 𝒑)^𝜸) .* log(𝒑)
-    reduce3d(r, y.value, seqlabels, reduction)
+    reduce3d(r, ᵛ(y), seqlabels, reduction)
 
     if 𝒑.backprop
-        𝒑.backward = function _CRNN_Focal_CTC_Backward()
+        𝒑.backward = function FRNNFocalCTCLoss_Naive_Backward()
             if need2computeδ!(p)
-                δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
+                if weight==1.0
+                    δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
+                else
+                    δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p) .* weight
+                end
             end
             ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, p)
     end
     return loss(y)
+end
+
+
+"""
+    FRNNCTCProbs(p::Variable, seqlabels::Vector; blank::Int=1) -> prob::Variable
+
+# Inputs
+`p`         : 3-D Variable (featdims,timesteps,batchsize), output of softmax\n
+`seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
+`weight`    : weight for CTC loss
+
+# Output
+`prob`      : 3-D Variable (1,1,batchsize), i.e. `prob` is the probabilities of each sequence
+"""
+function FRNNCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where T
+    featdims, timesteps, batchsize = size(p)
+    loglikely = zeros(eltype(p), batchsize)
+    r = zero(ᵛ(p))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    𝒑 = Variable{T}(exp(T(-loglikely)), x.backprop)
+
+    if 𝒑.backprop
+        𝒑.backward = function FRNNCTCProbs_Backward()
+            if need2computeδ!(p)
+                δ(p) .-= δ(𝒑) .* r ./ ᵛ(p)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(𝒑, p)
+    end
+    return 𝒑
 end

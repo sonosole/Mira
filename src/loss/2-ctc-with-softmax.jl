@@ -1,11 +1,12 @@
-export DNN_CTC_With_Softmax
-export DNN_Batch_CTC_With_Softmax
-export RNN_Batch_CTC_With_Softmax
-export CRNN_Batch_CTC_With_Softmax
-export CRNN_Focal_CTC_With_Softmax
+export DNNSoftmaxCTCLossSingleSeq
+export FNNSoftmaxCTCLoss
+export RNNSoftmaxCTCLoss
+export FRNNSoftmaxCTCLoss
+export CRNNSoftmaxFocalCTCLoss
+export FRNNSoftmaxCTCProbs
 
 """
-    DNN_CTC_With_Softmax(x::Variable{T}, seq; blank=1, weight=1.0)
+    DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq; blank=1, weight=1.0)
 
 case batchsize==1 for test case. `x` is the output of a whole complete input sequence
 
@@ -32,7 +33,7 @@ case batchsize==1 for test case. `x` is the output of a whole complete input seq
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_CTC_With_Softmax(x::Variable{T}, seq; blank::Int=1, weight=1.0) where T
+function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq; blank::Int=1, weight=1.0) where T
     p = softmax(ᵛ(x); dims=1)
     L = length(seq) * 2 + 1
     r, loglikely = CTC(p, seq, blank=blank)
@@ -41,7 +42,7 @@ function DNN_CTC_With_Softmax(x::Variable{T}, seq; blank::Int=1, weight=1.0) whe
     y = Variable{T}([loglikely], x.backprop)
 
     if y.backprop
-        y.backward = function DNN_CTC_With_Softmax_Backward()
+        y.backward = function DNNSoftmaxCTCLossSingleSeq_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -58,7 +59,7 @@ end
 
 
 """
-    DNN_Batch_CTC_With_Softmax(x::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+    FNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
 
 a batch of concatenated input sequence is processed by neural networks into `x`
 
@@ -86,12 +87,12 @@ a batch of concatenated input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_Batch_CTC_With_Softmax(x::Variable{T},
-                                    seqlabels::Vector,
-                                    inputlens;
-                                    blank::Int=1,
-                                    reduction::String="seqlen"
-                                    weight=1.0) where T
+function FNNSoftmaxCTCLoss(x::Variable{T},
+                           seqlabels::Vector,
+                           inputlens;
+                           blank::Int=1,
+                           reduction::String="seqlen"
+                           weight=1.0) where T
     batchsize = length(inputLengths)
     loglikely = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
@@ -108,7 +109,7 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{T},
     y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
-        y.backward = function DNN_Batch_CTC_With_Softmax_Backward()
+        y.backward = function FNNSoftmaxCTCLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -125,7 +126,7 @@ end
 
 
 """
-    RNN_Batch_CTC_With_Softmax(x::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
+    RNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::Vector, inputlens; blank=1, weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -153,12 +154,12 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function RNN_Batch_CTC_With_Softmax(x::Variable{T},
-                                    seqlabels::Vector,
-                                    inputlens;
-                                    blank::Int=1,
-                                    reduction::String="seqlen"
-                                    weight=1.0) where T
+function RNNSoftmaxCTCLoss(x::Variable{T},
+                           seqlabels::Vector,
+                           inputlens;
+                           blank::Int=1,
+                           reduction::String="seqlen"
+                           weight=1.0) where T
     batchsize = length(inputlens)
     loglikely = zeros(eltype(x), batchsize)
     p = zero(ᵛ(x))
@@ -176,7 +177,7 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{T},
     y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
-        y.backward = function RNN_Batch_CTC_With_Softmax_Backward()
+        y.backward = function RNNSoftmaxCTCLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -193,7 +194,7 @@ end
 
 
 """
-    CRNN_Batch_CTC_With_Softmax(x::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) where T
+    FRNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::Vector; blank=1, weight=1.0) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -220,11 +221,11 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function CRNN_Batch_CTC_With_Softmax(x::Variable{T},
-                                     seqlabels::Vector;
-                                     blank::Int=1,
-                                     weight::Float64=1.0,
-                                     reduction::String="seqlen") where T
+function FRNNSoftmaxCTCLoss(x::Variable{T},
+                            seqlabels::Vector;
+                            blank::Int=1,
+                            weight::Float64=1.0,
+                            reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
     loglikely = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
@@ -239,7 +240,7 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{T},
     y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
-        y.backward = function CRNN_Batch_CTC_With_Softmax_Backward()
+        y.backward = function FRNNSoftmaxCTCLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -256,16 +257,16 @@ end
 
 
 
-function CRNN_Focal_CTC_With_Softmax(x::Variable{T},
-                                     seqlabels::Vector;
-                                     blank::Int=1,
-                                     gamma::Real=2,
-                                     weight::Float64=1.0,
-                                     reduction::String="seqlen") where T
+function CRNNSoftmaxFocalCTCLoss(x::Variable{T},
+                                 seqlabels::Vector;
+                                 blank::Int=1,
+                                 gamma::Real=2,
+                                 weight::Float64=1.0,
+                                 reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
     loglikely = zeros(S, 1, 1, batchsize)
-    p = softmax(ᵛ(x); dims=1)
+    p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
     𝜸 = S(gamma)
     𝟙 = S(1.0f0)
@@ -283,12 +284,12 @@ function CRNN_Focal_CTC_With_Softmax(x::Variable{T},
     y = Variable{T}([sum(t)], x.backprop)
 
     if y.backprop
-        y.backward = function CRNN_Focal_CTC_With_Softmax_Backward()
+        y.backward = function CRNNSoftmaxFocalCTCLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* 𝒌 .* Δ
                 else
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* weight
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -296,4 +297,42 @@ function CRNN_Focal_CTC_With_Softmax(x::Variable{T},
         addchild(y, x)
     end
     return y
+end
+
+
+"""
+    FRNNSoftmaxCTCProbs(x::Variable, seqlabels::Vector; blank::Int=1) -> p::Variable
+
+# Inputs
+`x`         : 3-D Variable (featdims,timesteps,batchsize), input of softmax\n
+`seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
+`weight`    : weight for CTC loss
+
+# Output
+`p`         : 3-D Variable (1,1,batchsize), i.e. `p` is the probabilities of each sequence
+"""
+function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::Vector; blank::Int=1) where T
+    S = eltype(x)
+    featdims, timesteps, batchsize = size(x)
+    loglikely = zeros(S, batchsize)
+    p = softmax(ᵛ(x), dims=1)
+    r = zero(ᵛ(x))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], loglikely[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    𝒑 = Variable{T}(exp(T(-loglikely)), x.backprop)
+    Δ = p - r
+
+    if 𝒑.backprop
+        𝒑.backward = function FRNNSoftmaxCTCProbs_Backward()
+            if need2computeδ!(x)
+                δ(x) .+= δ(𝒑) .* Δ
+            end
+            ifNotKeepδThenFreeδ!(𝒑)
+        end
+        addchild(𝒑, x)
+    end
+    return 𝒑
 end
