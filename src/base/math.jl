@@ -60,6 +60,22 @@ function Base.:-(constant, x::Variable{T}) where T
 end
 
 
+function Base.:-(x::Variable{T}) where T
+    # a matrix minus a constant element by element
+    y = Variable{T}(- ᵛ(x), x.backprop)
+    if y.backprop
+        y.backward = function setNegativeBackward()
+            if need2computeδ!(x)
+                δ(x) .-= δ(y)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
 function Base.:*(x::Variable{T}, constant) where T
     # a matrix multiplies a constant element by element
     C = eltype(ᵛ(x))(constant)
@@ -82,7 +98,7 @@ function Base.:*(constant, var::Variable{T}) where T
 end
 
 
-function Base.:^(x::Variable{T}, n::Int) where T
+function Base.:^(x::Variable{T}, n::Real) where T
     # 矩阵、列向量与常数按元素做幂指数运算
     n = eltype(ᵛ(x))(n)
     y = Variable{T}(ᵛ(x) .^ n, x.backprop)
