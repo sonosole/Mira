@@ -44,9 +44,9 @@ function DNN_CTC_With_Softmax(x::Variable{T}, seq; blank::Int=1, weight=1.0) whe
         y.backward = function DNN_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -90,6 +90,7 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{T},
                                     seqlabels::Vector,
                                     inputlens;
                                     blank::Int=1,
+                                    reduction::String="seqlen"
                                     weight=1.0) where T
     batchsize = length(inputLengths)
     loglikely = zeros(eltype(x), batchsize)
@@ -100,19 +101,19 @@ function DNN_Batch_CTC_With_Softmax(x::Variable{T},
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], loglikely[b] = CTC(p[:,span], seqlabels[b], blank=blank)
-        loglikely[b] /= length(seqlabels[b]) * 2 + 1
     end
 
     Δ = p - r
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function DNN_Batch_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -156,6 +157,7 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{T},
                                     seqlabels::Vector,
                                     inputlens;
                                     blank::Int=1,
+                                    reduction::String="seqlen"
                                     weight=1.0) where T
     batchsize = length(inputlens)
     loglikely = zeros(eltype(x), batchsize)
@@ -167,19 +169,19 @@ function RNN_Batch_CTC_With_Softmax(x::Variable{T},
         Lᵇ = length(seqlabels[b])
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
         r[:,1:Tᵇ,b], loglikely[b] = CTC(p[:,1:Tᵇ,b], seqlabels[b], blank=blank)
-        loglikely[b] /= Lᵇ * 2 + 1
     end
 
     Δ = p - r
-    y = Variable{T}([sum(loglikely)/batchsize], x.backprop)
+    reduce3d(Δ, loglikely, seqlabels, reduction)
+    y = Variable{T}([sum(loglikely)], x.backprop)
 
     if y.backprop
         y.backward = function RNN_Batch_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -240,9 +242,9 @@ function CRNN_Batch_CTC_With_Softmax(x::Variable{T},
         y.backward = function CRNN_Batch_CTC_With_Softmax_Backward()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= Δ
+                    δ(x) .+= δ(y) .* Δ
                 else
-                    δ(x) .+= Δ .* weight
+                    δ(x) .+= δ(y) .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
