@@ -2,7 +2,7 @@ export DNNSoftmaxCTCLossSingleSeq
 export FNNSoftmaxCTCLoss
 export RNNSoftmaxCTCLoss
 export FRNNSoftmaxCTCLoss
-export CRNNSoftmaxFocalCTCLoss
+export FRNNSoftmaxFocalCTCLoss
 export FRNNSoftmaxCTCProbs
 
 """
@@ -91,7 +91,6 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
                            seqlabels::Vector,
                            inputlens;
                            blank::Int=1,
-                           reduction::String="seqlen"
                            weight=1.0) where T
     batchsize = length(inputLengths)
     nlnp = zeros(eltype(x), batchsize)
@@ -105,7 +104,6 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
     end
 
     Δ = p - r
-    reduce3d(Δ, nlnp, seqlabels, reduction)
     y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
@@ -158,7 +156,6 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
                            seqlabels::Vector,
                            inputlens;
                            blank::Int=1,
-                           reduction::String="seqlen"
                            weight=1.0) where T
     batchsize = length(inputlens)
     nlnp = zeros(eltype(x), batchsize)
@@ -167,7 +164,6 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
 
     Threads.@threads for b = 1:batchsize
         Tᵇ = inputlens[b]
-        Lᵇ = length(seqlabels[b])
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
         r[:,1:Tᵇ,b], nlnp[b] = CTC(p[:,1:Tᵇ,b], seqlabels[b], blank=blank)
     end
@@ -257,7 +253,7 @@ end
 
 
 
-function CRNNSoftmaxFocalCTCLoss(x::Variable{T},
+function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
                                  seqlabels::Vector;
                                  blank::Int=1,
                                  gamma::Real=2,
@@ -284,7 +280,7 @@ function CRNNSoftmaxFocalCTCLoss(x::Variable{T},
     y = Variable{T}([sum(t)], x.backprop)
 
     if y.backprop
-        y.backward = function CRNNSoftmaxFocalCTCLoss_Backward()
+        y.backward = function FRNNSoftmaxFocalCTCLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* 𝒌 .* Δ
@@ -314,7 +310,7 @@ end
 function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::Vector; blank::Int=1) where T
     S = eltype(x)
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(S, batchsize)
+    nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
@@ -323,12 +319,12 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::Vector; blank::Int=1) wh
     end
 
     𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
-    Δ = p - r
+    Δ = r - p
 
     if 𝒑.backprop
         𝒑.backward = function FRNNSoftmaxCTCProbs_Backward()
             if need2computeδ!(x)
-                δ(x) .+= δ(𝒑) .* Δ
+                δ(x) .+= δ(𝒑) .* ᵛ(𝒑) .*  Δ
             end
             ifNotKeepδThenFreeδ!(𝒑)
         end

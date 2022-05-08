@@ -62,8 +62,8 @@
     end
 
     # [0] model
-    F = 64;   # featdim
-    T = 522;  # timesteps
+    F = 32;   # featdim
+    T = 64;  # timesteps
     B = 4;    # batchsize
     TYPE  = Array{Float64};
     MODEL = AModel(F, 32);
@@ -73,14 +73,14 @@
     # [1] prepare input data and its label
     i = randn(F,T,B);
     x = Variable(i, type=TYPE);
-    l = [[2 3 4], [4,5,6], [6,7], [8,9,15]];
+    l = [[7 3 4], [4,5,6], [6,7], [8,9,15]];
     RE = "nil"
     KG = false
     BY = "dfs"
 
     # [2] forward and backward propagation
     y1 = forward(model, x);
-    c1 = CRNN_Batch_CTC_With_Softmax(y1, l, blank=1, weight=1.0, reduction=RE);
+    c1 = FRNNSoftmaxCTCLoss(y1, l, blank=1, weight=1.0, reduction=RE);
     backward(c1, by=BY, keepgraph=KG)
     GRAD1 = model[1].w.delta[1];
     zerograds!(param)
@@ -91,11 +91,11 @@
 
     # [4] forward and backward propagation
     y2 = forward(model, x);
-    c2 = CRNN_Batch_CTC_With_Softmax(y2, l, blank=1, weight=1.0, reduction=RE);
+    c2 = FRNNSoftmaxCTCLoss(y2, l, blank=1, weight=1.0, reduction=RE);
     backward(c2, by=BY, keepgraph=KG)
     GRAD2 = model[1].w.delta[1];
     zerograds!(param)
-    
+
     GRAD = (GRAD1 + GRAD2)/2
     dLdW = (cost(c2) - cost(c1))/DELTA;   # numerical gradient
     err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %

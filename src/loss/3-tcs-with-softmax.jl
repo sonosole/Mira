@@ -216,7 +216,7 @@ end
 
 function FRNNSoftmaxTCSProbs(x::Variable{T}, seqlabels::Vector; background::Int=1, foreground::Int=2) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
@@ -225,12 +225,12 @@ function FRNNSoftmaxTCSProbs(x::Variable{T}, seqlabels::Vector; background::Int=
     end
 
     𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
-    Δ = p - r
+    Δ = r - p
 
     if 𝒑.backprop
         𝒑.backward = function FRNNSoftmaxCTCProbs_Backward()
             if need2computeδ!(x)
-                δ(x) .+= δ(𝒑) .* Δ
+                δ(x) .+= δ(𝒑)  .* ᵛ(𝒑) .* Δ
             end
             ifNotKeepδThenFreeδ!(𝒑)
         end
@@ -245,6 +245,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
                                  background::Int=1,
                                  foreground::Int=2,
                                  reduction::String="seqlen",
+                                 gamma::Real=2,
                                  weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)

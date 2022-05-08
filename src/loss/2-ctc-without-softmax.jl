@@ -356,21 +356,21 @@ end
 """
 function FRNNCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where T
     featdims, timesteps, batchsize = size(p)
-    nlnp = zeros(eltype(p), batchsize)
+    nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
+    𝒑 = Variable{T}(exp(T(-nlnp)), p.backprop)
 
     if 𝒑.backprop
         𝒑.backward = function FRNNCTCProbs_Backward()
             if need2computeδ!(p)
-                δ(p) .-= δ(𝒑) .* r ./ ᵛ(p)
+                δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(y)
+            ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, p)
     end
