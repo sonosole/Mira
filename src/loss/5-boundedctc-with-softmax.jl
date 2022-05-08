@@ -8,17 +8,17 @@ function CRNN_BoundedCTC_With_Softmax(x::Variable{Array{T}},
                                      reduction::String="seqlen",
                                      weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(T, batchsize)
+    nlnp = zeros(T, batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = BoundedCTC(p[:,:,b], seqlabels[b], blank=blank, bound=bound)
+        r[:,:,b], nlnp[b] = BoundedCTC(p[:,:,b], seqlabels[b], blank=blank, bound=bound)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_BoundedCTC_With_Softmax_Backward()

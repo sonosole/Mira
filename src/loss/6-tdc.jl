@@ -97,7 +97,7 @@ function TDC(p::Array{TYPE,2}, seqlabel; blank::Int=1, front::Int=2) where TYPE
 		end
 	end
 
-    # loglikely of TCS
+    # nlnp of TCS
     logsum = LogSum2Exp(a[1,1] + b[1,1], a[2,1] + b[2,1])
 
     # log weight --> normal probs
@@ -168,17 +168,17 @@ function CRNN_TDC_With_Softmax(x::Variable{T},
                                reduction::String="seqlen",
                                weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = TDC(p[:,:,b], seqlabels[b], blank=blank, front=front)
+        r[:,:,b], nlnp[b] = TDC(p[:,:,b], seqlabels[b], blank=blank, front=front)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
         y.backward = function CRNN_TDC_With_Softmax_Backward()

@@ -34,8 +34,8 @@ case batchsize==1 for test case, `p` here is probability or weighted probability
     └───┘                                    └───┘
 """
 function DNNCTCLoss(p::Variable{T}, seq; blank::Int=1, weight=1.0) where T
-    r, loglikely = CTC(ᵛ(p), seq, blank=blank)
-    y = Variable{T}([loglikely], p.backprop)
+    r, nlnp = CTC(ᵛ(p), seq, blank=blank)
+    y = Variable{T}([nlnp], p.backprop)
 
     if y.backprop
         y.backward = function DNNCTCLoss_Backward()
@@ -84,16 +84,16 @@ end
 function FNNCTCLoss(p::Variable{T}, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0) where T
     S = eltype(p)
     batchsize = length(inputLengths)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
-        r[:,span], loglikely[b] = CTC(p.value[:,span], seqlabels[b], blank=blank)
+        r[:,span], nlnp[b] = CTC(p.value[:,span], seqlabels[b], blank=blank)
     end
 
-    y = Variable{T}([sum(loglikely)], p.backprop)
+    y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
         y.backward = function FNNCTCLoss_Backward()
@@ -147,16 +147,16 @@ function RNNCTCLoss(p::Variable{T},
                     reduction::String="seqlen") where T
     S = eltype(p)
     batchsize = length(inputlens)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         Tᵇ = inputlens[b]
-        r[:,1:Tᵇ,b], loglikely[b] = CTC(p.value[:,1:Tᵇ,b], seqlabels[b], blank=blank)
+        r[:,1:Tᵇ,b], nlnp[b] = CTC(p.value[:,1:Tᵇ,b], seqlabels[b], blank=blank)
     end
 
-    reduce3d(r, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], p.backprop)
+    reduce3d(r, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
         y.backward = function RNNCTCLoss_Backward()
@@ -212,15 +212,15 @@ function FRNNCTCLoss(p::Variable{T},
                      reduction::String="seqlen") where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    reduce3d(r, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], p.backprop)
+    reduce3d(r, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
         y.backward = function FRNNCTCLoss_Backward()
@@ -269,16 +269,16 @@ function FRNNFocalCTCLoss(p::Variable{T},
 
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(S, 1, 1, batchsize)
+    nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
     𝜸 = S(gamma)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    𝒍𝒏𝒑 = T(-loglikely)
+    𝒍𝒏𝒑 = T(-nlnp)
     𝒑 = exp(𝒍𝒏𝒑)
     𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝜸*𝒑*𝒍𝒏𝒑 + 𝒑 - 𝟙)
     t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
@@ -312,16 +312,16 @@ function FRNNFocalCTCLoss_Naive(p::Variable{T},
                                 reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(p)
     S = eltype(p)
-    loglikely = zeros(S, 1, 1, batchsize)
+    nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
     𝜸 = S(gamma)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    𝒍𝒏𝒑 = T(-loglikely)
+    𝒍𝒏𝒑 = T(-nlnp)
     𝒑 = Variable{T}(exp(𝒍𝒏𝒑), p.backprop)
     y = (-(1 - 𝒑)^𝜸) .* log(𝒑)
     reduce3d(r, ᵛ(y), seqlabels, reduction)
@@ -356,14 +356,14 @@ end
 """
 function FRNNCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where T
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(eltype(p), batchsize)
+    nlnp = zeros(eltype(p), batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    𝒑 = Variable{T}(exp(T(-loglikely)), x.backprop)
+    𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
 
     if 𝒑.backprop
         𝒑.backward = function FRNNCTCProbs_Backward()

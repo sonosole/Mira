@@ -36,10 +36,10 @@ case batchsize==1 for test case. `x` is the output of a whole complete input seq
 function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq; blank::Int=1, weight=1.0) where T
     p = softmax(ᵛ(x); dims=1)
     L = length(seq) * 2 + 1
-    r, loglikely = CTC(p, seq, blank=blank)
+    r, nlnp = CTC(p, seq, blank=blank)
 
     Δ = p - r
-    y = Variable{T}([loglikely], x.backprop)
+    y = Variable{T}([nlnp], x.backprop)
 
     if y.backprop
         y.backward = function DNNSoftmaxCTCLossSingleSeq_Backward()
@@ -94,19 +94,19 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
                            reduction::String="seqlen"
                            weight=1.0) where T
     batchsize = length(inputLengths)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
     p = softmax(ᵛ(x); dims=1)
     r = zero(p)
 
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
-        r[:,span], loglikely[b] = CTC(p[:,span], seqlabels[b], blank=blank)
+        r[:,span], nlnp[b] = CTC(p[:,span], seqlabels[b], blank=blank)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
         y.backward = function FNNSoftmaxCTCLoss_Backward()
@@ -161,7 +161,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
                            reduction::String="seqlen"
                            weight=1.0) where T
     batchsize = length(inputlens)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
@@ -169,12 +169,12 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
         Tᵇ = inputlens[b]
         Lᵇ = length(seqlabels[b])
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
-        r[:,1:Tᵇ,b], loglikely[b] = CTC(p[:,1:Tᵇ,b], seqlabels[b], blank=blank)
+        r[:,1:Tᵇ,b], nlnp[b] = CTC(p[:,1:Tᵇ,b], seqlabels[b], blank=blank)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
         y.backward = function RNNSoftmaxCTCLoss_Backward()
@@ -227,17 +227,17 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
                             weight::Float64=1.0,
                             reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
         y.backward = function FRNNSoftmaxCTCLoss_Backward()
@@ -265,17 +265,17 @@ function CRNNSoftmaxFocalCTCLoss(x::Variable{T},
                                  reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
-    loglikely = zeros(S, 1, 1, batchsize)
+    nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
     𝜸 = S(gamma)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
-    𝒍𝒏𝒑 = T(-loglikely)
+    𝒍𝒏𝒑 = T(-nlnp)
     𝒑 = exp(𝒍𝒏𝒑)
     𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑)
     t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
@@ -314,15 +314,15 @@ end
 function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::Vector; blank::Int=1) where T
     S = eltype(x)
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
+        r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
-    𝒑 = Variable{T}(exp(T(-loglikely)), x.backprop)
+    𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
     Δ = p - r
 
     if 𝒑.backprop

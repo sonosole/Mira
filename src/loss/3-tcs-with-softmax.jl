@@ -1,18 +1,16 @@
-export DNN_Batch_TCS_With_Softmax
-export RNN_Batch_TCS_With_Softmax
-export CRNN_Batch_TCS_With_Softmax
-
+export FNNSoftmaxTCSLoss
+export RNNSoftmaxTCSLoss
+export FRNNSoftmaxTCSLoss
+export FRNNSoftmaxFocalTCSLoss
+export FRNNSoftmaxTCSProbs
 
 """
-    DNN_Batch_TCS_With_Softmax(x::Variable{T},
-                               seqlabels::Vector,
-                               inputlens;
-                               background::Int=1,
-                               foreground::Int=2,
-                               reduction::String="seqlen",
-                               weight=1.0) where T
-
-a batch of concatenated input sequence is processed by neural networks into `x`
+    FNNSoftmaxTCSLoss(x::Variable,
+                      seqlabels::Vector,
+                      inputlens;
+                      background::Int=1,
+                      foreground::Int=2,
+                      weight=1.0)
 
 # Inputs
 `x`         : 2-D Variable, a batch of concatenated input sequence\n
@@ -38,30 +36,28 @@ a batch of concatenated input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function DNN_Batch_TCS_With_Softmax(x::Variable{T},
-                                    seqlabels::Vector,
-                                    inputlens;
-                                    background::Int=1,
-                                    foreground::Int=2,
-                                    reduction::String="seqlen",
-                                    weight=1.0) where T
+function FNNSoftmaxTCSLoss(x::Variable{T},
+                           seqlabels::Vector,
+                           inputlens;
+                           background::Int=1,
+                           foreground::Int=2,
+                           weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
-        r[:,span], loglikely[b] = TCS(p[:,span], seqlabels[b], background=background, foreground=foreground)
+        r[:,span], nlnp[b] = TCS(p[:,span], seqlabels[b], background=background, foreground=foreground)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
-        y.backward = function DNN_Batch_TCS_With_Softmax_Backward()
+        y.backward = function FNNSoftmaxTCSLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -78,13 +74,13 @@ end
 
 
 """
-    RNN_Batch_TCS_With_Softmax(x::Variable{T},
-                               seqlabels::Vector,
-                               inputlens;
-                               background::Int=1,
-                               foreground::Int=2,
-                               reduction::String="seqlen",
-                               weight=1.0) where T
+    RNNSoftmaxTCSLoss(x::Variable,
+                      seqlabels::Vector,
+                      inputlens;
+                      background::Int=1,
+                      foreground::Int=2,
+                      reduction::String="seqlen",
+                      weight=1.0)
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -112,31 +108,30 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function RNN_Batch_TCS_With_Softmax(x::Variable{T},
-                                    seqlabels::Vector,
-                                    inputlens;
-                                    background::Int=1,
-                                    foreground::Int=2,
-                                    reduction::String="seqlen",
-                                    weight=1.0) where T
+function RNNSoftmaxTCSLoss(x::Variable{T},
+                           seqlabels::Vector,
+                           inputlens;
+                           background::Int=1,
+                           foreground::Int=2,
+                           reduction::String="seqlen",
+                           weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
         Tᵇ = inputlens[b]
-        Lᵇ = length(seqlabels[b])
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
-        r[:,1:Tᵇ,b], loglikely[b] = TCS(p[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
+        r[:,1:Tᵇ,b], nlnp[b] = TCS(p[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
-        y.backward = function RNN_Batch_TCS_With_Softmax_Backward()
+        y.backward = function RNNSoftmaxTCSLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -151,15 +146,14 @@ function RNN_Batch_TCS_With_Softmax(x::Variable{T},
     return y
 end
 
-"""
-    CRNN_Batch_TCS_With_Softmax(x::Variable{T},
-                                seqlabels::Vector;
-                                background::Int=1,
-                                foreground::Int=2,
-                                reduction::String="seqlen",
-                                weight=1.0) where T
 
-a batch of padded input sequence is processed by neural networks into `x`
+"""
+    FRNNSoftmaxTCSLoss(x::Variable,
+                       seqlabels::Vector;
+                       background::Int=1,
+                       foreground::Int=2,
+                       reduction::String="seqlen",
+                       weight=1.0)
 
 # Main Inputs
 `x`            : 3-D Variable with shape (featdims,timesteps,batchsize), resulted by a batch of padded input sequence\n
@@ -184,32 +178,101 @@ a batch of padded input sequence is processed by neural networks into `x`
                   │ │ │          └───┘     │ │ │
                   └───┘                    └───┘
 """
-function CRNN_Batch_TCS_With_Softmax(x::Variable{T},
-                                     seqlabels::Vector;
-                                     background::Int=1,
-                                     foreground::Int=2,
-                                     reduction::String="seqlen",
-                                     weight::Float64=1.0) where T
+function FRNNSoftmaxTCSLoss(x::Variable{T},
+                            seqlabels::Vector;
+                            background::Int=1,
+                            foreground::Int=2,
+                            reduction::String="seqlen",
+                            weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    loglikely = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
+        r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
     Δ = p - r
-    reduce3d(Δ, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], x.backprop)
+    reduce3d(Δ, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
-        y.backward = function CRNN_Batch_TCS_With_Softmax_Backward()
+        y.backward = function FRNNSoftmaxTCSLoss_Backward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
                 else
                     δ(x) .+= δ(y) .* Δ .* weight
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function FRNNSoftmaxTCSProbs(x::Variable{T}, seqlabels::Vector; background::Int=1, foreground::Int=2) where T
+    featdims, timesteps, batchsize = size(x)
+    nlnp = zeros(eltype(x), batchsize)
+    p = softmax(ᵛ(x); dims=1)
+    r = zero(ᵛ(x))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
+    end
+
+    𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
+    Δ = p - r
+
+    if 𝒑.backprop
+        𝒑.backward = function FRNNSoftmaxCTCProbs_Backward()
+            if need2computeδ!(x)
+                δ(x) .+= δ(𝒑) .* Δ
+            end
+            ifNotKeepδThenFreeδ!(𝒑)
+        end
+        addchild(𝒑, x)
+    end
+    return 𝒑
+end
+
+
+function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
+                                 seqlabels::Vector;
+                                 background::Int=1,
+                                 foreground::Int=2,
+                                 reduction::String="seqlen",
+                                 weight=1.0) where T
+    featdims, timesteps, batchsize = size(x)
+    S = eltype(x)
+    nlnp = zeros(S, 1, 1, batchsize)
+    p = softmax(ᵛ(x), dims=1)
+    r = zero(ᵛ(x))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
+    end
+
+    𝒍𝒏𝒑 = T(-nlnp)
+    𝒑 = exp(𝒍𝒏𝒑)
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑)
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+    Δ = p - r
+    reduce3d(Δ, t, seqlabels, reduction)
+    y = Variable{T}([sum(t)], x.backprop)
+
+    if y.backprop
+        y.backward = function FRNNSoftmaxFocalTCSLoss_Backward()
+            if need2computeδ!(x)
+                if weight==1.0
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ
+                else
+                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* S(weight)
                 end
             end
             ifNotKeepδThenFreeδ!(y)

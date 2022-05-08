@@ -1,16 +1,15 @@
-export DNN_Batch_TCS
-export RNN_Batch_TCS
-export CRNN_Batch_TCS
+export FNNTCSLoss
+export RNNTCSLoss
+export FRNNTCSLoss
 
 
 """
-    DNN_Batch_TCS(p::Variable{T},
-                  seqlabels::Vector,
-                  inputlens;
-                  background::Int=1,
-                  foreground::Int=2,
-                  reduction::String="seqlen"
-                  weight=1.0) where T
+    FNNTCSLoss(p::Variable,
+               seqlabels::Vector,
+               inputlens;
+               background::Int=1,
+               foreground::Int=2,
+               weight=1.0)
 
 a batch of concatenated input sequence is processed by neural networks into `p`
 
@@ -38,34 +37,31 @@ a batch of concatenated input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function DNN_Batch_TCS(p::Variable{T},
-                       seqlabels::Vector,
-                       inputlens;
-                       background::Int=1,
-                       foreground::Int=2,
-                       reduction::String="seqlen"
-                       weight=1.0) where T
-    S = eltype(p)
+function FNNTCSLoss(p::Variable{T},
+                    seqlabels::Vector,
+                    inputlens;
+                    background::Int=1,
+                    foreground::Int=2,
+                    weight=1.0) where T
     batchsize = length(seqlabels)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         span = I[b]:F[b]
-        r[:,span], loglikely[b] = TCS(p.value[:,span], seqlabels[b], background=background, foreground=foreground)
+        r[:,span], nlnp[b] = TCS(p.value[:,span], seqlabels[b], background=background, foreground=foreground)
     end
 
-    reduce3d(r, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)/batchsize], p.backprop)
+    y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
-        y.backward = function DNN_Batch_TCS_Backward()
+        y.backward = function FNNTCSLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ ᵛ(p) .* S(weight)
+                    δ(p) .-= r ./ ᵛ(p) .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -77,13 +73,13 @@ end
 
 
 """
-    RNN_Batch_TCS(p::Variable{T},
-                  seqlabels::Vector,
-                  inputlens;
-                  background::Int=1,
-                  foreground::Int=2,
-                  reduction::String="seqlen"
-                  weight=1.0) where T
+    RNNTCSLoss(p::Variable,
+               seqlabels::Vector,
+               inputlens;
+               background::Int=1,
+               foreground::Int=2,
+               reduction::String="seqlen"
+               weight=1.0)
 
 a batch of padded input sequence is processed by neural networks into `p`
 
@@ -111,34 +107,33 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function RNN_Batch_TCS(p::Variable{T},
-                       seqlabels::Vector,
-                       inputlens;
-                       background::Int=1,
-                       foreground::Int=2,
-                       reduction::String="seqlen"
-                       weight=1.0) where T
+function RNNTCSLoss(p::Variable{T},
+                    seqlabels::Vector,
+                    inputlens;
+                    background::Int=1,
+                    foreground::Int=2,
+                    reduction::String="seqlen"
+                    weight=1.0) where T
     S = eltype(p)
     batchsize = length(seqlabels)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
         Tᵇ = inputlens[b]
-        Lᵇ = length(seqlabels[b])
-        r[:,1:Tᵇ,b], loglikely[b] = TCS(p.value[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
+        r[:,1:Tᵇ,b], nlnp[b] = TCS(p.value[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
     end
 
-    reduce3d(r, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], p.backprop)
+    reduce3d(r, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
-        y.backward = function RNN_Batch_TCS_Backward()
+        y.backward = function RNNTCSLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ ᵛ(p)
                 else
-                    δ(p) .-= r ./ ᵛ(p) .* S(weight)
+                    δ(p) .-= r ./ ᵛ(p) .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -149,12 +144,12 @@ function RNN_Batch_TCS(p::Variable{T},
 end
 
 """
-    CRNN_Batch_TCS(p::Variable{T},
-                   seqlabels::Vector;
-                   background::Int=1,
-                   foreground::Int=2,
-                   reduction::String="seqlen"
-                   weight=1.0) where T
+    FRNNTCSLoss(p::Variable,
+                seqlabels::Vector;
+                background::Int=1,
+                foreground::Int=2,
+                reduction::String="seqlen"
+                weight=1.0)
 
 a batch of padded input sequence is processed by neural networks into `p`
 
@@ -181,26 +176,26 @@ a batch of padded input sequence is processed by neural networks into `p`
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function CRNN_Batch_TCS(p::Variable{T},
-                        seqlabels::Vector;
-                        background::Int=1,
-                        foreground::Int=2,
-                        reduction::String="seqlen"
-                        weight=1.0) where T
+function FRNNTCSLoss(p::Variable{T},
+                     seqlabels::Vector;
+                     background::Int=1,
+                     foreground::Int=2,
+                     reduction::String="seqlen"
+                     weight=1.0) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
-    loglikely = zeros(S, batchsize)
+    nlnp = zeros(S, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
-        r[:,:,b], loglikely[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
+        r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
-    reduce3d(r, loglikely, seqlabels, reduction)
-    y = Variable{T}([sum(loglikely)], p.backprop)
+    reduce3d(r, nlnp, seqlabels, reduction)
+    y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
-        y.backward = function CRNN_Batch_TCS_Backward()
+        y.backward = function FRNNTCSLoss_Backward()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ ᵛ(p)
@@ -213,4 +208,76 @@ function CRNN_Batch_TCS(p::Variable{T},
         addchild(y, p)
     end
     return y
+end
+
+
+function FRNNFocalTCSLoss(p::Variable{T},
+                          seqlabels::Vector;
+                          background::Int=1,
+                          foreground::Int=2,
+                          reduction::String="seqlen"
+                          weight=1.0) where T
+    S = eltype(p)
+    featdims, timesteps, batchsize = size(p)
+    nlnp = zeros(S, 1, 1, batchsize)
+    r = zero(ᵛ(p))
+    𝜸 = S(gamma)
+    𝟙 = S(1.0f0)
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
+    end
+
+    𝒍𝒏𝒑 = T(-nlnp)
+    𝒑 = exp(𝒍𝒏𝒑)
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝜸*𝒑*𝒍𝒏𝒑 + 𝒑 - 𝟙)
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+
+    reduce3d(r, t, seqlabels, reduction)
+    y = Variable{T}([sum(t)], p.backprop)
+
+    if y.backprop
+        y.backward = function FRNNFocalCTCLoss_Backward()
+            if need2computeδ!(p)
+                if weight==1.0
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
+                else
+                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* weight
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
+    end
+    return y
+end
+
+
+function FRNNTCSProbs(p::Variable{T},
+                      seqlabels::Vector;
+                      background::Int=1,
+                      foreground::Int=2,
+                      reduction::String="seqlen"
+                      weight=1.0) where T
+    S = eltype(p)
+    featdims, timesteps, batchsize = size(p)
+    nlnp = zeros(S, batchsize)
+    r = zero(ᵛ(p))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
+    end
+
+    𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
+
+    if 𝒑.backprop
+        𝒑.backward = function FRNNTCSProbs_Backward()
+            if need2computeδ!(p)
+                δ(p) .-= δ(𝒑) .* r ./ ᵛ(p)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(𝒑, p)
+    end
+    return 𝒑
 end
