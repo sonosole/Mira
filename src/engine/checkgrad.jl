@@ -8,7 +8,7 @@ export checkgrad
               tol::AbstractFloat=0.1,  # tolerance of error
               onlyone::Bool=false)     # true for only one param shall be checked
 
-    if all gradients were true, then it returns true.
+if all gradients were true, then it returns true.
 """
 function checkgrad(block::Block,
                    x::Variable;
