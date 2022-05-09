@@ -1,7 +1,7 @@
 export scale
 export zeropoint
 export scale_and_zeropoint
-export xqx, quantize, dequantize
+export xqx, xqx!, quantize, dequantize
 
 
 """
@@ -55,7 +55,7 @@ end
 
 
 """
-    quantize(x::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> xq::Real
+    quantize(x::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> xq::dtype
 
 where [Xmin, Xmax] denotes the range of the input data while Qmin and Qmax are
 respectively the minimum and maximum values of the quantized data type.
@@ -73,8 +73,17 @@ function quantize(x::Real, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: 
 end
 
 
+function quantize(x::AbstractArray, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
+    S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
+    K = 1 / S
+    x = @. clamp(x, Xmin, Xmax)
+    q = @. round(I, x * K) + Z
+    return q
+end
+
+
 """
-    dequantize(x::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> xq::Real
+    dequantize(x::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer; dtype=Float32) -> xq::dtype
 
 where [Xmin, Xmax] denotes the range of the input data while Qmin and Qmax are
 respectively the minimum and maximum values of the quantized data type.
@@ -83,14 +92,21 @@ julia> dequantize(0.5, 0.0, 1.0, 0, 5)
 0.4
 ```
 """
-function dequantize(q::I, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
+function dequantize(q::I, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I; dtype=Float32) where I <: Integer
     S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
-    return S * (q - Z)
+    return type(S * (q - Z))
+end
+
+
+function dequantize(q::AbstractArray{I}, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I; type=Array{Float32}) where I <: Integer
+    S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
+    x = @. S * (q - Z)
+    return type(x)
 end
 
 
 """
-    xqx(X::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> Xq
+    xqx(X::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> Xq::typeof(X)
 
     Xq = DeQuantize( Quantize( X ) )
 ```
@@ -101,7 +117,26 @@ julia> xqx(0.5, 0.0, 1.0, 0, 5)
 function xqx(x::Real, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
     S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
     K = 1 / S
+    T = typeof(x)
     x = clamp(x, Xmin, Xmax)
-    q = round(I, x * K + Z)
-    return S * (q - Z)
+    q = round(I, x * K) + Z
+    return T(S * (q - Z))
+end
+
+function xqx(x::AbstractArray, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
+    S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
+    K = 1 / S
+    T = typeof(x)
+    x = @. clamp(x, Xmin, Xmax)
+    q = @. round(I, x * K) + Z
+    return T(S .* (q .- Z))
+end
+
+function xqx!(x::AbstractArray, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
+    S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
+    K  = 1 / S
+    x  = clamp!(x, Xmin, Xmax)
+    q  = round.(I, x .* K) .+ Z
+    x .= S .* (q .- Z)
+    return x
 end

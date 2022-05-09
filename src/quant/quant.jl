@@ -40,15 +40,15 @@ function quantize(Q::Quant, x::AbstractArray)
     S = Q.S
     Z = Q.Z
     K = 1/S
-    x = clamp(x, Q.Xmin, Q.Xmax)
+    x = clamp.(x, Q.Xmin, Q.Xmax)
     q = round.(eltype(Z), x .* K) .+ Z
     return q
 end
 
 
-function dequantize(Q::Quant, q::AbstractArray{I}) where I <: Integer
+function dequantize(Q::Quant, q::AbstractArray{I}; type=Array{Float32}) where I <: Integer
     S, Z = Q.S, Q.Z
-    return S .* (q .- Z)
+    return type(S .* (q .- Z))
 end
 
 
@@ -56,7 +56,19 @@ function xqx(Q::Quant, x::AbstractArray)
     S = Q.S
     Z = Q.Z
     K = 1/S
-    x = clamp(x, Q.Xmin, Q.Xmax)
+    T = typeof(x)
+    x = clamp.(x, Q.Xmin, Q.Xmax)
     q = round.(eltype(Z), x .* K) .+ Z
-    return S .* (q .- Z)
+    return T(S .* (q .- Z))
+end
+
+
+function xqx!(Q::Quant, x::AbstractArray)
+    S = Q.S
+    Z = Q.Z
+    K = 1/S
+    x  = clamp!(x, Q.Xmin, Q.Xmax)
+    q  = round.(eltype(Z), x .* K) .+ Z
+    x .= S .* (q .- Z)
+    return x
 end
