@@ -50,6 +50,14 @@ function zerograds!(params::Vector{Variable})
 end
 
 
+function zerograds!(xp::XVariable)
+    c , x = xp
+    if !isnothing(δ(x))
+        δ(x) .= 0.0
+    end
+end
+
+
 function zerograds!(xparams::Vector{XVariable})
     Threads.@threads for xvar in xparams
         c , x = xvar
