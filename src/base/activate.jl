@@ -10,7 +10,7 @@ export min2max, min2max!
 limit the scope of the data, i.e. ⤦\n
     @. x = min(max(x, lower), upper)
 """
-function min2max!(x::AbstractArray; lower=0.0, upper=1.0)
+function min2max!(x::AbstractArray; lower=0.0::Real, upper=1.0::Real)
     T = eltype(x)
     L = T(lower)
     U = T(upper)
@@ -24,7 +24,7 @@ end
 limit the scope of the data, i.e. ⤦\n
     y = min.(max.(x, lower), upper)
 """
-function min2max(x::AbstractArray; lower=0.0, upper=1.0)
+function min2max(x::AbstractArray; lower=0.0::Real, upper::Real=1.0)
     T = eltype(x)
     L = T(lower)
     U = T(upper)
@@ -38,7 +38,7 @@ end
 limit the scope of the data, i.e. ⤦\n
     y = Variable{S}(min2max!(ᵛ(x), lower=lower, upper=upper), x.backprop)
 """
-function min2max!(x::Variable{S}; lower=0.0, upper=1.0) where S
+function min2max!(x::Variable{S}; lower::Real=0.0, upper::Real=1.0) where S
     y = Variable{S}(min2max!(ᵛ(x), lower=lower, upper=upper), x.backprop)
     if y.backprop
         y.backward = function min2maxBackward()
@@ -63,7 +63,7 @@ end
 limit the scope of the data, i.e. ⤦\n
     y = Variable{S}(min2max(ᵛ(x), lower=lower, upper=upper), x.backprop)
 """
-function min2max(x::Variable{S}; lower=0.0, upper=1.0) where S
+function min2max(x::Variable{S}; lower::Real=0.0, upper::Real=1.0) where S
     y = Variable{S}(min2max(ᵛ(x), lower=lower, upper=upper), x.backprop)
     if x.backprop
         y.backward = function min2maxBackward()
@@ -396,14 +396,14 @@ end
 
 export softmax
 ## -------------------------------------------------------- softmax
-function softmax(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}) where N
+function softmax(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}=1) where N
     y = exp.(x .- maximum(x, dims=dims))
     Σ = eltype(x)(1.0) ./ sum(y, dims=dims)
     return y .* Σ
 end
 
 
-function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}) where {T,N}
+function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     y = Variable{T}(softmax(ᵛ(x); dims=dims), x.backprop)
     if y.backprop
         y.backward = function softmaxBackward()
@@ -876,8 +876,8 @@ end
 function tand!(x::Variable{T}) where T
     y = Variable{T}(tand!(ᵛ(x)), x.backprop)
     if y.backprop
-        DPI = TOO(pi/180)
         TOO = eltype(x)
+        DPI = TOO(pi/180)
         𝟙 = TOO(1.0)
         𝟚 = TOO(2.0)
         y.backward = function tandBackward()
@@ -895,8 +895,8 @@ end
 function Base.:tand(x::Variable{T}) where T
     y = Variable{T}(tand(ᵛ(x)), x.backprop)
     if y.backprop
-        DPI = TOO(pi/180)
         TOO = eltype(x)
+        DPI = TOO(pi/180)
         𝟙 = TOO(1.0)
         𝟚 = TOO(2.0)
         y.backward = function tandBackward()
@@ -1198,7 +1198,7 @@ function inv!(x::Variable{T}) where T
 end
 
 
-function inv(x::Variable{T}) where T
+function Base.:inv(x::Variable{T}) where T
     y = Variable{T}(inv(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function invBackward()
