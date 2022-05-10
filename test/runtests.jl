@@ -12,4 +12,5 @@ using Mira
     include("./checkgrad/6-addingProblem.jl")
     include("./checkgrad/7-scaler.jl")
     include("./checkgrad/8-ctc.jl")
+    include("./checkgrad/acts.jl")
 end
