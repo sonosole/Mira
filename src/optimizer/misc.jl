@@ -3,12 +3,12 @@ export update!
 export zerograds!
 
 
-function clip(x, clipval)
+function clip(x::Real, clipval::Real)
     x = (abs(x) > clipval) ? clipval * sign(x) : x
 end
 
 
-function update!(x::Variable, lr)
+function update!(x::Variable, lr::AbstractFloat)
     # update single Variable
     if !isnothing(δ(x))
         setNanInfZero!(δ(x))
@@ -17,7 +17,7 @@ function update!(x::Variable, lr)
 end
 
 
-function update!(vars::Vector{Variable}, lr)
+function update!(vars::Vector{Variable}, lr::AbstractFloat)
     # update multi Variables
     Threads.@threads for var in vars
         update!(var, lr)
@@ -25,11 +25,18 @@ function update!(vars::Vector{Variable}, lr)
 end
 
 
-function update!(xparams::Vector{XVariable}, lr)
+function update!(xparams::Vector{XVariable}, lr::AbstractFloat)
     # update multi Variables
     Threads.@threads for xvar in xparams
         c , x = xvar
         update!(x, lr)
+    end
+end
+
+
+function zerograds!(x::Variable)
+    if !isnothing(δ(x))
+        δ(x) .= 0.0
     end
 end
 
