@@ -10,12 +10,12 @@ export checkgrad
 
 if all gradients were true, then it returns true.
 """
-function checkgrad(block::Block,
+function checkgrad(block::B,
                    x::Variable;
                    dw::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.1,
-                   onlyone::Bool=false)
-    iftrue = true
+                   onlyone::Bool=false) where B <: Block
+    istrue = true
     params = paramsof(block)
     for w in params
         # [1] forward 1st time
@@ -36,15 +36,24 @@ function checkgrad(block::Block,
         zerograds!(params)
 
         # [4] backward gradient vs numerical gradient
-        ∂L∂w = (dw₂ + dw₁) / 2 + 1e-38
+        ∂L∂w = (dw₂ + dw₁) / 2
         dLdw = (cost(C₂) - cost(C₁)) / dw
+
+        # abnormal cases
+        ∂L∂w==0 && dLdw==0 && return true
+        ∂L∂w==0 && abs(dLdw)<=1e-5 && return true
+        abs(∂L∂w)<=1e-5 && dLdw==0 && return true
 
         # [5] check if the auto-grad is true or not
         err = abs( (∂L∂w-dLdw) / ∂L∂w ) * 100
-        iftrue = (err ≤ tol) && iftrue
+        istrue = (err ≤ tol) && istrue
+        if !istrue
+            println(yellow!("backward  gradient: $∂L∂w"))
+            println(yellow!("numerical gradient: $dLdw"))
+        end
         onlyone ? break : continue
     end
-    return iftrue
+    return istrue
 end
 
 
@@ -54,7 +63,8 @@ checkgrad(fn::Function,
           dx::AbstractFloat=1e-8,
           tol::AbstractFloat=0.1)
 
-if gradients were true, then it returns true.
+if gradients were true, then it returns true. Attention, functions with ! ending
+can NOT used here.
 """
 function checkgrad(fn::Function,
                    x::Variable;
@@ -88,5 +98,10 @@ function checkgrad(fn::Function,
     abs(∂L∂x)<=1e-5 && dLdx==0 && return true
 
     err = abs( 1 - ∂L∂x / dLdx ) * 100
-    return (err ≤ tol)
+    istrue = (err ≤ tol)
+    if !istrue
+        println(yellow!("backward  gradient: $∂L∂x"))
+        println(yellow!("numerical gradient: $dLdx"))
+    end
+    return istrue
 end
