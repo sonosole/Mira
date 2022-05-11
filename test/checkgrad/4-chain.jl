@@ -2,13 +2,10 @@
     # [1] prepare input data and its label
     using Random
     Random.seed!(UInt(time_ns()))
-    
+
     TYPE = Array{Float64}
     x = randn(256, 62)
-    l = rand(64, 62)
-    l = l ./ sum(l, dims=1)
     x = Variable(x; type=TYPE)
-    l = Variable(l; type=TYPE)
 
     blocks = [
         Dense(256,128,tanh; type=TYPE),
@@ -25,24 +22,5 @@
     ]
 
     model = Chain(blocks)
-
-    # [2] forward and backward propagation
-    outs = softmax(forward(model, x); dims=1)
-    COST1 = crossEntropyLoss(outs, l)
-    backward(COST1)
-    GRAD = blocks[1].w.delta[1]
-
-    # [3] with a samll change of a weight
-    DELTA = 1e-5
-    model[1].w.value[1] += DELTA
-
-    # [4] forward and backward propagation
-    outs = softmax(forward(model, x); dims=1)
-    COST2 = crossEntropyLoss(outs, l)
-    backward(COST2)
-
-    # [5] check if the auto-grad is true or not
-    dLdW = (cost(COST2) - cost(COST1))/DELTA
-    err  = abs((dLdW-GRAD)/(GRAD==0.0 ? 1.0 : GRAD))*100
-    @test err < 1e-1
+    @test checkgrad(model, x)
 end

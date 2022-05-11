@@ -16,23 +16,8 @@ Random.seed!(UInt(time_ns()))
                 if d==2;l = Variable(rand(inputdims, 1, batchsize); type=TYPE);end
                 if d==3;l = Variable(rand(inputdims, timeSteps, 1); type=TYPE);end
 
-                # [2] forward and backward propagation
-                COST1 = mseLoss(pool(x; dims=DIMS), l);
-                backward(COST1);
-
-                # [3] with a samll change of a weight
-                GRAD = x.delta[1];
-                DELTA = 1e-6;
-                x.value[1] += DELTA;
-
-                # [4] forward and backward propagation
-                COST2 = mseLoss(pool(x; dims=DIMS), l);
-                backward(COST2);
-
-                # [5] check if the auto-grad is true or not
-                dLdW = (cost(COST2) - cost(COST1))/DELTA;         # numerical gradient
-                err  = abs((dLdW-GRAD)/(GRAD+eps(Float32)))*100;  # relative error in %
-                @test err < 1e-1
+                fn(x) = mseLoss(pool(x, dims=DIMS), l);
+                @test checkgrad(fn, x)
             end
         end
     end
@@ -52,23 +37,8 @@ end
             x = Variable(rand(inputdims, timeSteps, batchsize); type=TYPE,keepsgrad=true);
             l = Variable(rand(1,         1,         batchsize); type=TYPE);
 
-            # [2] forward and backward propagation
-            COST1 = mseLoss(pool(x; dims=DIMS), l);
-            backward(COST1);
-
-            # [3] with a samll change of a weight
-            GRAD = x.delta[1];
-            DELTA = 1e-6;
-            x.value[1] += DELTA;
-
-            # [4] forward and backward propagation with a samll change of a weight
-            COST2 = mseLoss(pool(x; dims=DIMS), l);
-            backward(COST2);
-
-            # [5] check if the auto-grad is true or not
-            dLdW = (cost(COST2) - cost(COST1))/DELTA;         # numerical gradient
-            err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
-            @test err < 1e-1
+            fn(x) = mseLoss(pool(x; dims=DIMS), l);
+            @test checkgrad(fn, x)
         end
     end
 end
@@ -88,23 +58,8 @@ end
             x = Variable(rand(inputdims, timeSteps, batchsize); type=TYPE,keepsgrad=true);
             l = Variable(rand(1,         1,         batchsize); type=TYPE);
 
-            # [2] forward and backward propagation
-            COST1 = mseLoss(pool(x; dims1=DIM1, dims2=DIM2), l)
-            backward(COST1);
-            GRAD = x.delta[1];
-
-            # [3] with a samll change of a weight
-            DELTA = 1e-6;
-            x.value[1] += DELTA;
-
-            # [4] forward and backward propagation with a samll change of a weight
-            COST2 = mseLoss(pool(x; dims1=DIM1, dims2=DIM2), l)
-            backward(COST2);
-
-            # [5] check if the auto-grad is true or not
-            dLdW = (cost(COST2) - cost(COST1))/DELTA;         # numerical gradient
-            err  = abs((dLdW-GRAD)/(GRAD+eps(Float64)))*100;  # relative error in %
-            @test err < 1e-1
+            fn(x) = mseLoss(pool(x; dims1=DIM1, dims2=DIM2), l)
+            @test checkgrad(fn, x)
         end
     end
 end
