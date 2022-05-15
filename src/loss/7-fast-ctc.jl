@@ -137,7 +137,7 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
                                 weight=1.0,
                                 reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
@@ -173,7 +173,7 @@ function FRNNFastCTCLoss(p::Variable{T},
                          reduction::String="seqlen") where T
 
     featdims, timesteps, batchsize = size(p)
-    nlnp = zeros(eltype(p), batchsize)
+    nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -287,7 +287,7 @@ end
 
 function FRNNFastCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where T
     featdims, timesteps, batchsize = size(p)
-    nlnp = zeros(eltype(p), batchsize)
+    nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -311,7 +311,7 @@ end
 
 function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::Vector; blank::Int=1) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 

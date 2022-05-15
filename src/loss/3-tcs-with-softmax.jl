@@ -116,7 +116,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
                            reduction::String="seqlen",
                            weight=1.0) where T
     batchsize = length(seqlabels)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
@@ -185,7 +185,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
                             reduction::String="seqlen",
                             weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 

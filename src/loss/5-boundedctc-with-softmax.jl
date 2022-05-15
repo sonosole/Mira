@@ -8,7 +8,7 @@ function CRNN_BoundedCTC_With_Softmax(x::Variable{Array{T}},
                                      reduction::String="seqlen",
                                      weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(T, batchsize)
+    nlnp = zeros(T, 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 

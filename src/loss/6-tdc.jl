@@ -168,7 +168,7 @@ function CRNN_TDC_With_Softmax(x::Variable{T},
                                reduction::String="seqlen",
                                weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 

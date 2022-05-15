@@ -158,7 +158,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
                            blank::Int=1,
                            weight=1.0) where T
     batchsize = length(inputlens)
-    nlnp = zeros(eltype(x), batchsize)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
@@ -223,8 +223,8 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
                             weight::Float64=1.0,
                             reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), batchsize)
-    p = softmax(ᵛ(x); dims=1)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
+    p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
     Threads.@threads for b = 1:batchsize

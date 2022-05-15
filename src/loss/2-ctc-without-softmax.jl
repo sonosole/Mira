@@ -147,7 +147,7 @@ function RNNCTCLoss(p::Variable{T},
                     reduction::String="seqlen") where T
     S = eltype(p)
     batchsize = length(inputlens)
-    nlnp = zeros(S, batchsize)
+    nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
@@ -212,7 +212,7 @@ function FRNNCTCLoss(p::Variable{T},
                      reduction::String="seqlen") where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
-    nlnp = zeros(S, batchsize)
+    nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
     Threads.@threads for b = 1:batchsize
