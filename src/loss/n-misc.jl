@@ -54,68 +54,38 @@ function adjustLossWeights(x...)
 end
 
 
-function reduce3d(x::AbstractArray, loglikely::AbstractArray, seqlabels::Vector, reduction::String)
+function reduce3d(x::AbstractArray, nlnp::AbstractArray, seqlabels::Vector, reduction::String)
     featdims, timesteps, batchsize = size(x)
     # 标签长度归一化 ⤦
     if isequal(reduction, "seqlen")
-        Threads.@threads for b = 1:batchsize
-            seqlen   = length(seqlabels[b]) * batchsize
-            seqlen⁻¹ = 1 / ifelse(seqlen≠0, seqlen, batchsize)
-            x[:,:,b]    .*= seqlen⁻¹
-            loglikely[b] *= seqlen⁻¹
+        bvec = zeros(eltype(nlnp), size(nlnp))
+        for b = 1:batchsize
+            seqlen  = length(seqlabels[b]) * batchsize
+            bvec[b] = 1 / ifelse(seqlen≠0, seqlen, batchsize)
         end
+        bvec   = typeof(nlnp)(bvec)
+        x    .*= bvec
+        nlnp .*= bvec
     # 时间长度归一化 ⤦
     elseif isequal(reduction, "timesteps")
         timesteps⁻¹ = 1 / (timesteps * batchsize)
-        x         .*= timesteps⁻¹
-        loglikely .*= timesteps⁻¹
+        x    .*= timesteps⁻¹
+        nlnp .*= timesteps⁻¹
     # 网格归一化 ⤦
     elseif isequal(reduction, "trellis")
-        Threads.@threads for b = 1:batchsize
-            volume   = length(seqlabels[b]) * timesteps * batchsize
-            volume⁻¹ = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
-            x[:,:,b]    .*= volume⁻¹
-            loglikely[b] *= volume⁻¹
+        bvec = zeros(eltype(nlnp), size(nlnp))
+        for b = 1:batchsize
+            volume  = length(seqlabels[b]) * timesteps * batchsize
+            bvec[b] = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
         end
+        bvec   = typeof(nlnp)(bvec)
+        x    .*= bvec
+        nlnp .*= bvec
     # 只是 batchsize 归一化 ⤦
     elseif isequal(reduction, "normal")
         batchsize⁻¹ = 1 / batchsize
-        x         .*= batchsize⁻¹
-        loglikely .*= batchsize⁻¹
-    # 无归一化 ⤦
-    elseif isequal(reduction, "nil")
-        return nothing
-    else
-        @warn "reduction is one of seqlen/timesteps/trellis/normal/nil, but got $reduction"
-    end
-    return nothing
-end
-
-
-function reduce3dSeqGrad(x::AbstractArray, seqlabels::Vector, reduction::String)
-    featdims, timesteps, batchsize = size(x)
-    # 标签长度归一化 ⤦
-    if isequal(reduction, "seqlen")
-        Threads.@threads for b = 1:batchsize
-            seqlen     = length(seqlabels[b]) * batchsize
-            seqlen⁻¹   = 1 / ifelse(seqlen≠0, seqlen, batchsize)
-            x[:,:,b] .*= seqlen⁻¹
-        end
-    # 时间长度归一化 ⤦
-    elseif isequal(reduction, "timesteps")
-        timesteps⁻¹ = 1 / (timesteps * batchsize)
-        x         .*= timesteps⁻¹
-    # 网格归一化 ⤦
-    elseif isequal(reduction, "trellis")
-        Threads.@threads for b = 1:batchsize
-            volume     = length(seqlabels[b]) * timesteps * batchsize
-            volume⁻¹   = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
-            x[:,:,b] .*= volume⁻¹
-        end
-    # 只是 batchsize 归一化 ⤦
-    elseif isequal(reduction, "normal")
-        batchsize⁻¹ = 1 / batchsize
-        x         .*= batchsize⁻¹
+        x    .*= batchsize⁻¹
+        nlnp .*= batchsize⁻¹
     # 无归一化 ⤦
     elseif isequal(reduction, "nil")
         return nothing
