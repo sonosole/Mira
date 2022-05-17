@@ -25,27 +25,27 @@ end
 
 
 """
-    CTC(p::Array{T,2}, seq; blank=1) where T -> (target, lossvalue)
+    CTC(p::Array{T,2}, seq::Vector{Int}; blank=1) -> (target, lossvalue)
 # Inputs
     p   : probability of softmax output\n
-    seq : label seq like [9 3 6 15] which contains no blank. If p
-          has no label (e.g. pure noise or oov) then seq is []
+    seq : label seq like [9,3,6,15] which contains no blank. If p
+          has no label (e.g. pure noise) then seq is [0]
 # Outputs
     target    : target of softmax's output\n
     lossvalue : negative log-likelyhood
 """
-function CTC(p::Array{TYPE,2}, seq; blank=1) where TYPE
-    Log0 = LogZero(TYPE)   # approximate -Inf of TYPE
-    ZERO = TYPE(0)         # typed zero,e.g. Float32(0)
-    S, T = size(p)         # assert p is a 2-D tensor
-    L = length(seq)*2 + 1  # topology length with blanks
+function CTC(p::Array{TYPE,2}, seq::Vector{Int}; blank::Int=1) where TYPE
+    ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
+    S, T = size(p)                               # assert p is a 2-D tensor
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
 
-    if L == 1
+    if seq[1] == 0                               # no sequence label
         r[blank,:] .= TYPE(1)
         return r, - sum(log.(p[blank,:]))
     end
 
+    Log0 = LogZero(TYPE)                         # approximate -Inf of TYPE
+    L = length(seq)*2 + 1                        # topology length with blanks
     a = fill!(Array{TYPE,2}(undef,L,T), Log0)    # 𝜶 = p(s[k,t], x[1:t]), k in CTC topology's indexing
     b = fill!(Array{TYPE,2}(undef,L,T), Log0)    # 𝛃 = p(x[t+1:T] | s[k,t]), k in CTC topology's indexing
     a[1,1] = log(p[blank, 1])
