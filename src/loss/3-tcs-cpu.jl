@@ -3,16 +3,19 @@ export TCSGreedySearch
 export TCSGreedySearchWithTimestamp
 
 """
-    seqtcs(seq, background::Int=1, foreground::Int=2) -> newseq
+    seqtcs(seq::Vector{Int}, background::Int=1, foreground::Int=2) -> newseq
 expand `seq` with `background` and `foreground`'s indexes. For example, if `seq` is [i,j,k], then
-`newseq` is [B,F,i,B,F,j,B,F,k,B], of which B is `background` index and F is `foreground` index.
+`newseq` is [`B`, F,i, `B`, F,j, `B`, F,k, `B`], of which B is `background` index and F is `foreground` index.
 
 # Example
     julia> seqtcs([7,3,5], 2, 4)'
     1×10 LinearAlgebra.Adjoint{Int64,Array{Int64,1}}:
      2  4  7  2  4  3  2  4  5  2
 """
-function seqtcs(seq, background::Int=1, foreground::Int=2)
+function seqtcs(seq::Vector{Int}, background::Int=1, foreground::Int=2)
+    if seq[1] == 0
+        return [background]
+    end
     L = length(seq)       # sequence length
     N = 3 * L + 1         # topology length
     label = zeros(Int, N)
@@ -23,27 +26,27 @@ function seqtcs(seq, background::Int=1, foreground::Int=2)
 end
 
 """
-    TCS(p::Array{T,2}, seqlabel; background::Int=1, foreground::Int=2) -> target, lossvalue
+    TCS(p::Array{T,2}, seqlabel::Vector{Int}; background::Int=1, foreground::Int=2) -> target, lossvalue
 # Inputs
 + `p`        : probability of softmax output
-+ `seqlabel` : like [i,j,k], i/j/k is neither background state nor foreground state. If `p` has no label (e.g. pure noise or oov) then `seq` is [].
++ `seqlabel` : like [i,j,k], i/j/k is neither background state nor foreground state. If `p` has no label (e.g. pure noise) then `seq` is [0].
 # Outputs
 + `target`    : target of softmax's output
 + `lossvalue` : negative log-likelyhood
 """
-function TCS(p::Array{TYPE,2}, seqlabel; background::Int=1, foreground::Int=2) where TYPE
+function TCS(p::Array{TYPE,2}, seqlabel::Vector{Int}; background::Int=1, foreground::Int=2) where TYPE
     seq  = seqtcs(seqlabel, background, foreground)
-    Log0 = LogZero(TYPE)   # approximate -Inf of TYPE
-    ZERO = TYPE(0)         # typed zero,e.g. Float32(0)
-    S, T = size(p)         # assert p is a 2-D tensor
-    L = length(seq)        # topology length
+    ZERO = TYPE(0)                             # typed zero,e.g. Float32(0)
+    S, T = size(p)                             # assert p is a 2-D tensor
+    L = length(seq)                            # topology length
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)  # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
 
     if L == 1
-        r[seq[1],:] .= TYPE(1)
-        return r, - sum(log.(p[seq[1],:]))
+        r[background,:] .= TYPE(1)
+        return r, - sum(log.(p[background,:]))
     end
 
+    Log0 = LogZero(TYPE)                       # approximate -Inf of TYPE
     a = fill!(Array{TYPE,2}(undef,L,T), Log0)  # 𝜶 = p(s[k,t], x[1:t]), k in TCS topology's indexing
     b = fill!(Array{TYPE,2}(undef,L,T), Log0)  # 𝛃 = p(x[t+1:T] | s[k,t]), k in TCS topology's indexing
     a[1,1] = log(p[seq[1],1])  # background entrance
