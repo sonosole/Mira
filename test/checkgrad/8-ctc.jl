@@ -73,8 +73,8 @@
     # [1] prepare input data and its label
     i = randn(F,T,B);
     x = Variable(i, type=TYPE);
-    l = [[7 3 4], [4,5,6], [6,7], [8,9,15]];
-    RE = "nil"
+    l = [[7,3,4], [4,5,6], [6,7], [0]];
+    RE = "seqlen"
     KG = false
     BY = "dfs"
 
