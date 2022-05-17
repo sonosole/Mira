@@ -7,9 +7,12 @@ export FRNNFastCTCLoss
 export FRNNSoftmaxFocalFastCTCLoss
 export FRNNFocalFastCTCLoss
 
-function seqfastctc(seq, blank::Int=1)
-    L = length(seq)       # sequence length
-    N = 2 * L + 1         # topology length
+function seqfastctc(seq::Vector{Int}, blank::Int=1)
+    if seq[1] == 0
+        return [blank]
+    end
+    L = length(seq) # sequence length
+    N = 2 * L + 1   # topology length
     label = zeros(Int, N)
     label[1:2:N] .= blank
     label[2:2:N] .= seq
@@ -18,7 +21,7 @@ end
 
 
 """
-    FastCTC(p::Array{T,2}, seqlabel; blank::Int=1)
+    FastCTC(p::Array{T,2}, seqlabel::Vector{Int}; blank::Int=1)
 
 # Topology Example
      ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐
@@ -26,12 +29,11 @@ end
     │blank├─►│  C  ├─►│blank├─►│  A  ├─►│blank├─►│  T  ├─►│blank│
     └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘
 """
-function FastCTC(p::Array{TYPE,2}, seqlabel; blank::Int=1) where TYPE
+function FastCTC(p::Array{TYPE,2}, seqlabel::Vector{Int}; blank::Int=1) where TYPE
     seq  = seqfastctc(seqlabel, blank)
-    Log0 = LogZero(TYPE)   # approximate -Inf of TYPE
-    ZERO = TYPE(0)         # typed zero,e.g. Float32(0)
-    S, T = size(p)         # assert p is a 2-D tensor
-    L = length(seq)        # topology length with blanks
+    ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
+    S, T = size(p)                               # assert p is a 2-D tensor
+    L = length(seq)                              # topology length with blanks
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
 
     if L == 1
@@ -39,6 +41,7 @@ function FastCTC(p::Array{TYPE,2}, seqlabel; blank::Int=1) where TYPE
         return r, - sum(log.(p[blank,:]))
     end
 
+    Log0 = LogZero(TYPE)                         # approximate -Inf of TYPE
     a = fill!(Array{TYPE,2}(undef,L,T), Log0)    # 𝜶 = p(s[k,t], x[1:t]), k in FastCTC topology's indexing
     b = fill!(Array{TYPE,2}(undef,L,T), Log0)    # 𝛃 = p(x[t+1:T] | s[k,t]), k in FastCTC topology's indexing
     a[1,1] = log(p[seq[1],1])
