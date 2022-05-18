@@ -7,7 +7,7 @@ export FRNNFastCTCLoss
 export FRNNSoftmaxFocalFastCTCLoss
 export FRNNFocalFastCTCLoss
 
-function seqfastctc(seq::Vector{Int}, blank::Int=1)
+function seqfastctc(seq::VecInt, blank::Int=1)
     if seq[1] == 0
         return [blank]
     end
@@ -21,7 +21,7 @@ end
 
 
 """
-    FastCTC(p::Array{T,2}, seqlabel::Vector{Int}; blank::Int=1)
+    FastCTC(p::Array{T,2}, seqlabel::VecInt; blank::Int=1)
 
 # Topology Example
      ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐
@@ -29,7 +29,7 @@ end
     │blank├─►│  C  ├─►│blank├─►│  A  ├─►│blank├─►│  T  ├─►│blank│
     └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘
 """
-function FastCTC(p::Array{TYPE,2}, seqlabel::Vector{Int}; blank::Int=1) where TYPE
+function FastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where TYPE
     seq  = seqfastctc(seqlabel, blank)
     ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
     S, T = size(p)                               # assert p is a 2-D tensor
@@ -135,10 +135,10 @@ end
 
 
 function FRNNSoftmaxFastCTCLoss(x::Variable{T},
-                                seqlabels::Vector;
+                                seqlabels::VecVecInt;
+                                reduction::String="seqlen",
                                 blank::Int=1,
-                                weight=1.0,
-                                reduction::String="seqlen") where T
+                                weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
@@ -149,8 +149,9 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
     end
 
     Δ = p - r
-    reduce3d(Δ, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], x.backprop)
+    l = T(nlnp)
+    reduce3d(Δ, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
         y.backward = function FRNNSoftmaxFastCTCLoss_Backward()
@@ -170,10 +171,10 @@ end
 
 
 function FRNNFastCTCLoss(p::Variable{T},
-                         seqlabels::Vector;
+                         seqlabels::VecVecInt;
+                         reduction::String="seqlen",
                          blank::Int=1,
-                         weight=1.0,
-                         reduction::String="seqlen") where T
+                         weight=1.0) where T
 
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(eltype(p), 1, 1, batchsize)
@@ -183,8 +184,9 @@ function FRNNFastCTCLoss(p::Variable{T},
         r[:,:,b], nlnp[b] = FastCTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    reduce3d(r, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], p.backprop)
+    l = T(nlnp)
+    reduce3d(r, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
         y.backward = function FRNNFastCTCLoss_Backward()
@@ -204,11 +206,11 @@ end
 
 
 function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
-                                     seqlabels::Vector;
+                                     seqlabels::VecVecInt;
+                                     reduction::String="seqlen",
                                      blank::Int=1,
                                      gamma::Real=2,
-                                     weight=1.0,
-                                     reduction::String="seqlen") where T
+                                     weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -247,11 +249,11 @@ end
 
 
 function FRNNFocalFastCTCLoss(p::Variable{T},
-                              seqlabels::Vector;
+                              seqlabels::VecVecInt;
+                              reduction::String="seqlen",
                               blank::Int=1,
                               gamma::Real=2,
-                              weight=1.0,
-                              reduction::String="seqlen") where T
+                              weight=1.0) where T
     featdims, timesteps, batchsize = size(p)
     S = eltype(p)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -288,7 +290,7 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
 end
 
 
-function FRNNFastCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where T
+function FRNNFastCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where T
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
@@ -312,7 +314,7 @@ function FRNNFastCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where
 end
 
 
-function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::Vector; blank::Int=1) where T
+function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)

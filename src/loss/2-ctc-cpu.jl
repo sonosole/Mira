@@ -34,7 +34,7 @@ end
     target    : target of softmax's output\n
     lossvalue : negative log-likelyhood
 """
-function CTC(p::Array{TYPE,2}, seq::Vector{Int}; blank::Int=1) where TYPE
+function CTC(p::Array{TYPE,2}, seq::VecInt; blank::Int=1) where TYPE
     ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
     S, T = size(p)                               # assert p is a 2-D tensor
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing

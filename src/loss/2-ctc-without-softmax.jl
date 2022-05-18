@@ -6,7 +6,7 @@ export FRNNFocalCTCLoss
 export FRNNCTCProbs
 
 """
-    DNNCTCLoss(p::Variable{T}, seq; blank::Int=1, weight=1.0)
+    DNNCTCLoss(p::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0)
 
 case batchsize==1 for test case, `p` here is probability or weighted probability
 
@@ -33,7 +33,7 @@ case batchsize==1 for test case, `p` here is probability or weighted probability
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function DNNCTCLoss(p::Variable{T}, seq; blank::Int=1, weight=1.0) where T
+function DNNCTCLoss(p::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0) where T
     r, nlnp = CTC(ᵛ(p), seq, blank=blank)
     y = Variable{T}([nlnp], p.backprop)
 
@@ -55,7 +55,7 @@ end
 
 
 """
-    FNNCTCLoss(p::Variable, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0)
+    FNNCTCLoss(p::Variable, seqlabels::VecVecInt, inputlens::VecInt; blank::Int=1, weight=1.0)
 
 # Inputs
 `p`         : 2-D Variable, probability or weighted probability\n
@@ -81,7 +81,7 @@ end
     │ │ │          └───┘                     │ │ │
     └───┘                                    └───┘
 """
-function FNNCTCLoss(p::Variable{T}, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0) where T
+function FNNCTCLoss(p::Variable{T}, seqlabels::VecVecInt, inputlens::VecInt; blank::Int=1, weight=1.0) where T
     S = eltype(p)
     batchsize = length(inputLengths)
     nlnp = zeros(S, batchsize)
@@ -113,7 +113,7 @@ end
 
 
 """
-    RNNCTCLoss(p::Variable, seqlabels::Vector, inputlens; blank::Int=1, weight=1.0)
+    RNNCTCLoss(p::Variable, seqlabels::VecVecInt, inputlens::VecInt; blank::Int=1, weight=1.0)
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
@@ -140,11 +140,11 @@ end
     └───┘                                    └───┘
 """
 function RNNCTCLoss(p::Variable{T},
-                    seqlabels::Vector,
-                    inputlens;
+                    seqlabels::VecVecInt,
+                    inputlens::VecInt;
+                    reduction::String="seqlen",
                     blank::Int=1,
-                    weight=1.0,
-                    reduction::String="seqlen") where T
+                    weight=1.0) where T
     S = eltype(p)
     batchsize = length(inputlens)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -155,8 +155,9 @@ function RNNCTCLoss(p::Variable{T},
         r[:,1:Tᵇ,b], nlnp[b] = CTC(p.value[:,1:Tᵇ,b], seqlabels[b], blank=blank)
     end
 
-    reduce3d(r, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], p.backprop)
+    l = T(nlnp)
+    reduce3d(r, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
         y.backward = function RNNCTCLoss_Backward()
@@ -177,10 +178,10 @@ end
 
 """
     FRNNCTCLoss(p::Variable,
-                seqlabels::Vector;
+                seqlabels::VecVecInt;
+                reduction::String="seqlen",
                 blank::Int=1,
-                weight=1.0,
-                reduction::String="seqlen")
+                weight=1.0)
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
@@ -206,10 +207,10 @@ end
     └───┘                                    └───┘
 """
 function FRNNCTCLoss(p::Variable{T},
-                     seqlabels::Vector;
+                     seqlabels::VecVecInt;
+                     reduction::String="seqlen",
                      blank::Int=1,
-                     weight=1.0,
-                     reduction::String="seqlen") where T
+                     weight=1.0) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -219,8 +220,9 @@ function FRNNCTCLoss(p::Variable{T},
         r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
-    reduce3d(r, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], p.backprop)
+    l = T(nlnp)
+    reduce3d(r, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
         y.backward = function FRNNCTCLoss_Backward()
@@ -241,11 +243,11 @@ end
 
 """
     FRNNFocalCTCLoss(p::Variable,
-                     seqlabels::Vector;
+                     seqlabels::VecVecInt;
+                     reduction::String="seqlen"
                      blank::Int=1,
                      gamma=2,
-                     weight::Float64=1.0,
-                     reduction="seqlen")
+                     weight=1.0)
 
 # Inputs
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability\n
@@ -261,11 +263,11 @@ end
     └───┘          └───┘
 """
 function FRNNFocalCTCLoss(p::Variable{T},
-                          seqlabels::Vector;
+                          seqlabels::VecVecInt;
+                          reduction::String="seqlen",
                           blank::Int=1,
                           gamma::Real=2,
-                          weight=1.0,
-                          reduction::String="seqlen") where T
+                          weight=1.0) where T
 
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
@@ -305,11 +307,11 @@ end
 
 # naive implementation, more ops needed, good for learning
 function FRNNFocalCTCLoss_Naive(p::Variable{T},
-                                seqlabels::Vector;
+                                seqlabels::VecVecInt;
+                                reduction::String="seqlen",
                                 blank::Int=1,
                                 gamma::Real=2,
-                                weight=1.0,
-                                reduction::String="seqlen") where T
+                                weight=1.0) where T
     featdims, timesteps, batchsize = size(p)
     S = eltype(p)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -344,7 +346,7 @@ end
 
 
 """
-    FRNNCTCProbs(p::Variable, seqlabels::Vector; blank::Int=1) -> prob::Variable
+    FRNNCTCProbs(p::Variable, seqlabels::VecVecInt; blank::Int=1) -> prob::Variable
 
 # Inputs
 `p`         : 3-D Variable (featdims,timesteps,batchsize), output of softmax\n
@@ -354,7 +356,7 @@ end
 # Output
 `prob`      : 3-D Variable (1,1,batchsize), i.e. `prob` is the probabilities of each sequence
 """
-function FRNNCTCProbs(p::Variable{T}, seqlabels::Vector; blank::Int=1) where T
+function FRNNCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where T
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))

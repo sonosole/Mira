@@ -4,7 +4,7 @@ export TDCGreedySearch
 export TDCGreedySearchWithTimestamp
 
 
-function seqtdc(seq, blank::Int=1, front::Int=2)
+function seqtdc(seq::VecInt, blank::Int=1, front::Int=2)
     L = length(seq)       # sequence length
     if L ≠ 0
         N = 4 * L         # topology length
@@ -32,7 +32,7 @@ end
                          └─────────────────►──────────┘      └─────────────────►──────────┘
 
 """
-function TDC(p::Array{TYPE,2}, seqlabel; blank::Int=1, front::Int=2) where TYPE
+function TDC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1, front::Int=2) where TYPE
     seq  = seqtdc(seqlabel, blank, front)
     Log0 = LogZero(TYPE)   # approximate -Inf of TYPE
     ZERO = TYPE(0)         # typed zero, e.g. Float32(0)
@@ -158,15 +158,15 @@ end
 
 
 
-export CRNN_TDC_With_Softmax
+export CRNNSoftmaxTDC
 
 
-function CRNN_TDC_With_Softmax(x::Variable{T},
-                               seqlabels::Vector;
-                               blank::Int=1,
-                               front::Int=2,
-                               reduction::String="seqlen",
-                               weight::Float64=1.0) where T
+function CRNNSoftmaxTDC(x::Variable{T},
+                        seqlabels::VecVecInt;
+                        reduction::String="seqlen",
+                        blank::Int=1,
+                        front::Int=2,
+                        weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
@@ -177,11 +177,12 @@ function CRNN_TDC_With_Softmax(x::Variable{T},
     end
 
     Δ = p - r
-    reduce3d(Δ, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], x.backprop)
+    l = T(nlnp)
+    reduce3d(Δ, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function CRNN_TDC_With_Softmax_Backward()
+        y.backward = function CRNNSoftmaxTDCBackward()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ

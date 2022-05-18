@@ -6,8 +6,8 @@ export FRNNFocalTCSLoss
 
 """
     FNNTCSLoss(p::Variable,
-               seqlabels::Vector,
-               inputlens;
+               seqlabels::VecVecInt,
+               inputlens::VecInt;
                background::Int=1,
                foreground::Int=2,
                weight=1.0)
@@ -39,8 +39,8 @@ a batch of concatenated input sequence is processed by neural networks into `p`
     └───┘                                    └───┘
 """
 function FNNTCSLoss(p::Variable{T},
-                    seqlabels::Vector,
-                    inputlens;
+                    seqlabels::VecVecInt,
+                    inputlens::VecInt;
                     background::Int=1,
                     foreground::Int=2,
                     weight=1.0) where T
@@ -75,11 +75,11 @@ end
 
 """
     RNNTCSLoss(p::Variable,
-               seqlabels::Vector,
-               inputlens;
+               seqlabels::VecVecInt,
+               inputlens::VecInt;
+               reduction::String="seqlen",
                background::Int=1,
                foreground::Int=2,
-               reduction::String="seqlen",
                weight=1.0)
 
 a batch of padded input sequence is processed by neural networks into `p`
@@ -109,11 +109,11 @@ a batch of padded input sequence is processed by neural networks into `p`
     └───┘                                    └───┘
 """
 function RNNTCSLoss(p::Variable{T},
-                    seqlabels::Vector,
-                    inputlens;
+                    seqlabels::VecVecInt,
+                    inputlens::VecInt;
+                    reduction::String="seqlen",
                     background::Int=1,
                     foreground::Int=2,
-                    reduction::String="seqlen",
                     weight=1.0) where T
     S = eltype(p)
     batchsize = length(seqlabels)
@@ -125,8 +125,9 @@ function RNNTCSLoss(p::Variable{T},
         r[:,1:Tᵇ,b], nlnp[b] = TCS(p.value[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
     end
 
-    reduce3d(r, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], p.backprop)
+    l = T(nlnp)
+    reduce3d(r, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
         y.backward = function RNNTCSLoss_Backward()
@@ -146,10 +147,10 @@ end
 
 """
     FRNNTCSLoss(p::Variable,
-                seqlabels::Vector;
+                seqlabels::VecVecInt;
+                reduction::String="seqlen",
                 background::Int=1,
                 foreground::Int=2,
-                reduction::String="seqlen",
                 weight=1.0)
 
 a batch of padded input sequence is processed by neural networks into `p`
@@ -178,10 +179,10 @@ a batch of padded input sequence is processed by neural networks into `p`
     └───┘                                    └───┘
 """
 function FRNNTCSLoss(p::Variable{T},
-                     seqlabels::Vector;
+                     seqlabels::VecVecInt;
+                     reduction::String="seqlen",
                      background::Int=1,
                      foreground::Int=2,
-                     reduction::String="seqlen",
                      weight=1.0) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
@@ -192,8 +193,9 @@ function FRNNTCSLoss(p::Variable{T},
         r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
-    reduce3d(r, nlnp, seqlabels, reduction)
-    y = Variable{T}([sum(nlnp)], p.backprop)
+    l = T(nlnp)
+    reduce3d(r, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
         y.backward = function FRNNTCSLoss_Backward()
@@ -213,10 +215,10 @@ end
 
 
 function FRNNFocalTCSLoss(p::Variable{T},
-                          seqlabels::Vector;
+                          seqlabels::VecVecInt;
+                          reduction::String="seqlen",
                           background::Int=1,
                           foreground::Int=2,
-                          reduction::String="seqlen",
                           gamma::Real=2,
                           weight=1.0) where T
     S = eltype(p)
@@ -255,7 +257,7 @@ function FRNNFocalTCSLoss(p::Variable{T},
 end
 
 
-function FRNNTCSProbs(p::Variable{T}, seqlabels::Vector; background::Int=1, foreground::Int=2) where T
+function FRNNTCSProbs(p::Variable{T}, seqlabels::VecVecInt; background::Int=1, foreground::Int=2) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(S, 1, 1, batchsize)

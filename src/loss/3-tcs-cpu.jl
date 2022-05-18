@@ -12,7 +12,7 @@ expand `seq` with `background` and `foreground`'s indexes. For example, if `seq`
     1×10 LinearAlgebra.Adjoint{Int64,Array{Int64,1}}:
      2  4  7  2  4  3  2  4  5  2
 """
-function seqtcs(seq::Vector{Int}, background::Int=1, foreground::Int=2)
+function seqtcs(seq::VecInt, background::Int=1, foreground::Int=2)
     if seq[1] == 0
         return [background]
     end
@@ -34,7 +34,7 @@ end
 + `target`    : target of softmax's output
 + `lossvalue` : negative log-likelyhood
 """
-function TCS(p::Array{TYPE,2}, seqlabel::Vector{Int}; background::Int=1, foreground::Int=2) where TYPE
+function TCS(p::Array{TYPE,2}, seqlabel::VecInt; background::Int=1, foreground::Int=2) where TYPE
     seq  = seqtcs(seqlabel, background, foreground)
     ZERO = TYPE(0)                             # typed zero,e.g. Float32(0)
     S, T = size(p)                             # assert p is a 2-D tensor
