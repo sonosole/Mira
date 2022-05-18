@@ -54,38 +54,38 @@ function adjustLossWeights(x...)
 end
 
 
-function reduce3d(x::AbstractArray, nlnp::AbstractArray, seqlabels::Vector, reduction::String)
+function reduce3d(x::AbstractArray, l::AbstractArray, seqlabels::Vector, reduction::String)
     featdims, timesteps, batchsize = size(x)
     # 标签长度归一化 ⤦
     if isequal(reduction, "seqlen")
-        bvec = zeros(eltype(nlnp), size(nlnp))
+        bvec = zeros(eltype(l), size(l))
         for b = 1:batchsize
             seqlen  = length(seqlabels[b]) * batchsize
             bvec[b] = 1 / ifelse(seqlen≠0, seqlen, batchsize)
         end
-        bvec   = typeof(nlnp)(bvec)
-        x    .*= bvec
-        nlnp .*= bvec
+        bvec = typeof(l)(bvec)
+        x .*= bvec
+        l .*= bvec
     # 时间长度归一化 ⤦
     elseif isequal(reduction, "timesteps")
         timesteps⁻¹ = 1 / (timesteps * batchsize)
-        x    .*= timesteps⁻¹
-        nlnp .*= timesteps⁻¹
+        x .*= timesteps⁻¹
+        l .*= timesteps⁻¹
     # 网格归一化 ⤦
     elseif isequal(reduction, "trellis")
-        bvec = zeros(eltype(nlnp), size(nlnp))
+        bvec = zeros(eltype(l), size(l))
         for b = 1:batchsize
             volume  = length(seqlabels[b]) * timesteps * batchsize
             bvec[b] = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
         end
-        bvec   = typeof(nlnp)(bvec)
-        x    .*= bvec
-        nlnp .*= bvec
+        bvec = typeof(l)(bvec)
+        x .*= bvec
+        l .*= bvec
     # 只是 batchsize 归一化 ⤦
     elseif isequal(reduction, "normal")
         batchsize⁻¹ = 1 / batchsize
-        x    .*= batchsize⁻¹
-        nlnp .*= batchsize⁻¹
+        x .*= batchsize⁻¹
+        l .*= batchsize⁻¹
     # 无归一化 ⤦
     elseif isequal(reduction, "nil")
         return nothing
