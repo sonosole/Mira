@@ -37,3 +37,9 @@ end
     T = T1 <: T2 ? T2 : T1
     return T
 end
+
+
+export VecVecInt
+export VecInt
+const VecVecInt = Vector{Vector{Int}}
+const    VecInt =        Vector{Int}
