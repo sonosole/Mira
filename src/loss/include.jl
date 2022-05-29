@@ -17,3 +17,4 @@ include("./3-tcs-without-softmax.jl")
 #
 include("./6-tdc.jl")
 include("./7-fast-ctc.jl")
+include("./8-ace.jl")
