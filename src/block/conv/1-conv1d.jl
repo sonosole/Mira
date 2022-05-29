@@ -194,7 +194,7 @@ function in2col(x::Variable{Array{T}}, kernel::Int, stride::Int) where T
     end
 
     if y.backprop
-        y.backward = function in2colBackward()
+        y.backward = function ∇in2col()
             if need2computeδ!(x)
                 Threads.@threads for b = 1:batchsize
                     index = 1 + (b-1)*step

@@ -71,7 +71,7 @@ function forward(m::ScaleChannels, x::Variable{T}) where T
     y = Variable{T}(ᵛ(x) .* ᵛ(k), x.backprop)
 
     if y.backprop
-        y.backward = function ScaleChannelsBackward()
+        y.backward = function ∇ScaleChannels()
             if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(k)                end
             if need2computeδ!(k) δ(k) .+= sum(δ(y) .* ᵛ(x), dims=m.views) end
             ifNotKeepδThenFreeδ!(y)

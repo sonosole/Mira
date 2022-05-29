@@ -105,7 +105,7 @@ function forward(m::LogLinear, x::Variable{T}) where T
     y = Variable{T}(log.(t), x.backprop)
 
     if y.backprop
-        y.backward = function LogLinearBackward()
+        y.backward = function ∇LogLinear()
             z = eltype(T)(1) ./ t
             if need2computeδ!(x)
                 δ(x) .+= δ(y) .* z .* abs(ᵛ(k))

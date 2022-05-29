@@ -154,7 +154,7 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
     y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function FRNNSoftmaxFastCTCLoss_Backward()
+        y.backward = function ∇FRNNSoftmaxFastCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -189,7 +189,7 @@ function FRNNFastCTCLoss(p::Variable{T},
     y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
-        y.backward = function FRNNFastCTCLoss_Backward()
+        y.backward = function ∇FRNNFastCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -232,7 +232,7 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
     y = Variable{T}([sum(t)], x.backprop)
 
     if y.backprop
-        y.backward = function FRNNSoftmaxFocalFastCTCLoss_Backward()
+        y.backward = function ∇FRNNSoftmaxFocalFastCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* 𝒌 .* Δ
@@ -274,7 +274,7 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
     y = Variable{T}([sum(t)], p.backprop)
 
     if y.backprop
-        y.backward = function FRNNFocalFastCTCLoss_Backward()
+        y.backward = function ∇FRNNFocalFastCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
@@ -302,7 +302,7 @@ function FRNNFastCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) wh
     𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNFastCTCProbs_Backward()
+        𝒑.backward = function ∇FRNNFastCTCProbs()
             if need2computeδ!(p)
                 δ(p) .-= δ(𝒑) .* r ./ ᵛ(p)
             end
@@ -328,7 +328,7 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
     Δ = p - r
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNSoftmaxFastCTCProbs_Backward()
+        𝒑.backward = function ∇FRNNSoftmaxFastCTCProbs()
             if need2computeδ!(x)
                 δ(x) .+= δ(𝒑) .* Δ
             end

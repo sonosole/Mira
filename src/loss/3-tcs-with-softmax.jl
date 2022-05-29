@@ -57,7 +57,7 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
     y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
-        y.backward = function FNNSoftmaxTCSLoss_Backward()
+        y.backward = function ∇FNNSoftmaxTCSLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -132,7 +132,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
     y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function RNNSoftmaxTCSLoss_Backward()
+        y.backward = function ∇RNNSoftmaxTCSLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -200,7 +200,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
     y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function FRNNSoftmaxTCSLoss_Backward()
+        y.backward = function ∇FRNNSoftmaxTCSLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -233,7 +233,7 @@ function FRNNSoftmaxTCSProbs(x::Variable{T},
     Δ = r - p
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNSoftmaxCTCProbs_Backward()
+        𝒑.backward = function ∇FRNNSoftmaxCTCProbs()
             if need2computeδ!(x)
                 δ(x) .+= δ(𝒑)  .* ᵛ(𝒑) .* Δ
             end
@@ -273,7 +273,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
     y = Variable{T}([sum(t)], x.backprop)
 
     if y.backprop
-        y.backward = function FRNNSoftmaxFocalTCSLoss_Backward()
+        y.backward = function ∇FRNNSoftmaxFocalTCSLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* 𝒌 .* Δ

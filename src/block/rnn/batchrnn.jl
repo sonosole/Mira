@@ -66,7 +66,7 @@ function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
     end
 
     if y.backprop
-        y.backward = function PackSeqSlicesBackward()
+        y.backward = function ∇PackSeqSlices()
             Threads.@threads for t = 1:T
                 if need2computeδ!(v[t])
                     v[t].delta .+= y.delta[:,t,:]

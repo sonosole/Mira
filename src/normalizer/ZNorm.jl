@@ -97,7 +97,7 @@ function forward(b::ZNorm, x::Variable{T}) where T
         Σ = σ .* σ
         @. b.μ = ρ * b.μ + (1 - ρ) * μ    # running mean
         @. b.σ = ρ * b.σ + (1 - ρ) * Σ    # running var
-        y.backward = function ZNormBackward()
+        y.backward = function ∇ZNorm()
             if need2computeδ!(x)
                 n     = length(σ)/length(x)
                 σ¯¹   = 1 ./ (σ .+ ϵ)

@@ -61,7 +61,7 @@ function forward(m::ScalePath, x::Variable{T}) where T
     y = Variable{T}(ᵛ(x) .* ᵛ(k), x.backprop)
 
     if y.backprop
-        y.backward = function ScalePathBackward()
+        y.backward = function ∇ScalePath()
             if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(k)  end
             if need2computeδ!(k) δ(k) .+= sum(δ(y) .* ᵛ(x)) end
             ifNotKeepδThenFreeδ!(y);

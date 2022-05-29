@@ -38,7 +38,7 @@ function DNNCTCLoss(p::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0) where
     y = Variable{T}([nlnp], p.backprop)
 
     if y.backprop
-        y.backward = function DNNCTCLoss_Backward()
+        y.backward = function ∇DNNCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -96,7 +96,7 @@ function FNNCTCLoss(p::Variable{T}, seqlabels::VecVecInt, inputlens::VecInt; bla
     y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
-        y.backward = function FNNCTCLoss_Backward()
+        y.backward = function ∇FNNCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -160,7 +160,7 @@ function RNNCTCLoss(p::Variable{T},
     y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
-        y.backward = function RNNCTCLoss_Backward()
+        y.backward = function ∇RNNCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -225,7 +225,7 @@ function FRNNCTCLoss(p::Variable{T},
     y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
-        y.backward = function FRNNCTCLoss_Backward()
+        y.backward = function ∇FRNNCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= δ(y) .* r ./ ᵛ(p)
@@ -289,7 +289,7 @@ function FRNNFocalCTCLoss(p::Variable{T},
     y = Variable{T}([sum(t)], p.backprop)
 
     if y.backprop
-        y.backward = function FRNNFocalCTCLoss_Backward()
+        y.backward = function ∇FRNNFocalCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
@@ -329,7 +329,7 @@ function FRNNFocalCTCLoss_Naive(p::Variable{T},
     reduce3d(r, ᵛ(y), seqlabels, reduction)
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNFocalCTCLoss_Naive_Backward()
+        𝒑.backward = function ∇FRNNFocalCTCLoss_Naive()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
@@ -368,7 +368,7 @@ function FRNNCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where 
     𝒑 = Variable{T}(exp(T(-nlnp)), p.backprop)
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNCTCProbs_Backward()
+        𝒑.backward = function ∇FRNNCTCProbs()
             if need2computeδ!(p)
                 δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end

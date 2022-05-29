@@ -48,7 +48,7 @@ function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
-        z.backward = function DotAddBackward()
+        z.backward = function ∇DotAdd()
             δz = copy(δ(z))
             if need2computeδ!(x)
                 δx = δz
@@ -70,7 +70,7 @@ end
 function broadcasted(::typeof(+), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .+ y, x.backprop)
     if z.backprop
-        z.backward = function DotAddBackward()
+        z.backward = function ∇DotAdd()
             if need2computeδ!(x)
                 δx = copy(δ(z))
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -86,7 +86,7 @@ end
 function broadcasted(::typeof(+), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .+ ᵛ(y), y.backprop)
     if z.backprop
-        z.backward = function DotAddBackward()
+        z.backward = function ∇DotAdd()
             if need2computeδ!(y)
                 δy = copy(δ(z))
                 δ(y) .+= unbcast(δy, ᵛ(y))
@@ -104,7 +104,7 @@ function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .- ᵛ(y), x.backprop || y.backprop)
     if z.backprop
-        z.backward = function DotMinusBackward()
+        z.backward = function ∇DotMinus()
             if need2computeδ!(x)
                 δx = copy(δ(z))
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -125,7 +125,7 @@ end
 function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .- y, x.backprop)
     if z.backprop
-        z.backward = function DotMinusBackward()
+        z.backward = function ∇DotMinus()
             if need2computeδ!(x)
                 δx = copy(δ(z))
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -141,7 +141,7 @@ end
 function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .- ᵛ(y), y.backprop)
     if z.backprop
-        z.backward = function DotMinusBackward()
+        z.backward = function ∇DotMinus()
             if need2computeδ!(y)
                 δy = - δ(z)
                 δ(y) .+= unbcast(δy, ᵛ(y))
@@ -159,7 +159,7 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), x.backprop || y.backprop)
     if z.backprop
-        z.backward = function DotMulBackward()
+        z.backward = function ∇DotMul()
             if need2computeδ!(x)
                 δx = δ(z) .* ᵛ(y)
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -180,7 +180,7 @@ end
 function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if z.backprop
-        z.backward = function DotMulBackward()
+        z.backward = function ∇DotMul()
             if need2computeδ!(x)
                 δx = δ(z) .* y
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -196,7 +196,7 @@ end
 function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .* ᵛ(y), y.backprop)
     if z.backprop
-        z.backward = function DotMulBackward()
+        z.backward = function ∇DotMul()
             if need2computeδ!(y)
                 δy = δ(z) .* x
                 δ(y) .+= unbcast(δy, ᵛ(y))
@@ -214,7 +214,7 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) ./ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
-        z.backward = function DotDivBackward()
+        z.backward = function ∇DotDiv()
             δx = δ(z) ./ ᵛ(y)
             if need2computeδ!(x)
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -235,7 +235,7 @@ end
 function broadcasted(::typeof(/), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
-        z.backward = function DotDivBackward()
+        z.backward = function ∇DotDiv()
             δx = δ(z) ./ y
             if need2computeδ!(x)
                 δ(x) .+= unbcast(δx, ᵛ(x))
@@ -251,7 +251,7 @@ end
 function broadcasted(::typeof(/), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x ./ ᵛ(y), y.backprop)
     if z.backprop
-        z.backward = function DotDivBackward()
+        z.backward = function ∇DotDiv()
             if need2computeδ!(y)
                 δy = - δ(z) ./ ᵛ(y) .* ᵛ(z)
                 δ(y) .+= unbcast(δy, ᵛ(y))

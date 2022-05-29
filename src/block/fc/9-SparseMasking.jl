@@ -36,7 +36,7 @@ function sparseLoss(s::SparseMasking)
     y  = typeof(s.scale)(t₁ + t₂ .+ c, p.backprop)
 
     if y.backprop
-        y.backward = function sparseLossBackward()
+        y.backward = function ∇sparseLoss()
             if need2computeδ!(p)
                 δ₁ =  (𝟙 - 𝜌) ./ (𝟙 .- ᵛ(p) .+ ϵ)
                 δ₂ =       𝜌  ./ (     ᵛ(p) .+ ϵ)

@@ -9,7 +9,7 @@ function Base.:+(x::Variable{T}, constant) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .+ C, x.backprop)
     if y.backprop
-        y.backward = function matAddScalarBackward()
+        y.backward = function ∇matAddScalar()
             if need2computeδ!(x)
                 δ(x) .+= δ(y)
             end
@@ -31,7 +31,7 @@ function Base.:-(x::Variable{T}, constant) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .- C, x.backprop)
     if y.backprop
-        y.backward = function matMinusScalarBackward()
+        y.backward = function ∇matMinusScalar()
             if need2computeδ!(x)
                 δ(x) .+= δ(y)
             end
@@ -48,7 +48,7 @@ function Base.:-(constant, x::Variable{T}) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(C .- ᵛ(x), x.backprop)
     if y.backprop
-        y.backward = function scalarMinusMatBackward()
+        y.backward = function ∇scalarMinusMat()
             if need2computeδ!(x)
                 δ(x) .-= δ(y)
             end
@@ -64,7 +64,7 @@ function Base.:-(x::Variable{T}) where T
     # a matrix minus a constant element by element
     y = Variable{T}(- ᵛ(x), x.backprop)
     if y.backprop
-        y.backward = function setNegativeBackward()
+        y.backward = function ∇setNegative()
             if need2computeδ!(x)
                 δ(x) .-= δ(y)
             end
@@ -81,7 +81,7 @@ function Base.:*(x::Variable{T}, constant) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .* C, x.backprop)
     if y.backprop
-        y.backward = function matMulScalarBackward()
+        y.backward = function ∇matMulScalar()
             if need2computeδ!(x)
                 δ(x) .+= δ(y) .* C
             end
@@ -103,7 +103,7 @@ function Base.:^(x::Variable{T}, n::Real) where T
     n = eltype(ᵛ(x))(n)
     y = Variable{T}(ᵛ(x) .^ n, x.backprop)
     if y.backprop
-        y.backward = function powerBackward()
+        y.backward = function ∇power()
             if need2computeδ!(x)
                 δ(x) .+= n .* ᵛ(y) ./ ᵛ(x) .* δ(y)
             end
@@ -122,7 +122,7 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
    backprop = (x.backprop || y.backprop)
    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
    if backprop
-       z.backward = function add2varBackward()
+       z.backward = function ∇add2var()
            if need2computeδ!(x) δ(x) .+= δ(z) end
            if need2computeδ!(y) δ(y) .+= δ(z) end
            ifNotKeepδThenFreeδ!(z)
@@ -141,7 +141,7 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
     if backprop
-        z.backward = function minus2varBackward()
+        z.backward = function ∇minus2var()
             if need2computeδ!(x) δ(x) .+= δ(z) end
             if need2computeδ!(y) δ(y) .-= δ(z) end
             ifNotKeepδThenFreeδ!(z)
@@ -164,7 +164,7 @@ function dotAdd(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), backprop)
     if backprop
-        z.backward = function dotAddBackward()
+        z.backward = function ∇dotAdd()
             if need2computeδ!(x) δ(x) .+= δ(z) end
             if need2computeδ!(y) δ(y) .+= δ(z) end
             ifNotKeepδThenFreeδ!(z)
@@ -187,7 +187,7 @@ function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
-        z.backward = function dotMulBackward()
+        z.backward = function ∇dotMul()
             if need2computeδ!(x) δ(x) .+= δ(z) .* ᵛ(y) end
             if need2computeδ!(y) δ(y) .+= δ(z) .* ᵛ(x) end
             ifNotKeepδThenFreeδ!(z)
@@ -209,7 +209,7 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     Y = Variable{T}(ᵛ(W) * ᵛ(X), backprop)
     if backprop
-        Y.backward = function matMulBackward()
+        Y.backward = function ∇matMul()
             if need2computeδ!(W) δ(W) .+= δ(Y)  * ᵛ(X)' end
             if need2computeδ!(X) δ(X) .+= ᵛ(W)' * δ(Y)  end
             ifNotKeepδThenFreeδ!(Y)
@@ -234,7 +234,7 @@ function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
     if backprop
-        Z.backward = function matAddVecBackward()
+        Z.backward = function ∇matAddVec()
             if need2computeδ!(M) δ(M) .+=     δ(Z)          end
             if need2computeδ!(V) δ(V) .+= sum(δ(Z), dims=2) end
             ifNotKeepδThenFreeδ!(Z)
@@ -259,7 +259,7 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)
     if backprop
-        Z.backward = function matMulVecBackward()
+        Z.backward = function ∇matMulVec()
             if need2computeδ!(M) δ(M) .+=     δ(Z) .* ᵛ(V)          end
             if need2computeδ!(V) δ(V) .+= sum(δ(Z) .* ᵛ(M), dims=2) end
             ifNotKeepδThenFreeδ!(Z)

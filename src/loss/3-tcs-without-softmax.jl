@@ -57,7 +57,7 @@ function FNNTCSLoss(p::Variable{T},
     y = Variable{T}([sum(nlnp)], p.backprop)
 
     if y.backprop
-        y.backward = function FNNTCSLoss_Backward()
+        y.backward = function ∇FNNTCSLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ ᵛ(p)
@@ -130,7 +130,7 @@ function RNNTCSLoss(p::Variable{T},
     y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
-        y.backward = function RNNTCSLoss_Backward()
+        y.backward = function ∇RNNTCSLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ ᵛ(p)
@@ -198,7 +198,7 @@ function FRNNTCSLoss(p::Variable{T},
     y = Variable{T}([sum(l)], p.backprop)
 
     if y.backprop
-        y.backward = function FRNNTCSLoss_Backward()
+        y.backward = function ∇FRNNTCSLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .-= r ./ ᵛ(p)
@@ -241,7 +241,7 @@ function FRNNFocalTCSLoss(p::Variable{T},
     y = Variable{T}([sum(t)], p.backprop)
 
     if y.backprop
-        y.backward = function FRNNFocalCTCLoss_Backward()
+        y.backward = function ∇FRNNFocalCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
                     δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
@@ -270,7 +270,7 @@ function FRNNTCSProbs(p::Variable{T}, seqlabels::VecVecInt; background::Int=1, f
     𝒑 = Variable{T}(exp(T(-nlnp)), p.backprop)
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNTCSProbs_Backward()
+        𝒑.backward = function ∇FRNNTCSProbs()
             if need2computeδ!(p)
                 δ(p) .+= δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end

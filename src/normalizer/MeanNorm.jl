@@ -83,7 +83,7 @@ function forward(M::MeanNorm, x::Variable{T}) where T
 
     if y.backprop
         @. μ = (1 - ρ) * μ + ρ * μₓ    # running mean
-        y.backward = function MeanNormBackward()
+        y.backward = function ∇MeanNorm()
             if need2computeδ!(x)
                 δ(x) .+= δ(y) .- sum(δ(y), dims=v) .* n
             end

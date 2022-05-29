@@ -42,7 +42,7 @@ function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, w
     y = Variable{T}([nlnp], x.backprop)
 
     if y.backprop
-        y.backward = function DNNSoftmaxCTCLossSingleSeq_Backward()
+        y.backward = function ∇DNNSoftmaxCTCLossSingleSeq()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -107,7 +107,7 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
     y = Variable{T}([sum(nlnp)], x.backprop)
 
     if y.backprop
-        y.backward = function FNNSoftmaxCTCLoss_Backward()
+        y.backward = function ∇FNNSoftmaxCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -174,7 +174,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
     y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function RNNSoftmaxCTCLoss_Backward()
+        y.backward = function ∇RNNSoftmaxCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -238,7 +238,7 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
     y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function FRNNSoftmaxCTCLoss_Backward()
+        y.backward = function ∇FRNNSoftmaxCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* Δ
@@ -282,7 +282,7 @@ function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
     y = Variable{T}([sum(t)], x.backprop)
 
     if y.backprop
-        y.backward = function FRNNSoftmaxFocalCTCLoss_Backward()
+        y.backward = function ∇FRNNSoftmaxFocalCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
                     δ(x) .+= δ(y) .* 𝒌 .* Δ
@@ -324,7 +324,7 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1)
     Δ = r - p
 
     if 𝒑.backprop
-        𝒑.backward = function FRNNSoftmaxCTCProbs_Backward()
+        𝒑.backward = function ∇FRNNSoftmaxCTCProbs()
             if need2computeδ!(x)
                 δ(x) .+= δ(𝒑) .* ᵛ(𝒑) .*  Δ
             end
