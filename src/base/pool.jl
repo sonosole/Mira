@@ -90,6 +90,11 @@ function Base.minmax(x::AbstractArray; dims1::Int, dims2::Int)
 end
 
 
+"""
+    linearpool(x::Variable; dims=1) -> y
+
+    y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
+"""
 function linearpool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     Σxᵢ² = sum(ᵛ(x) .* ᵛ(x), dims=dims)     # Σ xᵢ·xᵢ
     Σxᵢ  = sum(ᵛ(x),         dims=dims)     # Σ xᵢ
@@ -111,13 +116,18 @@ end
 """
     linearpool(x::AbstractArray; dims=1) -> y
 
-    y = (Σᵢ xᵢ .* xᵢ) ./ Σᵢ xᵢ
+    y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
 """
 function linearpool(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}=1) where N
     return sum(x .* x, dims=dims) ./ sum(x, dims=dims)
 end
 
 
+"""
+    exppool(x::Variable; dims=1) -> y
+
+    y[k] = (Σᵢ exp(x[k,i]) * x[k,i]) / Σᵢ exp(x[k,i]), i is the indices of other dims
+"""
 function exppool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     eˣ  = exp.(ᵛ(x))
     Σeˣⁱxᵢ = sum(eˣ .* ᵛ(x), dims=dims)   # Σ exp(xᵢ)·xᵢ
@@ -140,7 +150,7 @@ end
 """
     exppool(x::AbstractArray; dims=1) -> y
 
-    y = (Σᵢ exp.(xᵢ) .* xᵢ) ./ Σᵢ exp.(xᵢ)
+    y[k] = (Σᵢ exp(x[k,i]) * x[k,i]) / Σᵢ exp(x[k,i]), i is the indices of other dims
 """
 function exppool(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}=1) where N
     e = exp.(x)
