@@ -141,9 +141,10 @@ function PlainConv1dReceptiveField(chain::Chain)
     t1 = 1
     t2 = 2
     for i = length(chain):-1:1
-        @assert (typeof(chain[i]) <: PlainConv1d) "$(typeof(chain[i])) <: PlainConv1d"
-        t1 = (t1-1) * chain[i].s + chain[i].k
-        t2 = (t2-1) * chain[i].s + chain[i].k
+        if typeof(chain[i]) <: PlainConv1d
+            t1 = (t1-1) * chain[i].s + chain[i].k
+            t2 = (t2-1) * chain[i].s + chain[i].k
+        end
     end
     return (1:t1,t2-t1+1:t2)
 end
