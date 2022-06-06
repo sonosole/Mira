@@ -106,8 +106,9 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
                 δw = δ(w)
                 δy = δ(y)
                 for t = 1:steps
-                    δw .+= sum(δy[:, t:t, :] .* vx[:, s[t]:f[t], :], dims=3)
-                    # C × K       C × 1 × B           C × K × B
+                    u = sum(δy[:, t:t, :] .* vx[:, s[t]:f[t], :], dims=3)
+                    #          C × 1 × B           C × K × B
+                    δw .+= reshape(u, channels, kernel)
                 end
             end
         end
