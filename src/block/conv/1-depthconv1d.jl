@@ -73,7 +73,7 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
     kernel = block.k
     stride = block.s
     steps = floor(Int, (width-kernel)/stride) + 1
-    vy = zeros(eltype(T), channels, steps, batchsize)
+    vy = Zeros(T, channels, steps, batchsize)
     vx = value(x)
     w = block.w
     b = block.b
@@ -116,13 +116,13 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
 end
 
 
-function predict(block::PlainDepthConv1d, x::AbstractArray)
+function predict(block::PlainDepthConv1d, x::S) where S <: AbstractArray
     @assert ndims(x)==3 "input shape is of (ichannels, width, batchsize)"
     channels, width, batchsize = size(x)
     kernel = block.k
     stride = block.s
     T = floor(Int, (width-kernel)/stride) + 1
-    y = zeros(eltype(x), channels, T, batchsize)
+    y = Zeros(S, channels, T, batchsize)
     w = ᵛ(block.w)
     b = ᵛ(block.b)
 

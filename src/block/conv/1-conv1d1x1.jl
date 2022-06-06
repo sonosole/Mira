@@ -1,3 +1,5 @@
+export Conv1d1x1
+
 """
     mutable struct Conv1d1x1 <: Block
 
