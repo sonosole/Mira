@@ -132,5 +132,5 @@ function predict(block::PlainDepthConv1d, x::S) where S <: AbstractArray
     Threads.@threads for t = 1:T
         y[:, t:t, :] = sum(w .* x[:, s[t]:f[t], :], dims=2)
     end
-    return y
+    return y .+ b
 end
