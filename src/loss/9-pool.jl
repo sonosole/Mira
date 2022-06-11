@@ -65,7 +65,8 @@ function PoolLoss(p::Variable{S},
                   reduction::String="sum",
                   poolingfn::Function=linearpool,
                   blank::IntOrNil=nothing,
-                  focus::BoolOrNil=nothing) where S
+                  focus::BoolOrNil=nothing,
+                  gamma::Real=1.0) where S
 
     C, T, B = size(p)
     y = poolingfn(p, dims=2)
