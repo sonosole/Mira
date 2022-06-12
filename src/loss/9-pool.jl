@@ -1,7 +1,5 @@
 export onehotpool
 export multihotpool
-export OnehotLinearPoolLoss
-export MultihotLinearPoolLoss
 export PoolLoss
 
 const IntOrNil  = Union{Nothing, Int}
