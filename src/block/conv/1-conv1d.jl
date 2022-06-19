@@ -19,9 +19,9 @@ mutable struct PlainConv1d <: Block
     function PlainConv1d(ichannels::Int, ochannels::Int, kernel::Int; stride::Int=1, type::Type=Array{Float32})
         dtype = eltype(type)
         filterSize = ichannels * kernel
-        amplitude = sqrt(dtype(2/filterSize))
-        w = amplitude * randn(dtype, ochannels, filterSize)
-        b = amplitude * randn(dtype, ochannels,          1)
+        A = dtype(sqrt(2 / filterSize))
+        w = A * randn(dtype, ochannels, filterSize)
+        b = A * randn(dtype, ochannels,          1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
             kernel, stride)

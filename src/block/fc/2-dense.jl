@@ -9,9 +9,9 @@ mutable struct Dense <: Block
     f::Function
     function Dense(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
         T = eltype(type)
-        a = sqrt(T(2/isize))
-        w = randn(T, hsize, isize) .* a
-        b = randn(T, hsize,     1) .* a
+        A = T(sqrt(2 / isize))
+        w = randn(T, hsize, isize) .* A
+        b = randn(T, hsize,     1) .* A
         new(Variable{type}(w,true,true,true), Variable{type}(b,true,true,true), fn)
     end
     function Dense(fn::Function)

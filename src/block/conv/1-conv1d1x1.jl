@@ -11,7 +11,7 @@ mutable struct Conv1d1x1 <: Block
     f::Function
     function Conv1d1x1(isize::Int, osize::Int, fn::Function=relu; type::Type=Array{Float32})
         T = eltype(type)
-        A = sqrt(T(2/isize))
+        A = T( sqrt(2 / isize) )
         w = randn(T, osize, isize) .* A
         b = randn(T, osize,     1) .* A
         new(Variable{type}(w,true,true,true), Variable{type}(b,true,true,true), fn)

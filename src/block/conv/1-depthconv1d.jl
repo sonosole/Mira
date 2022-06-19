@@ -7,7 +7,7 @@ mutable struct PlainDepthConv1d <: Block
     s::Int      # stride size
     function PlainDepthConv1d(channels::Int, kernel::Int; stride::Int=1, type::Type=Array{Float32})
         T = eltype(type)
-        A = sqrt(T(2/channels))
+        A = T(sqrt(2 / kernel))
         w = A * randn(T, channels, kernel)
         b = A * randn(T, channels,      1)
         new(Variable{type}(w,true,true,true),

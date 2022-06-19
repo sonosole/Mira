@@ -7,7 +7,7 @@ mutable struct Affine <: Block
     w::VarOrNil # input to hidden weights
     function Affine(isize::Int, hsize::Int; type::Type=Array{Float32})
         T = eltype(type)
-        A = sqrt(T(1/hsize))
+        A = T(sqrt(1 / hsize))
         w = randn(T, hsize, isize) .* A
         new(Variable{type}(w,true,true,true))
     end
