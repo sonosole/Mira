@@ -5,11 +5,25 @@ mutable struct PlainDepthConv1d <: Block
     b::VarOrNil # bias of hidden units
     k::Int      # kernel size
     s::Int      # stride size
-    function PlainDepthConv1d(channels::Int, kernel::Int; stride::Int=1, type::Type=Array{Float32})
+    function PlainDepthConv1d(channels::Int,
+                              kernel::Int;
+                              # bias::Bool=true,
+                              stride::Int=1,
+                              gain::Real=1.0,
+                              type::Type=Array{Float32})
         T = eltype(type)
-        A = T(sqrt(2 / kernel))
-        w = A * randn(T, channels, kernel)
-        b = A * randn(T, channels,      1)
+        A = T(sqrt(2 / kernel)) .* gain
+        w = randn(T, channels, kernel) .* A
+
+        # if bias
+        #     b = zeros(T, channels,      1)
+        #     new(Variable{type}(w,true,true,true),
+        #         Variable{type}(b,true,true,true),
+        #         kernel, stride)
+        # else
+        #     new(Variable{type}(w,true,true,true), nothing, kernel, stride)
+        # end
+        b = zeros(T, channels,      1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
             kernel, stride)
