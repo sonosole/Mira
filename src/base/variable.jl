@@ -84,6 +84,11 @@ function clone(x::Variable; type::Type=Array{Float32})
 end
 
 
+function clone(x::Nothing; type::Type=Array{Float32})
+    return nothing
+end
+
+
 function zerodelta(x::Variable{T}) where T
     if isnothing(x.delta)
         x.delta = Zeros(T, x.shape);
