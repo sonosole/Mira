@@ -38,6 +38,8 @@ end
     return T
 end
 
+(f::Nothing)(x::AbstractArray) = x
+(f::Nothing)(x::VarOrNil) = x
 
 export VecVecInt
 export VecInt
