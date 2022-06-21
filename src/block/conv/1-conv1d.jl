@@ -14,9 +14,16 @@ for convenient. This is the simplest case which has just kernel and stride param
 mutable struct PlainConv1d <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
+    f::FunOrNil
     k::Int      # kernel size
     s::Int      # stride size
-    function PlainConv1d(ichannels::Int, ochannels::Int, kernel::Int; stride::Int=1, type::Type=Array{Float32})
+    function PlainConv1d(ichannels::Int,
+                         ochannels::Int,
+                         kernel::Int,
+                         fn::FunOrNil=relu;
+                         stride::Int=1,
+                         type::Type=Array{Float32})
+
         dtype = eltype(type)
         filterSize = ichannels * kernel
         A = dtype(sqrt(2 / filterSize))
@@ -24,16 +31,16 @@ mutable struct PlainConv1d <: Block
         b = A * randn(dtype, ochannels,          1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
-            kernel, stride)
+            fn, kernel, stride)
     end
-    function PlainConv1d(kernel::Int; stride::Int=1)
-        new(nothing, nothing, kernel, stride)
+    function PlainConv1d(fn::FunOrNil, kernel::Int; stride::Int=1)
+        new(nothing, nothing, fn, kernel, stride)
     end
 end
 
 
 function clone(this::PlainConv1d; type::Type=Array{Float32})
-    cloned = PlainConv1d(this.k, stride=this.s)
+    cloned = PlainConv1d(this.f, this.k, stride=this.s)
     cloned.w = clone(this.w, type=type)
     cloned.b = clone(this.b, type=type)
     return cloned
@@ -233,27 +240,31 @@ function col2out(x::Variable, batchsize::Int)
 end
 
 
-function forward(model::PlainConv1d, x::Variable{T}) where T
+function forward(block::PlainConv1d, x::Variable{T}) where T
     # size(x) == (ichannels,width,batchsize)
     @assert ndims(x)==3 "input shape is of (ichannels,width,batchsize)"
     batchsize = size(x,3)
-    w = model.w
-    b = model.b
-    x = in2col(x, model.k, model.s)
+    w = block.w
+    b = block.b
+    f = block.f
+    x = in2col(x, block.k, block.s)
     x = matAddVec(w * x, b)
-    return col2out(x, batchsize)
+    x = col2out(x, batchsize)
+    return f(x)
 end
 
 
-function predict(model::PlainConv1d, x::AbstractArray)
+function predict(block::PlainConv1d, x::AbstractArray)
     # size(x) == (ichannels,width,batchsize)
     @assert ndims(x)==3 "input shape is of (ichannels,width,batchsize)"
     batchsize = size(x,3)
-    w = model.w.value
-    b = model.b.value
-    x = in2col(x, model.k, model.s)
+    f = block.f
+    w = block.w.value
+    b = block.b.value
+    x = in2col(x, block.k, block.s)
     x = w * x .+ b
-    return col2out(x, batchsize)
+    x = col2out(x, batchsize)
+    return f(x)
 end
 
 

@@ -8,15 +8,16 @@ Applies y = fn(w * x .+ b) transformation to the incoming data x
 mutable struct Conv1d1x1 <: Block
     w::VarOrNil
     b::VarOrNil
-    f::Function
-    function Conv1d1x1(isize::Int, osize::Int, fn::Function=relu; type::Type=Array{Float32})
+    f::FunOrNil
+    function Conv1d1x1(isize::Int, osize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
         A = T( sqrt(2 / isize) )
         w = randn(T, osize, isize) .* A
         b = randn(T, osize,     1) .* A
-        new(Variable{type}(w,true,true,true), Variable{type}(b,true,true,true), fn)
+        new(Variable{type}(w,true,true,true),
+            Variable{type}(b,true,true,true), fn)
     end
-    function Conv1d1x1(fn::Function)
+    function Conv1d1x1(fn::FunOrNil)
         new(nothing, nothing, fn)
     end
 end

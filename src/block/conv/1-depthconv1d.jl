@@ -3,39 +3,31 @@ export PlainDepthConv1d
 mutable struct PlainDepthConv1d <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
+    f::FunOrNil
     k::Int      # kernel size
     s::Int      # stride size
     function PlainDepthConv1d(channels::Int,
-                              kernel::Int;
-                              # bias::Bool=true,
+                              kernel::Int,
+                              fn::FunOrNil=relu;
                               stride::Int=1,
                               gain::Real=1.0,
                               type::Type=Array{Float32})
         T = eltype(type)
         A = T(sqrt(2 / kernel)) .* gain
         w = randn(T, channels, kernel) .* A
-
-        # if bias
-        #     b = zeros(T, channels,      1)
-        #     new(Variable{type}(w,true,true,true),
-        #         Variable{type}(b,true,true,true),
-        #         kernel, stride)
-        # else
-        #     new(Variable{type}(w,true,true,true), nothing, kernel, stride)
-        # end
         b = zeros(T, channels,      1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
-            kernel, stride)
+            fn, kernel, stride)
     end
-    function PlainDepthConv1d(kernel::Int; stride::Int=1)
-        new(nothing, nothing, kernel, stride)
+    function PlainDepthConv1d(fn::FunOrNil, kernel::Int; stride::Int=1)
+        new(nothing, nothing, fn, kernel, stride)
     end
 end
 
 
 function clone(this::PlainDepthConv1d; type::Type=Array{Float32})
-    cloned = PlainDepthConv1d(this.k, stride=this.s)
+    cloned = PlainDepthConv1d(this.f, this.k, stride=this.s)
     cloned.w = clone(this.w, type=type)
     cloned.b = clone(this.b, type=type)
     return cloned
@@ -89,6 +81,7 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
     steps = floor(Int, (width-kernel)/stride) + 1
     vy = Zeros(T, channels, steps, batchsize)
     vx = value(x)
+    F = block.f
     w = block.w
     b = block.b
     s =      1:stride:width # start indices
@@ -126,8 +119,12 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
                 end
             end
         end
+        addchild(y, w)
+        addchild(y, x)
     end
-    return y .+ b
+
+    z = y .+ b
+    return F(z)
 end
 
 
@@ -140,11 +137,13 @@ function predict(block::PlainDepthConv1d, x::S) where S <: AbstractArray
     y = Zeros(S, channels, T, batchsize)
     w = ᵛ(block.w)
     b = ᵛ(block.b)
-
+    F = block.f
     s =      1:stride:width # start indices
     f = kernel:stride:width # final indices
     Threads.@threads for t = 1:T
         y[:, t:t, :] = sum(w .* x[:, s[t]:f[t], :], dims=2)
     end
-    return y .+ b
+
+    z = y .+ b
+    return F(z)
 end
