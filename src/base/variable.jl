@@ -202,3 +202,7 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 function Vecvar(n::Int=0)
     return Vector{Variable}(undef, n)
 end
+
+
+(f::Nothing)(x::AbstractArray) = x
+(f::Nothing)(x::VarOrNil) = x
