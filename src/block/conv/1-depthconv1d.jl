@@ -3,7 +3,7 @@ export PlainDepthConv1d
 mutable struct PlainDepthConv1d <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
-    f::FunOrNil
+    f::FunOrNil # active fn or nothing
     k::Int      # kernel size
     s::Int      # stride size
     function PlainDepthConv1d(channels::Int,

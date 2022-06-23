@@ -14,7 +14,7 @@ for convenient. This is the simplest case which has just kernel and stride param
 mutable struct PlainConv1d <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
-    f::FunOrNil
+    f::FunOrNil # active fn or nothing
     k::Int      # kernel size
     s::Int      # stride size
     function PlainConv1d(ichannels::Int,
