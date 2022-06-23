@@ -30,19 +30,19 @@ mutable struct LSTM <: Block
     function LSTM(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
 
-        wi = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wi = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         ui = randdiagonal(T, hsize, from=-0.2, to=0.2)
-        bi = 3ones(T, hsize, 1)
+        bi = zeros(T, hsize, 1)
 
-        wf = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wf = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uf = randdiagonal(T, hsize, from=-0.2, to=0.2)
-        bf =-3ones(T, hsize, 1)
+        bf = zeros(T, hsize, 1) .+ T(5)
 
-        wo = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wo = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uo = randdiagonal(T, hsize, from=-0.2, to=0.2)
-        bo = 3ones(T, hsize, 1)
+        bo = zeros(T, hsize, 1)
 
-        wc = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wc = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uc = randdiagonal(T, hsize, from=-0.2, to=0.2)
         bc = zeros(T, hsize, 1)
 

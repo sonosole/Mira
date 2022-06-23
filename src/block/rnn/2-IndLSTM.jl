@@ -21,19 +21,19 @@ mutable struct IndLSTM <: Block
         T  = eltype(type)
         A  = T(1E-1)
 
-        wi = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wi = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         ui = randn(T, hsize, 1) .* A
-        bi = 3ones(T, hsize, 1)
+        bi = zeros(T, hsize, 1)
 
-        wf = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wf = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uf = randn(T, hsize, 1) .* A
-        bf =-3ones(T, hsize, 1)
+        bf = zeros(T, hsize, 1) .+ T(5)
 
-        wo = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wo = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uo = randn(T, hsize, 1) .* A
-        bo = 3ones(T, hsize, 1)
+        bo = zeros(T, hsize, 1)
 
-        wc = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        wc = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uc = randn(T, hsize, 1) .* A
         bc = zeros(T, hsize, 1)
 

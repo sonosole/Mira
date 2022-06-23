@@ -6,18 +6,18 @@ mutable struct RNN <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
     u::VarOrNil # recurrent weights
-    f::Function # activation function
+    f::FunOrNil # activation function
     h::Any      # hidden variable
-    function RNN(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
+    function RNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
-        w = randn(T, hsize, isize) .* sqrt( T(2/isize) )
+        w = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         b = zeros(T, hsize, 1)
         u = randdiagonal(T, hsize; from=-0.1990, to=0.1997)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
             Variable{type}(u,true,true,true), fn, nothing)
     end
-    function RNN(fn::Function)
+    function RNN(fn::FunOrNil)
         new(nothing, nothing, nothing, fn, nothing)
     end
 end
