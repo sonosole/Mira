@@ -16,7 +16,7 @@
 
             # [2] forward and backward propagation
             probs = softmax(x; dims=DIMS)
-            Loss1 = crossEntropyLoss(probs, l);
+            Loss1 = CrossEntropyLoss(probs, l);
             Loss2 = MSELoss(probs, l);
             COST1 = loss(0.8*Loss1 + 0.2*Loss2)
             backward(COST1);
@@ -28,7 +28,7 @@
 
             # [4] forward and backward propagation with a samll change of a weight
             probs = softmax(x; dims=DIMS)
-            Loss1 = crossEntropyLoss(probs, l);
+            Loss1 = CrossEntropyLoss(probs, l);
             Loss2 = MSELoss(probs, l);
             COST2 = loss(0.8*Loss1 + 0.2*Loss2)
             backward(COST2);
