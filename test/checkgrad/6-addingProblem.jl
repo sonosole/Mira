@@ -16,7 +16,7 @@
         y = sum(x1 .* x2)
         return [x1;x2],[y]
     end
-    
+
     using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
@@ -39,7 +39,7 @@
         tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) );
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) );
-    COST1 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) );
+    COST1 = MSELoss(y, Variable( reshape(s,1,1); type=TYPE) );
     backward(COST1)
     GRAD = model[1].w.delta[1]
 
@@ -53,7 +53,7 @@
         tmp = forward(model, Variable( reshape(x[:,t], 2,1); type=TYPE) )
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) )
-    COST2 = mseLoss(y, Variable( reshape(s,1,1); type=TYPE) )
+    COST2 = MSELoss(y, Variable( reshape(s,1,1); type=TYPE) )
     backward(COST2)
 
     # [5] check if the auto-grad is true or not

@@ -16,7 +16,7 @@ Random.seed!(UInt(time_ns()))
                 if d==2;l = Variable(rand(inputdims, 1, batchsize); type=TYPE);end
                 if d==3;l = Variable(rand(inputdims, timeSteps, 1); type=TYPE);end
 
-                fn(x) = mseLoss(pool(x, dims=DIMS), l);
+                fn(x) = MSELoss(pool(x, dims=DIMS), l);
                 @test checkgrad(fn, x)
             end
         end
@@ -37,7 +37,7 @@ end
             x = Variable(rand(inputdims, timeSteps, batchsize); type=TYPE,keepsgrad=true);
             l = Variable(rand(1,         1,         batchsize); type=TYPE);
 
-            fn(x) = mseLoss(pool(x; dims=DIMS), l);
+            fn(x) = MSELoss(pool(x; dims=DIMS), l);
             @test checkgrad(fn, x)
         end
     end
@@ -58,7 +58,7 @@ end
             x = Variable(rand(inputdims, timeSteps, batchsize); type=TYPE,keepsgrad=true);
             l = Variable(rand(1,         1,         batchsize); type=TYPE);
 
-            fn(x) = mseLoss(pool(x; dims1=DIM1, dims2=DIM2), l)
+            fn(x) = MSELoss(pool(x; dims1=DIM1, dims2=DIM2), l)
             @test checkgrad(fn, x)
         end
     end

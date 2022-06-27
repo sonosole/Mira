@@ -20,8 +20,8 @@
                 IndGRU(256, 256),              # m[9][2]
                 LSTM(256, 256),                # m[9][3]
                 IndLSTM(256, 256),             # m[9][4]
-                RNN(256, 256, leakyrelu),           # m[9][5]
-                IndRNN(256, 256, relu),   # m[9][6]
+                RNN(256, 256, leakyrelu),      # m[9][5]
+                IndRNN(256, 256, relu),        # m[9][6]
                 PickyRNN(256, tones, relux2y)) # m[9][7]
 
             new([c1, f1, f2, f3, f4, f5, f6, f7, chain])

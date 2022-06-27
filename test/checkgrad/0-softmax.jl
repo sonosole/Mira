@@ -1,7 +1,7 @@
 @testset "check softmax op's gradient" begin
     using Random
     Random.seed!(UInt(time_ns()))
-    
+
     for d in [1 2 3 (1,2) (2,3) (1,3) (1,2,3)]
         @testset "check softmax op's gradient at dim = $d" begin
             DIMS = d
@@ -17,7 +17,7 @@
             # [2] forward and backward propagation
             probs = softmax(x; dims=DIMS)
             Loss1 = crossEntropyLoss(probs, l);
-            Loss2 = mseLoss(probs, l);
+            Loss2 = MSELoss(probs, l);
             COST1 = loss(0.8*Loss1 + 0.2*Loss2)
             backward(COST1);
             GRAD = x.delta[1];
@@ -29,7 +29,7 @@
             # [4] forward and backward propagation with a samll change of a weight
             probs = softmax(x; dims=DIMS)
             Loss1 = crossEntropyLoss(probs, l);
-            Loss2 = mseLoss(probs, l);
+            Loss2 = MSELoss(probs, l);
             COST2 = loss(0.8*Loss1 + 0.2*Loss2)
             backward(COST2);
 

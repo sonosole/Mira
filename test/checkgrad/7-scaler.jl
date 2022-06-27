@@ -10,7 +10,7 @@
 
     # [3] forward and get gradient by backpropagation
     y  = forward(k, x);
-    C₁ = mseLoss(y, l);
+    C₁ = MSELoss(y, l);
     backward(C₁);
     ∇ = δ(k.scale)[1];  # backpropagation gradient
 
@@ -20,7 +20,7 @@
     ᵛ(k.scale)[1] += Δ;
 
     y  = forward(k, x);
-    C₂ = mseLoss(y, l);
+    C₂ = MSELoss(y, l);
     backward(C₂);
 
     # [5] check if the auto-grad is true or not
