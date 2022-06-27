@@ -1,23 +1,23 @@
 ## regression loss
 
-export mae
-export maeLoss
+export MAE
+export MAELoss
 export L1Loss
 
-export mse
-export mseLoss
+export MSE
+export MSELoss
 export L2Loss
 
 export Lp, LpLoss
 
 
 """
-    mae(x::Variable{T}, label::Variable{T}) -> y::Variable{T}
+    MAE(x::Variable{T}, label::Variable{T}) -> y::Variable{T}
 
-mean absolute error (mae) between each element in the input `x` and target `label`. Also called L1Loss. i.e. ⤦\n
+mean absolute error (MAE) between each element in the input `x` and target `label`. Also called L1Loss. i.e. ⤦\n
     y = |xᵢ - lᵢ|
 """
-function mae(x::Variable{T}, label::Variable{T}) where T
+function MAE(x::Variable{T}, label::Variable{T}) where T
     @assert (x.shape == label.shape)
     backprop = (x.backprop || label.backprop)
     y = Variable{T}(abs.(ᵛ(x) - ᵛ(label)), backprop)
@@ -34,7 +34,7 @@ function mae(x::Variable{T}, label::Variable{T}) where T
 end
 
 
-function mae(x::Variable{T}, label::AbstractArray) where T
+function MAE(x::Variable{T}, label::AbstractArray) where T
     @assert x.shape == size(label)
     y = Variable{T}(abs.(ᵛ(x) - label), x.backprop)
     if y.backprop
@@ -50,19 +50,19 @@ function mae(x::Variable{T}, label::AbstractArray) where T
 end
 
 
-function mae(x::AbstractArray, label::AbstractArray)
+function MAE(x::AbstractArray, label::AbstractArray)
     @assert sum(x) == size(label)
     return abs.(x - label)
 end
 
 
 """
-    mse(x::Variable{T}, label::Variable{T}) -> y::Variable{T}
+    MSE(x::Variable{T}, label::Variable{T}) -> y::Variable{T}
 
-mean sqrt error (mse) between each element in the input `x` and target `label`. Also called L2Loss. i.e. ⤦\n
+mean sqrt error (MSE) between each element in the input `x` and target `label`. Also called L2Loss. i.e. ⤦\n
     y = (xᵢ - lᵢ)²
 """
-function mse(x::Variable{T}, label::Variable{T}) where T
+function MSE(x::Variable{T}, label::Variable{T}) where T
     @assert (x.shape == label.shape)
     backprop = (x.backprop || label.backprop)
     𝟚 = eltype(x)(2.0)
@@ -80,7 +80,7 @@ function mse(x::Variable{T}, label::Variable{T}) where T
 end
 
 
-function mse(x::Variable{T}, label::AbstractArray) where T
+function MSE(x::Variable{T}, label::AbstractArray) where T
     @assert x.shape == size(label)
     𝟚 = eltype(x)(2.0)
     y = Variable{T}((ᵛ(x) - label).^𝟚, x.backprop)
@@ -97,7 +97,7 @@ function mse(x::Variable{T}, label::AbstractArray) where T
 end
 
 
-function mse(x::AbstractArray, label::AbstractArray)
+function MSE(x::AbstractArray, label::AbstractArray)
     @assert sum(x) == size(label)
     𝟚 = eltype(x)(2.0)
     return (x - label) .^ 𝟚
@@ -154,21 +154,21 @@ function Lp(x::AbstractArray, label::AbstractArray; p=3)
 end
 
 
-maeLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-maeLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-maeLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( mae(x, label), reduction=reduction )
+MAELoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( MAE(x, label), reduction=reduction )
+MAELoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( MAE(x, label), reduction=reduction )
+MAELoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( MAE(x, label), reduction=reduction )
 
-L1Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-L1Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( mae(x, label), reduction=reduction )
-L1Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") = loss( mae(x, label), reduction=reduction )
+L1Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( MAE(x, label), reduction=reduction )
+L1Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( MAE(x, label), reduction=reduction )
+L1Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") = loss( MAE(x, label), reduction=reduction )
 
-mseLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
-mseLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
-mseLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( mse(x, label), reduction=reduction )
+MSELoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( MSE(x, label), reduction=reduction )
+MSELoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( MSE(x, label), reduction=reduction )
+MSELoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( MSE(x, label), reduction=reduction )
 
-L2Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
-L2Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
-L2Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") where T = loss( mse(x, label), reduction=reduction )
+L2Loss(x::Variable{T},  label::Variable{T}; reduction::String="sum") where T = loss( MSE(x, label), reduction=reduction )
+L2Loss(x::Variable{T},  label::AbstractArray; reduction::String="sum") where T = loss( MSE(x, label), reduction=reduction )
+L2Loss(x::AbstractArray,  label::AbstractArray; reduction::String="sum") where T = loss( MSE(x, label), reduction=reduction )
 
 LpLoss(x::Variable{T}, label::Variable{T}; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )
 LpLoss(x::Variable{T}, label::AbstractArray; p=3, reduction::String="sum") where T = loss( Lp(x, label; p=p), reduction=reduction )

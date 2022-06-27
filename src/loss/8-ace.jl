@@ -49,7 +49,7 @@ function SoftmaxACELoss(x::Variable{S},
     p = softmax(x, dims=1)
     y = mean(p, dims=2)
     label = acelabel(seqlabels, C, T, B, blank=blank, dtype=eltype(x))
-    return crossEntropyLoss(y, S(label), reduction=reduction)
+    return CrossEntropyLoss(y, S(label), reduction=reduction)
 end
 
 
@@ -62,7 +62,7 @@ function SoftmaxFocalACELoss(x::Variable{S},
     p = softmax(x, dims=1)
     y = mean(p, dims=2)
     label = acelabel(seqlabels, C, T, B, blank=blank, dtype=eltype(x))
-    return focalCELoss(y, S(label), gamma=gamma, reduction=reduction)
+    return FocalCELoss(y, S(label), gamma=gamma, reduction=reduction)
 end
 
 
@@ -83,7 +83,7 @@ function ACELoss(p::Variable{S},
     C, T, B = size(p)
     y = mean(p, dims=2)
     label = acelabel(seqlabels, C, T, B, blank=blank, dtype=eltype(p))
-    return crossEntropyLoss(y, S(label), reduction=reduction)
+    return CrossEntropyLoss(y, S(label), reduction=reduction)
 end
 
 
@@ -105,5 +105,5 @@ function FocalACELoss(p::Variable{S},
     C, T, B = size(p)
     y = mean(p, dims=2)
     label = acelabel(seqlabels, C, T, B, blank=blank, dtype=eltype(p))
-    return focalCELoss(y, S(label), gamma=gamma, reduction=reduction)
+    return FocalCELoss(y, S(label), gamma=gamma, reduction=reduction)
 end

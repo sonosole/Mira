@@ -72,16 +72,16 @@ function PoolLoss(p::Variable{S},
     if isnothing(blank) # prob was made by sigmoid
         label = S( multihotpool(seqlabels, C, B, dtype=eltype(p)) )
         if isnothing(focus)
-            return binaryCrossEntropyLoss(y, label, reduction=reduction)
+            return BinaryCrossEntropyLoss(y, label, reduction=reduction)
         else
-            return focalBCELoss(y, label, gamma=gamma, reduction=reduction)
+            return FocalBCELoss(y, label, gamma=gamma, reduction=reduction)
         end
     else # prob was made by softmax
         label = S( onehotpool(seqlabels, C, B, blank=blank, dtype=eltype(p)) )
         if isnothing(focus)
-            return crossEntropyLoss(y, label, reduction=reduction)
+            return CrossEntropyLoss(y, label, reduction=reduction)
         else
-            return focalCELoss(y, label, gamma=gamma, reduction=reduction)
+            return FocalCELoss(y, label, gamma=gamma, reduction=reduction)
         end
     end
 end
