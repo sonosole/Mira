@@ -209,14 +209,14 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
                                      seqlabels::VecVecInt;
                                      reduction::String="seqlen",
                                      blank::Int=1,
-                                     gamma::Real=2,
+                                     focus::Real=1.0f0,
                                      weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
-    𝜸 = S(gamma)
+    𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize
@@ -252,13 +252,13 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
                               seqlabels::VecVecInt;
                               reduction::String="seqlen",
                               blank::Int=1,
-                              gamma::Real=2,
+                              focus::Real=1.0f0,
                               weight=1.0) where T
     featdims, timesteps, batchsize = size(p)
     S = eltype(p)
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
-    𝜸 = S(gamma)
+    𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize

@@ -250,14 +250,14 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
                                  reduction::String="seqlen",
                                  background::Int=1,
                                  foreground::Int=2,
-                                 gamma::Real=2,
+                                 focus::Real=1.0f0,
                                  weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
-    𝜸 = S(gamma)
+    𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize

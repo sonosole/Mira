@@ -56,13 +56,13 @@ end
 function SoftmaxFocalACELoss(x::Variable{S},
                              seqlabels::VecVecInt;
                              reduction::String="sum",
-                             gamma::Real=1.0,
+                             focus::Real=1.0f0,
                              blank::Int=1) where S
     C, T, B = size(x)
     p = softmax(x, dims=1)
     y = mean(p, dims=2)
     label = acelabel(seqlabels, C, T, B, blank=blank, dtype=eltype(x))
-    return FocalCELoss(y, S(label), gamma=gamma, reduction=reduction)
+    return FocalCELoss(y, S(label), focus=focus, reduction=reduction)
 end
 
 
@@ -100,10 +100,10 @@ end
 function FocalACELoss(p::Variable{S},
                       seqlabels::VecVecInt;
                       reduction::String="sum",
-                      gamma::Real=1.0,
+                      focus::Real=1.0f0,
                       blank::Int=1) where S
     C, T, B = size(p)
     y = mean(p, dims=2)
     label = acelabel(seqlabels, C, T, B, blank=blank, dtype=eltype(p))
-    return FocalCELoss(y, S(label), gamma=gamma, reduction=reduction)
+    return FocalCELoss(y, S(label), focus=focus, reduction=reduction)
 end

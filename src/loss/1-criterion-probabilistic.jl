@@ -154,12 +154,12 @@ BinaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="
 BinaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss(BinaryCrossEntropy(x, label), reduction=reduction)
 
 
-function FocalBCE(p::Variable{T}, label::AbstractArray; gamma::Real=2, alpha::Real=0.5) where T
+function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=2, alpha::Real=0.5) where T
     @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
-    γ  = TO(gamma)
+    γ  = TO(focus)
     α  = TO(alpha)
     𝝆  = label
     𝒑  = ᵛ(p)
@@ -173,7 +173,7 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; gamma::Real=2, alpha::Re
     y  = Variable{T}(t₁ + t₂, p.backprop)
 
     if y.backprop
-        y.backward = function focalBCEBackward()
+        y.backward = function ∇FocalBCE()
             if need2computeδ!(p)
                 δ₁ = @. w₁ * (𝟙 - 𝒑)^(γ - 𝟙) * (𝟙 / 𝒑 - γ * log(𝒑) - 𝟙)
                 δ₂ = @. w₂ * 𝒑 ^ γ * (𝟙 / (𝒑 - 𝟙) + γ * log(𝟙 - 𝒑) / 𝒑)
@@ -187,12 +187,12 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; gamma::Real=2, alpha::Re
 end
 
 
-function FocalCE(p::Variable{T}, label::AbstractArray; gamma::Real=2) where T
+function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=2) where T
     @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
-    γ  = TO(gamma)
+    γ  = TO(focus)
     𝝆  = label
     𝒑  = ᵛ(p)
 
@@ -200,7 +200,7 @@ function FocalCE(p::Variable{T}, label::AbstractArray; gamma::Real=2) where T
     y = Variable{T}(t, p.backprop)
 
     if y.backprop
-        y.backward = function focalCEBackward()
+        y.backward = function ∇FocalCE()
             if need2computeδ!(p)
                 δ(p) .+= δ(y) .* 𝝆 .* (𝟙 .- 𝒑).^(γ - 𝟙) .* (γ .* log.(𝒑) .+ 𝟙 .- 𝟙 ./ 𝒑)
             end

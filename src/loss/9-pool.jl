@@ -3,7 +3,7 @@ export multihotpool
 export PoolLoss
 
 const IntOrNil  = Union{Nothing, Int}
-const BoolOrNil = Union{Nothing, Bool}
+const RealOrNil = Union{Nothing, Real}
 
 
 function onehotpool(l::VecVecInt,
@@ -63,8 +63,7 @@ function PoolLoss(p::Variable{S},
                   reduction::String="sum",
                   poolingfn::Function=linearpool,
                   blank::IntOrNil=nothing,
-                  focus::BoolOrNil=nothing,
-                  gamma::Real=1.0) where S
+                  focus::RealOrNil=nothing) where S
 
     C, T, B = size(p)
     y = poolingfn(p, dims=2)
@@ -74,14 +73,14 @@ function PoolLoss(p::Variable{S},
         if isnothing(focus)
             return BinaryCrossEntropyLoss(y, label, reduction=reduction)
         else
-            return FocalBCELoss(y, label, gamma=gamma, reduction=reduction)
+            return FocalBCELoss(y, label, focus=focus, reduction=reduction)
         end
     else # prob was made by softmax
         label = S( onehotpool(seqlabels, C, B, blank=blank, dtype=eltype(p)) )
         if isnothing(focus)
             return CrossEntropyLoss(y, label, reduction=reduction)
         else
-            return FocalCELoss(y, label, gamma=gamma, reduction=reduction)
+            return FocalCELoss(y, label, focus=focus, reduction=reduction)
         end
     end
 end

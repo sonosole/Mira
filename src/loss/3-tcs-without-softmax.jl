@@ -219,13 +219,13 @@ function FRNNFocalTCSLoss(p::Variable{T},
                           reduction::String="seqlen",
                           background::Int=1,
                           foreground::Int=2,
-                          gamma::Real=2,
+                          focus::Real=1.0f0,
                           weight=1.0) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
-    𝜸 = S(gamma)
+    𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
     Threads.@threads for b = 1:batchsize
