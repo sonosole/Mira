@@ -24,7 +24,7 @@ function CrossEntropy(p::Variable{T}, label::Variable{T}) where T
     ϵ = eltype(p)(1e-38)
     y = Variable{T}(- 𝝆 .* log.(𝒑 .+ ϵ), backprop)
     if backprop
-        y.backward = function CrossEntropyBackward()
+        y.backward = function ∇CrossEntropy()
             if need2computeδ!(p)
                 δ(p) .-= δ(y) .* 𝝆 ./ (𝒑 .+ ϵ)
             end
@@ -47,7 +47,7 @@ function CrossEntropy(p::Variable{T}, label::AbstractArray) where T
     ϵ = eltype(p)(1e-38)
     y = Variable{T}(- 𝝆 .* log.(𝒑 .+ ϵ), p.backprop)
     if y.backprop
-        y.backward = function CrossEntropyBackward()
+        y.backward = function ∇CrossEntropy()
             if need2computeδ!(p)
                 δ(p) .-= δ(y) .* 𝝆 ./ (𝒑 .+ ϵ)
             end
@@ -87,7 +87,7 @@ function BinaryCrossEntropy(p::Variable{T}, label::Variable{T}) where T
     t₂ = @. - (𝟙 - 𝝆) * log(𝟙 - 𝒑 + ϵ)
     y  = Variable{T}(t₁ + t₂, backprop)
     if backprop
-        y.backward = function binaryCrossEntropyBackward()
+        y.backward = function ∇BinaryCrossEntropy()
             if need2computeδ!(p)
                 δ₁ = @. (𝟙 - 𝝆) / (𝟙 - 𝒑 + ϵ)
                 δ₂ = @.      𝝆  / (    𝒑 + ϵ)
@@ -102,7 +102,7 @@ end
 
 
 """
-    BinaryCrossEntropy(p::Variable{T}, 𝜌::AbstractArray) -> y::Variable{T}
+    BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) -> y::Variable{T}
 binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
@@ -116,7 +116,7 @@ function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
     t₂ = @. - (𝟙 - 𝝆) * log(𝟙 - 𝒑 + ϵ)
     y  = Variable{T}(t₁ + t₂, p.backprop)
     if y.backprop
-        y.backward = function binaryCrossEntropyBackward()
+        y.backward = function ∇BinaryCrossEntropy()
             if need2computeδ!(p)
                 δ₁ = @. (𝟙 - 𝝆) / (𝟙 - 𝒑 + ϵ)
                 δ₂ = @.      𝝆  / (    𝒑 + ϵ)
@@ -154,7 +154,7 @@ BinaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="
 BinaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss(BinaryCrossEntropy(x, label), reduction=reduction)
 
 
-function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=2, alpha::Real=0.5) where T
+function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5) where T
     @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
@@ -187,7 +187,7 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=2, alpha::Re
 end
 
 
-function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=2) where T
+function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where T
     @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
@@ -212,5 +212,5 @@ function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=2) where T
 end
 
 
-FocalCELoss(x::Variable{T}, label::AbstractArray; gamma::Real=2, reduction::String="sum") where T = loss(FocalCE(x, label, gamma=gamma), reduction=reduction)
-FocalBCELoss(x::Variable{T}, label::AbstractArray; gamma::Real=2, reduction::String="sum") where T = loss(FocalBCE(x, label, gamma=gamma), reduction=reduction)
+FocalCELoss(x::Variable{T}, label::AbstractArray; focus::Real=1.0f0, reduction::String="sum") where T = loss(FocalCE(x, label, focus=focus), reduction=reduction)
+FocalBCELoss(x::Variable{T}, label::AbstractArray; focus::Real=1.0f0, reduction::String="sum") where T = loss(FocalBCE(x, label, focus=focus), reduction=reduction)

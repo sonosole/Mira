@@ -1,4 +1,4 @@
-function blocksize(n::Int, u::String)
+function blocksize(n::Real, u::String)
     if u == "B"  return n / 1 end
     if u == "KB" return n / 1024 end
     if u == "MB" return n / 1048576 end
