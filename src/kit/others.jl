@@ -4,6 +4,12 @@ function blocksize(n::Int, u::String)
     if u == "MB" return n / 1048576 end
     if u == "GB" return n / 1073741824 end
     if u == "TB" return n / 1099511627776 end
+    if u == "PB" return n / 1125899906842624 end
+    if u == "EB" return n / 1152921504606846976 end
+    if u == "ZB" return n / 1180591620717411303424 end
+    if u == "YB" return n / 1208925819614629174706176 end
+    if u == "BB" return n / 1237940039285380274899124224 end
+    @error "MUST BE one of B KB MB GB TB PB EB ZB YB BB"
 end
 
 
@@ -73,3 +79,19 @@ end
     x .*= y
     return x
 end
+
+
+export isnormal
+function isnormal(x::Real; min::Real=-1e3, max::Real=1e3)
+    if isnan(x) ||
+       isinf(x) ||
+       x ≥ max  ||
+       x ≤ min
+        return false
+    else
+        return true
+    end
+end
+
+export cpuvec
+cpuvec(x::AbstractArray) = vec(Array(x))
