@@ -4,7 +4,7 @@ export need2computeδ!
 export ifNotKeepδThenFreeδ!
 export elsizeof
 export value, delta, ᵛ, ᵟ, δ
-export isleaf, backprop, keepsgrad
+export isleaf, setleaf, backprop, keepsgrad
 export haschild, childrenof, addchild, nchildrenof
 export haskid, kidsof, addkid, nkidsof
 
@@ -199,8 +199,15 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline addchild(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
 @inline   addkid(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
 
+
 function Vecvar(n::Int=0)
     return Vector{Variable}(undef, n)
+end
+
+
+function setleaf(x::Variable)
+    x.isleaf = true
+    return nothing
 end
 
 

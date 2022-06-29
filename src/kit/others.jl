@@ -82,6 +82,11 @@ end
 
 
 export isnormal
+"""
+    isnormal(x::Real; min::Real=-1e3, max::Real=1e3)::Bool
+
+return true if x isn't NaN nor Inf and not exceeding range [min, max]
+"""
 function isnormal(x::Real; min::Real=-1e3, max::Real=1e3)
     if isnan(x) ||
        isinf(x) ||
@@ -93,5 +98,27 @@ function isnormal(x::Real; min::Real=-1e3, max::Real=1e3)
     end
 end
 
+
 export cpuvec
+"""
+    cpuvec(x::AbstractArray) = vec(Array(x))
+"""
 cpuvec(x::AbstractArray) = vec(Array(x))
+
+
+export ⊙
+"""
+    ⊙(x::BitArray, y::BitArray) = @. ! xor(x,y)
+"""
+function ⊙(x::BitArray, y::BitArray)
+    return @. ! xor(x,y)
+end
+
+
+export sor
+"""
+    sor(x::BitArray, y::BitArray) = @. ! xor(x,y)
+"""
+function sor(x::BitArray, y::BitArray)
+    return @. ! xor(x,y)
+end
