@@ -108,17 +108,17 @@ cpuvec(x::AbstractArray) = vec(Array(x))
 
 export ⊙
 """
-    ⊙(x::BitArray, y::BitArray) = @. ! xor(x,y)
+    ⊙(x::BitArray, y::BitArray) = @. ! xor(x, y)
 """
 function ⊙(x::BitArray, y::BitArray)
-    return @. ! xor(x,y)
+    return @. ! xor(x, y)
 end
 
 
 export sor
 """
-    sor(x::BitArray, y::BitArray) = @. ! xor(x,y)
+    sor(x::BitArray, y::BitArray) = @. ! xor(x, y)
 """
 function sor(x::BitArray, y::BitArray)
-    return @. ! xor(x,y)
+    return @. ! xor(x, y)
 end

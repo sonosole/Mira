@@ -4,7 +4,7 @@ export need2computeδ!
 export ifNotKeepδThenFreeδ!
 export elsizeof
 export value, delta, ᵛ, ᵟ, δ
-export isleaf, setleaf, backprop, keepsgrad
+export isleaf, setleaf, backprop, keepsgrad, needsgrad
 export haschild, childrenof, addchild, nchildrenof
 export haskid, kidsof, addkid, nkidsof
 
@@ -184,6 +184,7 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline isleaf(x::Variable) = x.isleaf
 @inline backprop(x::Variable) = x.backprop
 @inline keepsgrad(x::Variable) = x.keepsgrad
+@inline needsgrad(x::Variable) = x.keepsgrad = true
 @inline haschild(x::Variable) = length(x.children) > 0 ? true : false
 @inline   haskid(x::Variable) = length(x.children) > 0 ? true : false
 @inline childrenof(x::Variable) = x.children
