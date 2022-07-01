@@ -95,7 +95,7 @@ function checkgrad(fn::Function,
     dLdx = (cost(C₂) - cost(C₁)) / dx
 
     # [5] check if the auto-grad is true or not
-    istrue = iseq(∂L∂w, dLdw, tol=tol)
+    istrue = iseq(∂L∂x, dLdx, tol=tol)
     if !istrue
         println(yellow!("backward  gradient: $∂L∂x"))
         println(yellow!("numerical gradient: $dLdx"))
