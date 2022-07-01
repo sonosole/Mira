@@ -1,6 +1,14 @@
 export checkgrad
 
 
+function iseq(x::Real, y::Real; tol::AbstractFloat=0.05)
+    (isnan(x) || isinf(x)) && return false
+    (isnan(y) || isinf(y)) && return false
+    sign(x) ≠ sign(y)      && return false
+    return abs(x-y) ≤ tol*max(abs(x), abs(y))
+end
+
+
 """
     checkgrad(block::Block,            # a block contains params
               x::Variable;             # input of block
@@ -39,14 +47,8 @@ function checkgrad(block::B,
         ∂L∂w = (dw₂ + dw₁) / 2
         dLdw = (cost(C₂) - cost(C₁)) / dw
 
-        # abnormal cases
-        ∂L∂w==0 && dLdw==0 && return true
-        ∂L∂w==0 && abs(dLdw)<=1e-5 && return true
-        abs(∂L∂w)<=1e-5 && dLdw==0 && return true
-
         # [5] check if the auto-grad is true or not
-        err = abs( (∂L∂w-dLdw) / ∂L∂w ) * 100
-        istrue = (err ≤ tol) && istrue
+        istrue = iseq(∂L∂w, dLdw, tol=tol) && istrue
         if !istrue
             println(yellow!("backward  gradient: $∂L∂w"))
             println(yellow!("numerical gradient: $dLdw"))
@@ -93,12 +95,7 @@ function checkgrad(fn::Function,
     dLdx = (cost(C₂) - cost(C₁)) / dx
 
     # [5] check if the auto-grad is true or not
-    ∂L∂x==0 && dLdx==0 && return true
-    ∂L∂x==0 && abs(dLdx)<=1e-5 && return true
-    abs(∂L∂x)<=1e-5 && dLdx==0 && return true
-
-    err = abs( 1 - ∂L∂x / dLdx ) * 100
-    istrue = (err ≤ tol)
+    istrue = iseq(∂L∂w, dLdw, tol=tol)
     if !istrue
         println(yellow!("backward  gradient: $∂L∂x"))
         println(yellow!("numerical gradient: $dLdx"))
