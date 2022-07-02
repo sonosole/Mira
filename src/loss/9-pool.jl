@@ -6,6 +6,30 @@ const IntOrNil  = Union{Nothing, Int}
 const RealOrNil = Union{Nothing, Real}
 
 
+"""
+    onehotpool(l::VecVecInt,            # label indices e.g. [[2,3],[4,5,5]]
+               C::Int,                  # number of categories
+               B::Int;                  # batch size
+               blank::Int=1,            # blank state's index
+               dtype::DataType=Float32) # data type for label variable
+
+    This is designed for classification layer with softmax and returns a bag level label..
+
+# example
+    julia> Mira.onehotpool([ [2,3], [4,3,3] ], 4, 2, blank=1) # order and occurrence counts not matter
+    4×1×2 Array{Float32, 3}:
+    [:, :, 1] =
+     1.0
+     1.0
+     1.0
+     0.0
+
+    [:, :, 2] =
+     1.0
+     0.0
+     1.0
+     1.0
+"""
 function onehotpool(l::VecVecInt,
                     C::Int,
                     B::Int;
@@ -27,7 +51,29 @@ function onehotpool(l::VecVecInt,
 end
 
 
+"""
+    multihotpool(l::VecVecInt,              # label indices e.g. [[2,3],[4,5,5]]
+                 C::Int,                    # number of categories
+                 B::Int;                    # batch size
+                 dtype::DataType=Float32)   # data type for label variable
 
+    This is designed for classification layer with sigmoid and returns a bag level label.
+
+# Example
+    julia> Mira.multihotpool([ [2,3], [4,3,3] ], 4, 2) # order and occurrence counts not matter
+    4×1×2 Array{Float32, 3}:
+    [:, :, 1] =
+     0.0
+     1.0
+     1.0
+     0.0
+
+    [:, :, 2] =
+     0.0
+     0.0
+     1.0
+     1.0
+"""
 function multihotpool(l::VecVecInt,
                       C::Int,
                       B::Int;
@@ -51,7 +97,7 @@ end
 """
     PoolLoss(p::Variable,
              seqlabels::VecVecInt;           # weakly supervised label, e.g. [[3,4,4],[2,2,2]] is the same as [[3,4],[2]]
-             reduction::String="sum",
+             reduction::String="sum",        # chose sum or mean
              poolingfn::Function=linearpool, # aggresive function e.g. exppool/powerpool/linearpool
              blank::IntOrNil=nothing,        # when p is the output of softmax then blank is an integer
              focus::RealOrNil=nothing,       # if using focal loss, then focus is the focal param ∈ [0, Inf)
