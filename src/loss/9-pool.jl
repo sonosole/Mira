@@ -13,7 +13,7 @@ const RealOrNil = Union{Nothing, Real}
                blank::Int=1,            # blank state's index
                dtype::DataType=Float32) # data type for label variable
 
-    This is designed for classification layer with softmax and returns a bag level label..
+This is designed for classification layer with softmax and returns a bag level label.
 
 # example
     julia> Mira.onehotpool([ [2,3], [4,3,3] ], 4, 2, blank=1) # order and occurrence counts not matter
@@ -57,7 +57,7 @@ end
                  B::Int;                    # batch size
                  dtype::DataType=Float32)   # data type for label variable
 
-    This is designed for classification layer with sigmoid and returns a bag level label.
+This is designed for classification layer with sigmoid and returns a bag level label.
 
 # Example
     julia> Mira.multihotpool([ [2,3], [4,3,3] ], 4, 2) # order and occurrence counts not matter
