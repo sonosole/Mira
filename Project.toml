@@ -1,7 +1,7 @@
 name = "Mira"
 uuid = "dc5327d4-52c5-48b3-8340-b1844419aa4d"
 authors = ["Sole <sonosole@163.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"

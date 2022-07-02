@@ -154,7 +154,12 @@ BinaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="
 BinaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss(BinaryCrossEntropy(x, label), reduction=reduction)
 
 
-function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5) where T
+"""
+    FocalBCE(p::Variable, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5f0)
+
+focal loss version BinaryCrossEntropy
+"""
+function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5f0) where T
     @assert p.shape == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
@@ -187,6 +192,11 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha
 end
 
 
+"""
+    FocalCE(p::Variable, label::AbstractArray; focus::Real=1.0f0)
+
+focal loss version CrossEntropy
+"""
 function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where T
     @assert p.shape == size(label)
     TO = eltype(p)
@@ -211,6 +221,35 @@ function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where 
     return y
 end
 
+"""
+    FocalCELoss(x::Variable,
+                label::AbstractArray;
+                focus::Real=1.0f0,
+                reduction::String="sum")
 
-FocalCELoss(x::Variable{T}, label::AbstractArray; focus::Real=1.0f0, reduction::String="sum") where T = loss(FocalCE(x, label, focus=focus), reduction=reduction)
-FocalBCELoss(x::Variable{T}, label::AbstractArray; focus::Real=1.0f0, reduction::String="sum") where T = loss(FocalBCE(x, label, focus=focus), reduction=reduction)
+focal loss version CrossEntropyLoss
+"""
+function FocalCELoss(x::Variable{T},
+                     label::AbstractArray;
+                     focus::Real=1.0f0,
+                     reduction::String="sum") where T
+    return loss(FocalCE(x, label, focus=focus), reduction=reduction)
+end
+
+
+"""
+    FocalBCELoss(x::Variable,
+                 label::AbstractArray;
+                 focus::Real=1.0f0,
+                 alpha::Real=0.5f0,
+                 reduction::String="sum")
+
+focal loss version BinaryCrossEntropyLoss
+"""
+function FocalBCELoss(x::Variable{T},
+                      label::AbstractArray;
+                      focus::Real=1.0f0,
+                      alpha::Real=0.5f0,
+                      reduction::String="sum") where T
+    return loss(FocalBCE(x, label, focus=focus, alpha=alpha), reduction=reduction)
+end
