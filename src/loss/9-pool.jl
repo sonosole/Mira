@@ -49,6 +49,14 @@ end
 
 
 """
+    PoolLoss(p::Variable,
+             seqlabels::VecVecInt;           # weakly supervised label, e.g. [[3,4,4],[2,2,2]] is the same as [[3,4],[2]]
+             reduction::String="sum",
+             poolingfn::Function=linearpool, # aggresive function e.g. exppool/powerpool/linearpool
+             blank::IntOrNil=nothing,        # when p is the output of softmax then blank is an integer
+             focus::RealOrNil=nothing,       # if using focal loss, then focus is the focal param ∈ [0, Inf)
+             alpha::Real=0.50000000f0)       # alpha is the weight for positive class, (1-alpha) for negative class.
+
            frame wise probs                pooled probs
            ┌─────────────┐                  ┌────┐
          ┌─┴───────────┐ │                ┌─┴──┐ │
@@ -63,22 +71,23 @@ function PoolLoss(p::Variable{S},
                   reduction::String="sum",
                   poolingfn::Function=linearpool,
                   blank::IntOrNil=nothing,
-                  focus::RealOrNil=nothing) where S
+                  focus::RealOrNil=nothing,
+                  alpha::Real=0.50000000f0) where S
 
     C, T, B = size(p)
     y = poolingfn(p, dims=2)
 
     if isnothing(blank)
-        # prob was made by sigmoid
+        # p is the output of sigmoid
         label = multihotpool(seqlabels, C, B, dtype=eltype(p))
     else
-        # prob was made by softmax
+        # p is the output of softmax
         label = onehotpool(seqlabels, C, B, blank=blank, dtype=eltype(p))
     end
 
     if isnothing(focus)
         return BinaryCrossEntropyLoss(y, S(label), reduction=reduction)
     else
-        return FocalBCELoss(y, S(label), focus=focus, reduction=reduction)
+        return FocalBCELoss(y, S(label), focus=focus, alpha=alpha, reduction=reduction)
     end
 end
