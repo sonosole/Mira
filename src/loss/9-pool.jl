@@ -16,7 +16,7 @@ const RealOrNil = Union{Nothing, Real}
 This is designed for classification layer with softmax and returns a bag level label.
 
 # example
-    julia> Mira.onehotpool([ [2,3], [4,3,3] ], 4, 2, blank=1) # order and occurrence counts not matter
+    julia> onehotpool([ [2,3], [4,3,3] ], 4, 2, blank=1) # order and occurrence counts not matter
     4×1×2 Array{Float32, 3}:
     [:, :, 1] =
      1.0
@@ -60,7 +60,7 @@ end
 This is designed for classification layer with sigmoid and returns a bag level label.
 
 # Example
-    julia> Mira.multihotpool([ [2,3], [4,3,3] ], 4, 2) # order and occurrence counts not matter
+    julia> multihotpool([ [2,3], [4,3,3] ], 4, 2) # order and occurrence counts not matter
     4×1×2 Array{Float32, 3}:
     [:, :, 1] =
      0.0

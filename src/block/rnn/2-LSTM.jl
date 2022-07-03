@@ -36,7 +36,7 @@ mutable struct LSTM <: Block
 
         wf = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uf = randdiagonal(T, hsize, from=-0.2, to=0.2)
-        bf = zeros(T, hsize, 1) .+ T(5)
+        bf = zeros(T, hsize, 1) .+ T(1)
 
         wo = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uo = randdiagonal(T, hsize, from=-0.2, to=0.2)

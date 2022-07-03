@@ -91,9 +91,9 @@ end
 
 
 """
-    linearpool(x::Variable; dims=2) -> y
+    linearpool(x::Variable; dims=2) -> y::Variable
 
-    y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
+y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
 """
 function linearpool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=2) where {T,N}
     Σxᵢ² = sum(ᵛ(x) .* ᵛ(x), dims=dims)     # Σ xᵢ·xᵢ
@@ -114,7 +114,7 @@ end
 
 
 """
-    linearpool(x::AbstractArray; dims=2) -> y
+    linearpool(x::AbstractArray; dims=2) -> y::AbstractArray
 
     y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
 """
@@ -148,7 +148,7 @@ end
 
 
 """
-    exppool(x::AbstractArray; dims=2) -> y
+    exppool(x::AbstractArray; dims=2) -> y::AbstractArray
 
     y[k] = (Σᵢ exp(x[k,i]) * x[k,i]) / Σᵢ exp(x[k,i]), i is the indices of other dims
 """
@@ -184,7 +184,7 @@ end
 
 
 """
-    powerpool(x::AbstractArray, n::Real=3; dims=2) -> y::Variable
+    powerpool(x::AbstractArray, n::Real=3; dims=2) -> y::AbstractArray
 
     y =  (Σxᵢⁿ · xᵢ) / Σxᵢⁿ, i is the indices for aggregate
 """
