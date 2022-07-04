@@ -27,7 +27,7 @@ mutable struct IndLSTM <: Block
 
         wf = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uf = randn(T, hsize, 1) .* A
-        bf = zeros(T, hsize, 1) .+ T(5)
+        bf = zeros(T, hsize, 1) .+ T(1)
 
         wo = randn(T, hsize, isize) .* sqrt( T(1/isize) )
         uo = randn(T, hsize, 1) .* A

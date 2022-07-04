@@ -6,9 +6,9 @@ mutable struct IndRNN <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
     u::VarOrNil # recurrent weights
-    f::Function # activation function
+    f::FunOrNil # activation function or nothing
     h::Any      # hidden variable
-    function IndRNN(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
+    function IndRNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
         w = randn(T, hsize, isize) .* sqrt( T(2/isize) )
         b = zeros(T, hsize, 1)
