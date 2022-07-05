@@ -4,6 +4,7 @@ Base.__precompile__(true)
 
 using Statistics: mean, std
 import Statistics.mean
+using LinearAlgebra: svd
 
 export predict
 export forward
