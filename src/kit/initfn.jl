@@ -154,3 +154,23 @@ Gives a N×N identity matrix of type `Float32`
      0.0  0.0  1.0
 """
 eye(N::Int) = eye(Float32, N)
+
+
+function orth(shape::NTuple{N,Int};
+              gain::Real=2.0f0/sqrt(shape[1]),
+              type::Type=Array{Float32}) where N
+    row = shape[1]
+    col = prod(shape[2:end])
+
+    A = randn(row, col)
+    U,S,Vᵀ = svd(A)
+
+    if row ≤ col
+        V = transpose(Vᵀ)
+        a = gain / std(V)
+        return type( reshape(V .* a, shape) )
+    else
+        a = gain / std(U)
+        return type( reshape(U .* a, shape) )
+    end
+end

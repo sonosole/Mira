@@ -8,7 +8,7 @@ mutable struct Linear <: Block
     b::VarOrNil # bias of hidden units
     function Linear(isize::Int, hsize::Int; type::Type=Array{Float32})
         T = eltype(type)
-        A = T(sqrt(1 / hsize))
+        A = T(sqrt(1 / isize))
         w = randn(T, hsize, isize) .* A
         b = randn(T, hsize,     1) .* A
         new(Variable{type}(w,true,true,true),

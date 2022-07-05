@@ -7,7 +7,7 @@ mutable struct Maxout <: Block
         @assert (k>=2) "# of Affine layers should no less than 2"
         T = eltype(type)
         d = hsize * k
-        w = randn(T, d, isize) .* T( sqrt(2/d) )
+        w = randn(T, d, isize) .* T(sqrt(1 / isize))
         b = zeros(T, d, 1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true), hsize, k)
