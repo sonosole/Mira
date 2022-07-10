@@ -225,8 +225,9 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
 
     𝒍𝒏𝒑 = T(-nlnp)
     𝒑 = exp(𝒍𝒏𝒑)
-    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑)
-    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑   # focal version of CTC loss
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑) # 𝒑 * ∂(-t)/∂𝒑
+
     Δ = p - r
     reduce3d(Δ, t, seqlabels, reduction)
     y = Variable{T}([sum(t)], x.backprop)
@@ -267,8 +268,8 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
 
     𝒍𝒏𝒑 = T(-nlnp)
     𝒑 = exp(𝒍𝒏𝒑)
-    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝜸*𝒑*𝒍𝒏𝒑 + 𝒑 - 𝟙)
-    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
+    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑       # focal version loss
+    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝜸*𝒑*𝒍𝒏𝒑 + 𝒑 - 𝟙) # 𝒑 * ∂t/∂𝒑
 
     reduce3d(r, t, seqlabels, reduction)
     y = Variable{T}([sum(t)], p.backprop)

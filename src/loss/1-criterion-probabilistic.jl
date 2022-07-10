@@ -11,6 +11,12 @@ export FocalCELoss
 export FocalBCE
 export FocalBCELoss
 
+export NLogCrossEntropy
+export NLogCELoss
+
+export InvPowerCrossEntropy
+export InvPowerCELoss
+
 
 """
     CrossEntropy(p::Variable{T}, label::Variable{T}) -> y::Variable{T}
@@ -20,13 +26,12 @@ function CrossEntropy(p::Variable{T}, label::Variable{T}) where T
     @assert (p.shape == label.shape)
     backprop = (p.backprop || label.backprop)
     𝝆 = ᵛ(label)
-    𝒑 = ᵛ(p)
-    ϵ = eltype(p)(1e-38)
-    y = Variable{T}(- 𝝆 .* log.(𝒑 .+ ϵ), backprop)
+    𝒑 = ᵛ(p) .+ eltype(p)(1e-38)
+    y = Variable{T}(- 𝝆 .* log.(𝒑), backprop)
     if backprop
         y.backward = function ∇CrossEntropy()
             if need2computeδ!(p)
-                δ(p) .-= δ(y) .* 𝝆 ./ (𝒑 .+ ϵ)
+                δ(p) .-= δ(y) .* 𝝆 ./ 𝒑
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -43,13 +48,12 @@ cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 function CrossEntropy(p::Variable{T}, label::AbstractArray) where T
     @assert p.shape == size(label)
     𝝆 = label
-    𝒑 = ᵛ(p)
-    ϵ = eltype(p)(1e-38)
-    y = Variable{T}(- 𝝆 .* log.(𝒑 .+ ϵ), p.backprop)
+    𝒑 = ᵛ(p) .+ eltype(p)(1e-38)
+    y = Variable{T}(- 𝝆 .* log.(𝒑), p.backprop)
     if y.backprop
         y.backward = function ∇CrossEntropy()
             if need2computeδ!(p)
-                δ(p) .-= δ(y) .* 𝝆 ./ (𝒑 .+ ϵ)
+                δ(p) .-= δ(y) .* 𝝆 ./ 𝒑
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -82,15 +86,15 @@ function BinaryCrossEntropy(p::Variable{T}, label::Variable{T}) where T
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
     𝝆  = ᵛ(label)
-    𝒑  = ᵛ(p)
-    t₁ = @. -      𝝆  * log(    𝒑 + ϵ)
-    t₂ = @. - (𝟙 - 𝝆) * log(𝟙 - 𝒑 + ϵ)
+    𝒑  = ᵛ(p) .+ ϵ
+    t₁ = @. -      𝝆  * log(    𝒑)
+    t₂ = @. - (𝟙 - 𝝆) * log(𝟙 - 𝒑)
     y  = Variable{T}(t₁ + t₂, backprop)
     if backprop
         y.backward = function ∇BinaryCrossEntropy()
             if need2computeδ!(p)
-                δ₁ = @. (𝟙 - 𝝆) / (𝟙 - 𝒑 + ϵ)
-                δ₂ = @.      𝝆  / (    𝒑 + ϵ)
+                δ₁ = @. (𝟙 - 𝝆) / (𝟙 - 𝒑)
+                δ₂ = @. 𝝆 / 𝒑
                 δ(p) .+= δ(y) .* (δ₁ - δ₂)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -111,15 +115,15 @@ function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
     𝝆  = label
-    𝒑  = ᵛ(p)
-    t₁ = @. -      𝝆  * log(    𝒑 + ϵ)
-    t₂ = @. - (𝟙 - 𝝆) * log(𝟙 - 𝒑 + ϵ)
+    𝒑  = ᵛ(p) .+ ϵ
+    t₁ = @. -      𝝆  * log(    𝒑)
+    t₂ = @. - (𝟙 - 𝝆) * log(𝟙 - 𝒑)
     y  = Variable{T}(t₁ + t₂, p.backprop)
     if y.backprop
         y.backward = function ∇BinaryCrossEntropy()
             if need2computeδ!(p)
-                δ₁ = @. (𝟙 - 𝝆) / (𝟙 - 𝒑 + ϵ)
-                δ₂ = @.      𝝆  / (    𝒑 + ϵ)
+                δ₁ = @. (𝟙 - 𝝆) / (𝟙 - 𝒑)
+                δ₂ = @. 𝝆 / 𝒑
                 δ(p) .+= δ(y) .* (δ₁ - δ₂)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -139,8 +143,9 @@ function BinaryCrossEntropy(p::AbstractArray, label::AbstractArray)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
-    t₁ = @. -      label  * log(    p + ϵ)
-    t₂ = @. - (𝟙 - label) * log(𝟙 - p + ϵ)
+    𝒑  = p + ϵ
+    t₁ = @. -      label  * log(    𝒑)
+    t₂ = @. - (𝟙 - label) * log(𝟙 - 𝒑)
     return t₁ + t₂
 end
 
@@ -167,13 +172,13 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha
     γ  = TO(focus)
     α  = TO(alpha)
     𝝆  = label
-    𝒑  = ᵛ(p)
+    𝒑  = ᵛ(p) .+ ϵ
 
     w₁ = @. -      α  *      𝝆
     w₂ = @. - (𝟙 - α) * (𝟙 - 𝝆)
 
-    t₁ = @. w₁ * (𝟙 - 𝒑)^ γ * log(    𝒑 + ϵ)
-    t₂ = @. w₂ *      𝒑 ^ γ * log(𝟙 - 𝒑 + ϵ)
+    t₁ = @. w₁ * (𝟙 - 𝒑) ^ γ * log(    𝒑)
+    t₂ = @. w₂ *      𝒑  ^ γ * log(𝟙 - 𝒑)
 
     y  = Variable{T}(t₁ + t₂, p.backprop)
 
@@ -203,10 +208,10 @@ function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where 
     ϵ  = TO(1e-38)
     𝟙  = TO(1.0f0)
     γ  = TO(focus)
+    𝒑  = ᵛ(p) .+ ϵ
     𝝆  = label
-    𝒑  = ᵛ(p)
 
-    t = @. - 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑 + ϵ)
+    t = @. - 𝝆 * (𝟙 - 𝒑) ^ γ * log(𝒑)
     y = Variable{T}(t, p.backprop)
 
     if y.backprop
@@ -252,4 +257,78 @@ function FocalBCELoss(x::Variable{T},
                       alpha::Real=0.5f0,
                       reduction::String="sum") where T
     return loss(FocalBCE(x, label, focus=focus, alpha=alpha), reduction=reduction)
+end
+
+
+"""
+    NLogCrossEntropy(p::Variable{T}, label::AbstractArray)
+Loss = [ − ln(`p`) ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability
+"""
+function NLogCrossEntropy(p::Variable{T}, label::AbstractArray) where T
+    # Loss = (-𝒍𝒏𝒑)*(-𝜸 * 𝒍𝒏𝒑), negative log weighted CELoss
+    @assert p.shape == size(label)
+    S = eltype(p)
+    ϵ = S(1e-38)
+    𝜸 = label
+    𝒑 = ᵛ(p) .+ ϵ
+    𝒍𝒏𝒑 = log.(𝒑)
+    y = Variable{T}(𝜸 .* 𝒍𝒏𝒑 .* 𝒍𝒏𝒑, p.backprop)
+    if y.backprop
+        𝟚 = S(2f0)
+        y.backward = function ∇NLogCrossEntropy()
+            if need2computeδ!(p)
+                δ(p) .+= δ(y) .* 𝟚 .* 𝜸 .* 𝒍𝒏𝒑 ./ 𝒑
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
+    end
+    return y
+end
+
+
+function NLogCELoss(p::Variable, label::AbstractArray; reduction::String="sum")
+    return loss(NLogCrossEntropy(p, label), reduction=reduction)
+end
+
+
+"""
+    InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray)
+Loss = [ 1 / (`p`+ a)^n ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability
+"""
+function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.5f0, n::Real=0.5f0) where T
+    @assert p.shape == size(label)
+    S = eltype(p)
+    ϵ = S(1e-38)
+    a = S(a)
+    𝒏 = S(n)
+
+    𝜸 = label
+    𝒑 = ᵛ(p) .+ ϵ
+    𝒍𝒏𝒑  = log.(𝒑)
+    Q    = 𝒑 .+ a
+    Qⁿ   = Q .^ 𝒏
+    Qⁿ⁺¹ = Q .* Qⁿ
+    y = Variable{T}( - 𝜸 .* 𝒍𝒏𝒑 ./ Qⁿ , p.backprop)
+
+    if y.backprop
+        y.backward = function ∇InvPowerCrossEntropy()
+            δy = δ(y)
+            δp = δ(p)
+            if need2computeδ!(p)
+                @. δp += δy * 𝜸 * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - Q) / (𝒑 * Qⁿ⁺¹)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, p)
+    end
+    return y
+end
+
+
+function InvPowerCELoss(p::Variable, label::AbstractArray;
+                        a::Real=0.5f0,
+                        n::Real=0.5f0,
+                        reduction::String="sum")
+    return loss(InvPowerCrossEntropy(p, label, a=a, n=n), reduction=reduction)
 end
