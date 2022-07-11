@@ -217,7 +217,9 @@ function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where 
     if y.backprop
         y.backward = function ∇FocalCE()
             if need2computeδ!(p)
-                δ(p) .+= δ(y) .* 𝝆 .* (𝟙 .- 𝒑).^(γ - 𝟙) .* (γ .* log.(𝒑) .+ 𝟙 .- 𝟙 ./ 𝒑)
+                δp = δ(p)
+                δy = δ(y)
+                @. δp += δy * 𝝆 * (𝟙 - 𝒑)^(γ - 𝟙) * (γ * log(𝒑) + 𝟙 - 𝟙 / 𝒑)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -293,14 +295,15 @@ end
 
 
 """
-    InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray)
-Loss = [ 1 / (`p`+ a)^n ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability
+    InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f0, n::Real=1f0)
+Loss = [ 1 / (`p`+ (1-a))^n ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability.
+`a` in [0, 0.5] is recommended.
 """
-function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.5f0, n::Real=0.5f0) where T
+function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f0, n::Real=1f0) where T
     @assert p.shape == size(label)
     S = eltype(p)
     ϵ = S(1e-38)
-    a = S(a)
+    a = S(1 - a)
     𝒏 = S(n)
 
     𝜸 = label
@@ -313,10 +316,10 @@ function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.5f
 
     if y.backprop
         y.backward = function ∇InvPowerCrossEntropy()
-            δy = δ(y)
-            δp = δ(p)
             if need2computeδ!(p)
-                @. δp += δy * 𝜸 * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - Q) / (𝒑 * Qⁿ⁺¹)
+                δy = δ(y)
+                δp = δ(p)
+                @. δp .+= δy * 𝜸 * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - Q) / (𝒑 * Qⁿ⁺¹)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -327,8 +330,8 @@ end
 
 
 function InvPowerCELoss(p::Variable, label::AbstractArray;
-                        a::Real=0.5f0,
-                        n::Real=0.5f0,
+                        a::Real=0.3f0,
+                        n::Real=1.0f0,
                         reduction::String="sum")
     return loss(InvPowerCrossEntropy(p, label, a=a, n=n), reduction=reduction)
 end

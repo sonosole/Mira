@@ -1,7 +1,7 @@
 export timeslotmat
 export adjustLossWeights
 export reduce3d
-export reduce3dSeqGrad
+export weightseqvar
 
 """
     timeslotmat(matrix::AbstractMatrix, timestamp::AbstractVector; dim=2, slotvalue=1.0)
@@ -93,4 +93,38 @@ function reduce3d(x::AbstractArray, l::AbstractArray, seqlabels::Vector, reducti
         @warn "reduction is one of seqlen/timesteps/trellis/normal/nil, but got $reduction"
     end
     return nothing
+end
+
+
+function weightseqvar(x::Variable{T}, seqlabels::VecVecInt, reduction::String) where T
+    featdims, timesteps, batchsize = size(x)
+    D = eltype(x)
+    if isequal(reduction, "seqlen") # 标签长度归一化
+        bvec = zeros(D, 1, 1, batchsize)
+        for b = 1:batchsize
+            seqlen  = length(seqlabels[b]) * batchsize
+            bvec[b] = 1 / ifelse(seqlen≠0, seqlen, batchsize)
+        end
+        return x .* T(bvec)
+
+    elseif isequal(reduction, "timesteps")  # 时间长度归一化
+        return x .* D(1 / (timesteps * batchsize))
+
+    elseif isequal(reduction, "trellis")    # 网格归一化
+        bvec = zeros(eltype(x), 1, 1, batchsize)
+        for b = 1:batchsize
+            volume  = length(seqlabels[b]) * timesteps * batchsize
+            bvec[b] = 1 / ifelse(volume≠0, volume, timesteps * batchsize)
+        end
+        return x .* T(bvec)
+
+    elseif isequal(reduction, "normal") # 只是 batchsize 归一化
+        return x .* D(1 / batchsize)
+
+    elseif isequal(reduction, "nil")    # 无归一化
+        return x
+    else
+        @warn "reduction is one of seqlen/timesteps/trellis/normal/nil, but got $reduction"
+    end
+    return x
 end

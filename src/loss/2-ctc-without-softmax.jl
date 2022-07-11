@@ -4,6 +4,7 @@ export RNNCTCLoss
 export FRNNCTCLoss
 export FRNNFocalCTCLoss
 export FRNNCTCProbs
+export CTCFocalCELoss
 
 """
     DNNCTCLoss(p::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0)
@@ -377,4 +378,21 @@ function FRNNCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where 
         addchild(𝒑, p)
     end
     return 𝒑
+end
+
+
+function CTCFocalCELoss(p::Variable,
+                        seqlabels::VecVecInt;
+                        reduction::String="seqlen",
+                        focus::Real=0.5f0,
+                        blank::Int=1)
+
+    featdims, timesteps, batchsize = size(p)
+    r = zero(ᵛ(p))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+    celoss = FocalCE(p, r, focus=focus)
+    return loss(weightseqvar(celoss, seqlabels, reduction=reduction))
 end

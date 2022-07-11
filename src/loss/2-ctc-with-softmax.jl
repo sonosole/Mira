@@ -4,6 +4,7 @@ export RNNSoftmaxCTCLoss
 export FRNNSoftmaxCTCLoss
 export FRNNSoftmaxFocalCTCLoss
 export FRNNSoftmaxCTCProbs
+export SoftmaxCTCFocalCELoss
 
 """
     DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0)
@@ -333,4 +334,22 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1)
         addchild(𝒑, x)
     end
     return 𝒑
+end
+
+
+function SoftmaxCTCFocalCELoss(x::Variable,
+                               seqlabels::VecVecInt;
+                               reduction::String="seqlen",
+                               focus::Real=0.5f0,
+                               blank::Int=1)
+
+    featdims, timesteps, batchsize = size(x)
+    p = softmax(x, dims=1)
+    r = zero(ᵛ(x))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+    celoss = FocalCE(p, r, focus=focus)
+    return loss(weightseqvar(celoss, seqlabels, reduction=reduction))
 end
