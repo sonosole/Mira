@@ -1,4 +1,4 @@
-export loss
+export Loss
 export cost
 
 
@@ -36,7 +36,7 @@ end
 
 
 """
-    loss(x::Variable{T}; reduction::String="sum") -> y::Variable{T}
+    Loss(x::Variable{T}; reduction::String="sum") -> y::Variable{T}
 
 Sums or takes mean over all elements in `value` of `x` as the loss `Variable`, i.e. ⤦\n
 + `y = Variable{T}([sum(ᵛ(x))], x.backprop)`, if reduction="sum"
@@ -47,7 +47,7 @@ or in a lazy way:\n
     totalLoss = β*mseLoss(x₁, ̂x₁) + (1 - β)*crossEntropyLoss(y₁, ̂y₁)
 where `β` is weight of mseLoss function.
 """
-function loss(x::Variable{T}; reduction::String="sum") where T
+function Loss(x::Variable{T}; reduction::String="sum") where T
     by = lowercase(reduction)
     by=="sum" && return _sum(x)
     by=="mean" && return _mean(x)
@@ -73,13 +73,13 @@ end
 
 
 """
-    loss(x::AbstractArray; reduction::String="sum") -> y::Variable{T}
+    Loss(x::AbstractArray; reduction::String="sum") -> y::Variable{T}
 
 Sums or takes mean over all elements in `value` of `x` as the loss `Variable`, i.e. ⤦\n
 + `y = sum(x)`, if reduction="sum"
 + `y = sum(x)/length(x)`, if reduction="mean"
 """
-function loss(x::AbstractArray; reduction::String="sum") where T
+function Loss(x::AbstractArray; reduction::String="sum") where T
     by = lowercase(reduction)
     by=="sum" && return _sum(x)
     by=="mean" && return _mean(x)

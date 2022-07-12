@@ -42,7 +42,7 @@ end
 
 
 """
-    CrossEntropy(p::Variable{T}, label::AbstractArray) -> y::Variable{T}
+    CrossEntropy(p::Variable, label::AbstractArray) -> y::Variable
 cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 """
 function CrossEntropy(p::Variable{T}, label::AbstractArray) where T
@@ -106,7 +106,7 @@ end
 
 
 """
-    BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) -> y::Variable{T}
+    BinaryCrossEntropy(p::Variable, label::AbstractArray) -> y::Variable
 binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
@@ -150,13 +150,13 @@ function BinaryCrossEntropy(p::AbstractArray, label::AbstractArray)
 end
 
 
-CrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss( CrossEntropy(x, label), reduction=reduction )
-CrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss( CrossEntropy(x, label), reduction=reduction )
-CrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss( CrossEntropy(x, label), reduction=reduction )
+CrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = Loss( CrossEntropy(x, label), reduction=reduction )
+CrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = Loss( CrossEntropy(x, label), reduction=reduction )
+CrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = Loss( CrossEntropy(x, label), reduction=reduction )
 
-BinaryCrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = loss(BinaryCrossEntropy(x, label), reduction=reduction)
-BinaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = loss(BinaryCrossEntropy(x, label), reduction=reduction)
-BinaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = loss(BinaryCrossEntropy(x, label), reduction=reduction)
+BinaryCrossEntropyLoss(x::Variable{T}, label::Variable{T}; reduction::String="sum") where T = Loss(BinaryCrossEntropy(x, label), reduction=reduction)
+BinaryCrossEntropyLoss(x::Variable{T}, label::AbstractArray; reduction::String="sum") where T = Loss(BinaryCrossEntropy(x, label), reduction=reduction)
+BinaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String="sum") = Loss(BinaryCrossEntropy(x, label), reduction=reduction)
 
 
 """
@@ -240,7 +240,7 @@ function FocalCELoss(x::Variable{T},
                      label::AbstractArray;
                      focus::Real=1.0f0,
                      reduction::String="sum") where T
-    return loss(FocalCE(x, label, focus=focus), reduction=reduction)
+    return Loss(FocalCE(x, label, focus=focus), reduction=reduction)
 end
 
 
@@ -258,7 +258,7 @@ function FocalBCELoss(x::Variable{T},
                       focus::Real=1.0f0,
                       alpha::Real=0.5f0,
                       reduction::String="sum") where T
-    return loss(FocalBCE(x, label, focus=focus, alpha=alpha), reduction=reduction)
+    return Loss(FocalBCE(x, label, focus=focus, alpha=alpha), reduction=reduction)
 end
 
 
@@ -290,13 +290,13 @@ end
 
 
 function NLogCELoss(p::Variable, label::AbstractArray; reduction::String="sum")
-    return loss(NLogCrossEntropy(p, label), reduction=reduction)
+    return Loss(NLogCrossEntropy(p, label), reduction=reduction)
 end
 
 
 """
     InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f0, n::Real=1f0)
-Loss = [ 1 / (`p`+ (1-a))^n ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability.
+Loss = [ 1 / (`p` + (1-`a`))`ⁿ` ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability.
 `a` in [0, 0.5] is recommended.
 """
 function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f0, n::Real=1f0) where T
@@ -333,5 +333,5 @@ function InvPowerCELoss(p::Variable, label::AbstractArray;
                         a::Real=0.3f0,
                         n::Real=1.0f0,
                         reduction::String="sum")
-    return loss(InvPowerCrossEntropy(p, label, a=a, n=n), reduction=reduction)
+    return Loss(InvPowerCrossEntropy(p, label, a=a, n=n), reduction=reduction)
 end

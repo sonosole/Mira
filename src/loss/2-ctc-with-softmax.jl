@@ -351,5 +351,5 @@ function SoftmaxCTCFocalCELoss(x::Variable,
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
     celoss = FocalCE(p, r, focus=focus)
-    return loss(weightseqvar(celoss, seqlabels, reduction=reduction))
+    return Loss(weightseqvar(celoss, seqlabels, reduction))
 end

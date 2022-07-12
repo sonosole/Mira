@@ -342,7 +342,7 @@ function FRNNFocalCTCLoss_Naive(p::Variable{T},
         end
         addchild(𝒑, p)
     end
-    return loss(y)
+    return Loss(y)
 end
 
 
@@ -394,5 +394,5 @@ function CTCFocalCELoss(p::Variable,
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
     celoss = FocalCE(p, r, focus=focus)
-    return loss(weightseqvar(celoss, seqlabels, reduction=reduction))
+    return Loss(weightseqvar(celoss, seqlabels, reduction))
 end
