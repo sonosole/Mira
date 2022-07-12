@@ -263,7 +263,7 @@ end
 
 
 """
-    NLogCrossEntropy(p::Variable{T}, label::AbstractArray)
+    NLogCrossEntropy(p::Variable, label::AbstractArray)
 Loss = [ − ln(`p`) ] * [ − `label` * ln(`p`) ], where `p` is the predicted probability
 """
 function NLogCrossEntropy(p::Variable{T}, label::AbstractArray) where T
