@@ -5,6 +5,8 @@ export FRNNSoftmaxCTCLoss
 export FRNNSoftmaxFocalCTCLoss
 export FRNNSoftmaxCTCProbs
 export SoftmaxCTCFocalCELoss
+export SoftmaxCTCInvPowerCELoss
+export SoftmaxCTCLikeWeightedCELoss
 
 """
     DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0)
@@ -350,6 +352,41 @@ function SoftmaxCTCFocalCELoss(x::Variable,
     Threads.@threads for b = 1:batchsize
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
-    celoss = FocalCE(p, r, focus=focus)
-    return Loss(weightseqvar(celoss, seqlabels, reduction))
+    fce = FocalCE(p, r, focus=focus)
+    return Loss(weightseqvar(fce, seqlabels, reduction))
+end
+
+
+function SoftmaxCTCInvPowerCELoss(x::Variable,
+                                  seqlabels::VecVecInt;
+                                  reduction::String="seqlen",
+                                  blank::Int=1,
+                                  a::Int=0.3f0,
+                                  n::Int=1.0f0)
+    featdims, timesteps, batchsize = size(x)
+    p = softmax(x, dims=1)
+    r = zero(ᵛ(x))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
+    end
+    ce = InvPowerCrossEntropy(p, r, a=a, n=n)
+    return Loss(weightseqvar(ce, seqlabels, reduction))
+end
+
+
+function SoftmaxCTCLikeWeightedCELoss(x::Variable,
+                                      seqlabels::VecVecInt;
+                                      reduction::String="seqlen",
+                                      gammafn::Function=CTC,
+                                      weightfn::Function=t->(1-t))
+    featdims, timesteps, batchsize = size(x)
+    p = softmax(x, dims=1)
+    r = zero(ᵛ(x))
+
+    Threads.@threads for b = 1:batchsize
+        r[:,:,b], _ = gammafn(p.value[:,:,b], seqlabels[b])
+    end
+    wce = weightfn(p) .* CrossEntropy(p, r)
+    return Loss(weightseqvar(wce, seqlabels, reduction))
 end

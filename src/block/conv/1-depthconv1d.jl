@@ -7,8 +7,8 @@ mutable struct PlainDepthConv1d <: Block
     k::Int      # kernel size
     s::Int      # stride size
     function PlainDepthConv1d(channels::Int,
-                              kernel::Int,
                               fn::FunOrNil=relu;
+                              kernel::Int=3,
                               stride::Int=1,
                               gain::Real=1.0,
                               type::Type=Array{Float32})
@@ -20,14 +20,14 @@ mutable struct PlainDepthConv1d <: Block
             Variable{type}(b,true,true,true),
             fn, kernel, stride)
     end
-    function PlainDepthConv1d(fn::FunOrNil, kernel::Int; stride::Int=1)
+    function PlainDepthConv1d(fn::FunOrNil; kernel::Int=3, stride::Int=1)
         new(nothing, nothing, fn, kernel, stride)
     end
 end
 
 
 function clone(this::PlainDepthConv1d; type::Type=Array{Float32})
-    cloned = PlainDepthConv1d(this.f, this.k, stride=this.s)
+    cloned = PlainDepthConv1d(this.f, kernel=this.k, stride=this.s)
     cloned.w = clone(this.w, type=type)
     cloned.b = clone(this.b, type=type)
     return cloned
@@ -37,7 +37,7 @@ end
 function Base.show(io::IO, m::PlainDepthConv1d)
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    print(io, "PlainDepthConv1d($(SIZE[1]), kernel=$(m.k), stride=$(m.s); type=$TYPE)")
+    print(io, "PlainDepthConv1d($(SIZE[1]), $(m.f); kernel=$(m.k), stride=$(m.s), type=$TYPE)")
 end
 
 

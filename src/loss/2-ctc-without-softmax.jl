@@ -393,6 +393,6 @@ function CTCFocalCELoss(p::Variable,
     Threads.@threads for b = 1:batchsize
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
-    celoss = FocalCE(p, r, focus=focus)
-    return Loss(weightseqvar(celoss, seqlabels, reduction))
+    fce = FocalCE(p, r, focus=focus)
+    return Loss(weightseqvar(fce, seqlabels, reduction))
 end

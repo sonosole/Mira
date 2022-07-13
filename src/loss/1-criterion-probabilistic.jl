@@ -329,9 +329,10 @@ function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f
 end
 
 
-function InvPowerCELoss(p::Variable, label::AbstractArray;
+function InvPowerCELoss(p::Variable,
+                        label::AbstractArray;
+                        reduction::String="sum",
                         a::Real=0.3f0,
-                        n::Real=1.0f0,
-                        reduction::String="sum")
+                        n::Real=1.0f0)
     return Loss(InvPowerCrossEntropy(p, label, a=a, n=n), reduction=reduction)
 end

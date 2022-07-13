@@ -19,8 +19,8 @@ mutable struct PlainConv1d <: Block
     s::Int      # stride size
     function PlainConv1d(ichannels::Int,
                          ochannels::Int,
-                         kernel::Int,
                          fn::FunOrNil=relu;
+                         kernel::Int=3,
                          stride::Int=1,
                          type::Type=Array{Float32})
 
@@ -33,14 +33,14 @@ mutable struct PlainConv1d <: Block
             Variable{type}(b,true,true,true),
             fn, kernel, stride)
     end
-    function PlainConv1d(fn::FunOrNil, kernel::Int; stride::Int=1)
+    function PlainConv1d(fn::FunOrNil; kernel::Int=3, stride::Int=1)
         new(nothing, nothing, fn, kernel, stride)
     end
 end
 
 
 function clone(this::PlainConv1d; type::Type=Array{Float32})
-    cloned = PlainConv1d(this.f, this.k, stride=this.s)
+    cloned = PlainConv1d(this.f, kernel=this.k, stride=this.s)
     cloned.w = clone(this.w, type=type)
     cloned.b = clone(this.b, type=type)
     return cloned
@@ -51,7 +51,7 @@ end
 function Base.show(io::IO, m::PlainConv1d)
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    print(io, "PlainConv1d($(Int(SIZE[2]/m.k)), $(SIZE[1]), kernel=$(m.k), stride=$(m.s); type=$TYPE)")
+    print(io, "PlainConv1d($(Int(SIZE[2]/m.k)), $(SIZE[1]), $(m.f), kernel=$(m.k), stride=$(m.s); type=$TYPE)")
 end
 
 

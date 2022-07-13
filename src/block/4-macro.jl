@@ -1,6 +1,7 @@
 export @index
 export @basic
 export @extend
+export @datasetindex
 
 macro index(xstruct, blocks)
     quote
@@ -54,7 +55,7 @@ macro basic(xstruct, blocks)
             n = nparamsof(model) * elsizeof(model)
             return blocksize(n, uppercase(unit))
         end
-        
+
         Mira.kbytesof(model::NerualStruct) = Mira.bytesof(model, "KB")
         Mira.mbytesof(model::NerualStruct) = Mira.bytesof(model, "MB")
         Mira.gbytesof(model::NerualStruct) = Mira.bytesof(model, "GB")
@@ -135,5 +136,16 @@ macro extend(xstruct, blocks)
             end
             return (mops, aops, acts)
         end
+    end
+end
+
+
+macro datasetindex(xstruct, list)
+    quote
+        DataSetStruct = $(esc(xstruct))
+        Base.length(s::DataSetStruct)     = length(s.$list)
+        Base.lastindex(s::DataSetStruct)  = length(s.$list)
+        Base.firstindex(s::DataSetStruct) = 1
+        Base.iterate(s::DataSetStruct, i=firstindex(s)) = i>length(s) ? nothing : (s[i], i+1)
     end
 end

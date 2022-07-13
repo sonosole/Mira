@@ -90,8 +90,8 @@ return true if x isn't NaN nor Inf and not exceeding range [min, max]
 function isnormal(x::Real; min::Real=-1e38, max::Real=1e38)
     if isnan(x) ||
        isinf(x) ||
-       x ≥ max  ||
-       x ≤ min
+       x > max  ||
+       x < min
         return false
     else
         return true

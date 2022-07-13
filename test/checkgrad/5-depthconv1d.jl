@@ -5,7 +5,7 @@
     CHANNEL = 8
     KERNEL  = 6
     STRIDE  = 1
-    BLOCK   = PlainDepthConv1d(CHANNEL, KERNEL, stride=STRIDE; type=TYPE)
+    BLOCK   = PlainDepthConv1d(CHANNEL, kernel=KERNEL, stride=STRIDE, type=TYPE)
 
     timeSteps = 256
     batchsize = 32

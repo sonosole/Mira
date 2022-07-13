@@ -14,8 +14,8 @@
 
     ichannels = 1
     ochannels = 2
-    c1 = PlainConv1d(ichannels,4,3; type=TYPE)
-    c2 = PlainConv1d(4,ochannels,2; type=TYPE)
+    c1 = PlainConv1d(ichannels, 4, kernel=3, type=TYPE)
+    c2 = PlainConv1d(4, ochannels, kernel=2, type=TYPE)
 
     timeSteps = 128
     batchsize = 32
