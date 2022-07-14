@@ -10,8 +10,8 @@ function CRNN_BoundsCTC_With_Softmax(x::Variable{Array{T}},
                                      weight::Float64=1.0) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(T, 1, 1, batchsize)
-    p = softmax(ᵛ(x); dims=1)
-    r = zero(ᵛ(x))
+    p = softmax(ᵛ(x), dims=1)
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = BoundsCTC(p[:,:,b], seqlabels[b], blank=blank, risebound=risebound, fallbound=fallbound)

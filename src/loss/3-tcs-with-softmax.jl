@@ -46,7 +46,7 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
     nlnp = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
     p = softmax(ᵛ(x); dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         span = I[b]:F[b]
@@ -118,7 +118,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
     batchsize = length(seqlabels)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = zero(ᵛ(x))
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         Tᵇ = inputlens[b]
@@ -188,7 +188,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
@@ -223,7 +223,7 @@ function FRNNSoftmaxTCSProbs(x::Variable{T},
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
@@ -256,7 +256,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 

@@ -142,7 +142,7 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p[:,:,b], seqlabels[b], blank=blank)
@@ -215,7 +215,7 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
@@ -319,7 +319,7 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p[:,:,b], seqlabels[b], blank=blank)

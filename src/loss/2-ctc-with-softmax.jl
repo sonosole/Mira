@@ -37,7 +37,7 @@ case batchsize==1 for test case. `x` is the output of a whole complete input seq
                   └───┘                    └───┘
 """
 function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0) where T
-    p = softmax(ᵛ(x), dims=1)
+
     L = length(seq) * 2 + 1
     r, nlnp = CTC(p, seq, blank=blank)
 
@@ -163,7 +163,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
     batchsize = length(inputlens)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = zero(ᵛ(x))
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         Tᵇ = inputlens[b]
@@ -228,8 +228,8 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
                             weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
-    p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
@@ -268,7 +268,7 @@ function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
@@ -317,7 +317,7 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1)
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(S, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
-    r = zero(ᵛ(x))
+    r = zero(p)
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
