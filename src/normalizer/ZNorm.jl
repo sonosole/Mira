@@ -33,7 +33,7 @@ mutable struct ZNorm <: Normalizer
         β = Variable{type}(Zeros(type, shape), true, true, true);
         μ = Zeros(type, shape);
         σ =  Ones(type, shape);
-        new(γ, β, μ, σ, views, true, eps, momentum)
+        new(γ, β, μ, σ, views, eps, momentum)
     end
     function ZNorm(views, eps, momentum)
         new(nothing, nothing, nothing, nothing, views, eps, momentum)
