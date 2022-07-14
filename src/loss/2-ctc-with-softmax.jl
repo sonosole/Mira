@@ -101,7 +101,7 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
     p = softmax(ᵛ(x); dims=1)
     r = zero(p)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], nlnp[b] = CTC(p[:,span], seqlabels[b], blank=blank)
     end
@@ -165,7 +165,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         Tᵇ = inputlens[b]
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
         r[:,1:Tᵇ,b], nlnp[b] = CTC(p[:,1:Tᵇ,b], seqlabels[b], blank=blank)
@@ -231,7 +231,7 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -272,7 +272,7 @@ function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -319,7 +319,7 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1)
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -349,7 +349,7 @@ function SoftmaxCTCFocalCELoss(x::Variable,
     p = softmax(x, dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
     fce = FocalCE(p, r, focus=focus)
@@ -367,7 +367,7 @@ function SoftmaxCTCInvPowerCELoss(x::Variable,
     p = softmax(x, dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
     ce = InvPowerCrossEntropy(p, r, a=a, n=n)
@@ -384,7 +384,7 @@ function SoftmaxCTCLikeWeightedCELoss(x::Variable,
     p = softmax(x, dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], _ = gammafn(p.value[:,:,b], seqlabels[b])
     end
     wce = weightfn(p) .* CrossEntropy(p, r)

@@ -49,7 +49,7 @@ function FNNTCSLoss(p::Variable{T},
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], nlnp[b] = TCS(p.value[:,span], seqlabels[b], background=background, foreground=foreground)
     end
@@ -120,7 +120,7 @@ function RNNTCSLoss(p::Variable{T},
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         Tᵇ = inputlens[b]
         r[:,1:Tᵇ,b], nlnp[b] = TCS(p.value[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
     end
@@ -189,7 +189,7 @@ function FRNNTCSLoss(p::Variable{T},
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
@@ -228,7 +228,7 @@ function FRNNFocalTCSLoss(p::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
@@ -263,7 +263,7 @@ function FRNNTCSProbs(p::Variable{T}, seqlabels::VecVecInt; background::Int=1, f
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p.value[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 

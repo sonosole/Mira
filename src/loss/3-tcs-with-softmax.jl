@@ -48,7 +48,7 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], nlnp[b] = TCS(p[:,span], seqlabels[b], background=background, foreground=foreground)
     end
@@ -120,7 +120,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
     p = zero(ᵛ(x))
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         Tᵇ = inputlens[b]
         p[:,1:Tᵇ,b] = softmax(x.value[:,1:Tᵇ,b]; dims=1)
         r[:,1:Tᵇ,b], nlnp[b] = TCS(p[:,1:Tᵇ,b], seqlabels[b], background=background, foreground=foreground)
@@ -190,7 +190,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
@@ -225,7 +225,7 @@ function FRNNSoftmaxTCSProbs(x::Variable{T},
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 
@@ -260,7 +260,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = TCS(p[:,:,b], seqlabels[b], background=background, foreground=foreground)
     end
 

@@ -12,7 +12,7 @@ function CRNN_BoundedCTC_With_Softmax(x::Variable{Array{T}},
     p = softmax(ᵛ(x); dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = BoundedCTC(p[:,:,b], seqlabels[b], blank=blank, bound=bound)
     end
 

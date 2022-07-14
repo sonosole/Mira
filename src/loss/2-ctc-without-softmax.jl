@@ -89,7 +89,7 @@ function FNNCTCLoss(p::Variable{T}, seqlabels::VecVecInt, inputlens::VecInt; bla
     I, F = indexbounds(inputlens)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         span = I[b]:F[b]
         r[:,span], nlnp[b] = CTC(p.value[:,span], seqlabels[b], blank=blank)
     end
@@ -151,7 +151,7 @@ function RNNCTCLoss(p::Variable{T},
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         Tᵇ = inputlens[b]
         r[:,1:Tᵇ,b], nlnp[b] = CTC(p.value[:,1:Tᵇ,b], seqlabels[b], blank=blank)
     end
@@ -217,7 +217,7 @@ function FRNNCTCLoss(p::Variable{T},
     nlnp = zeros(S, 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -277,7 +277,7 @@ function FRNNFocalCTCLoss(p::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -320,7 +320,7 @@ function FRNNFocalCTCLoss_Naive(p::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -362,7 +362,7 @@ function FRNNCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where 
     nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -390,7 +390,7 @@ function CTCFocalCELoss(p::Variable,
     featdims, timesteps, batchsize = size(p)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], _ = CTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
     fce = FocalCE(p, r, focus=focus)

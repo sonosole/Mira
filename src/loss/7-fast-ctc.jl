@@ -144,7 +144,7 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -180,7 +180,7 @@ function FRNNFastCTCLoss(p::Variable{T},
     nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -219,7 +219,7 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -262,7 +262,7 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
     𝜸 = S(focus)
     𝟙 = S(1.0f0)
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -296,7 +296,7 @@ function FRNNFastCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) wh
     nlnp = zeros(eltype(p), 1, 1, batchsize)
     r = zero(ᵛ(p))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p.value[:,:,b], seqlabels[b], blank=blank)
     end
 
@@ -321,7 +321,7 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
     p = softmax(ᵛ(x), dims=1)
     r = zero(ᵛ(x))
 
-    Threads.@threads for b = 1:batchsize
+    for b = 1:batchsize
         r[:,:,b], nlnp[b] = FastCTC(p[:,:,b], seqlabels[b], blank=blank)
     end
 
