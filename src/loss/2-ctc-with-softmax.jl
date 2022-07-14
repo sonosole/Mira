@@ -37,7 +37,7 @@ case batchsize==1 for test case. `x` is the output of a whole complete input seq
                   └───┘                    └───┘
 """
 function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0) where T
-
+    p = softmax(ᵛ(x), dims=1)
     L = length(seq) * 2 + 1
     r, nlnp = CTC(p, seq, blank=blank)
 
@@ -98,7 +98,7 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
     batchsize = length(inputLengths)
     nlnp = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
-    p = softmax(ᵛ(x); dims=1)
+    p = softmax(ᵛ(x), dims=1)
     r = zero(p)
 
     for b = 1:batchsize
@@ -228,7 +228,7 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
                             weight=1.0) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
-
+    p = softmax(ᵛ(x), dims=1)
     r = zero(p)
 
     for b = 1:batchsize
