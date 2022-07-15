@@ -21,7 +21,7 @@ if all gradients were true, then it returns true.
 function checkgrad(block::B,
                    x::Variable;
                    dw::AbstractFloat=1e-7,
-                   tol::AbstractFloat=0.1,
+                   tol::AbstractFloat=0.05,
                    onlyone::Bool=false) where B <: Block
     istrue = true
     params = paramsof(block)
@@ -71,7 +71,7 @@ can NOT used here.
 function checkgrad(fn::Function,
                    x::Variable;
                    dx::AbstractFloat=1e-8,
-                   tol::AbstractFloat=0.1)
+                   tol::AbstractFloat=0.05)
     x.keepsgrad = true
     # [1] forward 1st time
     y₁ = fn(x)
