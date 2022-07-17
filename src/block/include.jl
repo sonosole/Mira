@@ -16,6 +16,8 @@ export nparamsof
 export weightsof
 export unbiasedof
 export nops
+export checkvalues
+
 
 include("./1-chain.jl")
 include("./2-residual.jl")
@@ -89,4 +91,3 @@ function KeepNdimsPredict(block::FC, x::Variable)
     V = ntuple(i -> i≠1 ? S[i] : F, length(S))
     return reshape(z, V)    # 2D to N-D
 end
-

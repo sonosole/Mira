@@ -14,16 +14,16 @@ mutable struct IndGRU <: Block
     h::Any  # hidden variable
     function IndGRU(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
-
-        Wz = randn(T, hsize, isize) .* sqrt( T(1/isize) )
+        A  = T(sqrt(1 / isize))
+        Wz = randn(T, hsize, isize) .* A
         Uz = uniform(T, (hsize, 1), from=-0.2, to=0.2)
         bz = zeros(T, hsize, 1)
 
-        Wr = randn(T, hsize, isize) .* sqrt( T(1/isize) )
+        Wr = randn(T, hsize, isize) .* A
         Ur = uniform(T, (hsize, 1), from=-0.2, to=0.2)
         br = zeros(T, hsize, 1)
 
-        Wc = randn(T, hsize, isize) .* sqrt( T(1/isize) )
+        Wc = randn(T, hsize, isize) .* A
         Uc = uniform(T, (hsize, 1), from=-0.2, to=0.2)
         bc = zeros(T, hsize, 1)
 

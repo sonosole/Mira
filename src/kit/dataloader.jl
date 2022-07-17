@@ -26,9 +26,9 @@ mutable struct DataLoader{T}
     collate::Union{Function,Nothing}
 
     function DataLoader(dataset::T;
-                        batchsize=1,
-                        shuffle=true,
-                        droplast=true,
+                        batchsize::Int=1,
+                        shuffle::Bool=true,
+                        droplast::Bool=true,
                         collatefn::Union{Function,Nothing}=nothing) where {T<:DataSet}
         if batchsize <= 0
             throw(ArgumentError("batchsize should be positive, but got $batchsize"))

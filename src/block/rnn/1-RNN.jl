@@ -10,7 +10,7 @@ mutable struct RNN <: Block
     h::Any      # hidden variable
     function RNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
-        w = randn(T, hsize, isize) .* sqrt( T(1/isize) )
+        w = randn(T, hsize, isize) .* sqrt(T(2 / isize))
         b = zeros(T, hsize, 1)
         u = randdiagonal(T, hsize; from=-0.1990, to=0.1997)
         new(Variable{type}(w,true,true,true),

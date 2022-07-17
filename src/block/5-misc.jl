@@ -155,3 +155,31 @@ end
 #     V = ntuple(i -> i≠1 ? S[i] : F, length(S))
 #     return reshape(z, V)    # 2D to N-D
 # end
+
+
+"""
+    checkvalues(x::AbstractArray)
+If any value in x is NaN or Inf, throw a info
+"""
+function checkvalues(x::AbstractArray)
+    for v in Array(x)
+        if isnan(v) || isinf(v)
+            @info red!("$v is unnormal")
+            return nothing
+        end
+    end
+end
+
+
+function checkvalues(cv::Vector{XVariable})
+    for (c, v) in cv
+        checkvalues(value(v))
+    end
+end
+
+
+function checkvalues(vs::Vector{Variable})
+    for v in vs
+        checkvalues(value(v))
+    end
+end

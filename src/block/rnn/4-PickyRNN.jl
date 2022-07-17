@@ -5,7 +5,7 @@ mutable struct PickyRNN
     h::Any
     function PickyRNN(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
         T = eltype(type)
-        a = sqrt(T(2/isize))
+        a = T(sqrt(2/isize))
         w = randn(T, hsize, isize) .* a
         b = randn(T, hsize,     1) .* a
         new(Variable{type}(w,true,true,true),
