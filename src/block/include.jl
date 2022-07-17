@@ -17,7 +17,7 @@ export weightsof
 export unbiasedof
 export nops
 export checkvalues
-
+export staticsof
 
 include("./1-chain.jl")
 include("./2-residual.jl")

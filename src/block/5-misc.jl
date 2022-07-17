@@ -183,3 +183,37 @@ function checkvalues(vs::Vector{Variable})
         checkvalues(value(v))
     end
 end
+
+
+"""
+    staticsof(x::AbstractArray) -> mean, std, min, max
+"""
+function staticsof(x::AbstractArray)
+    μ = mean(x)
+    σ = std(x)
+    return μ, σ, minimum(x), maximum(x)
+end
+
+
+"""
+    staticsof(cv::Vector{XVariable})
+Show mean, std, min, max
+"""
+function staticsof(cv::Vector{XVariable})
+    for (i, (c, v)) in enumerate(cv)
+        μ, σ, l, u = staticsof(value(v))
+        println("$(i)\t$(size(v))\t$c\t[$l, $u]\t($μ ± $σ)")
+    end
+end
+
+
+"""
+    staticsof(vs::Vector{Variable})
+Show mean, std, min, max
+"""
+function staticsof(vs::Vector{Variable})
+    for (i, v) in enumerate(vs)
+        μ, σ, l, u = staticsof(value(v))
+        println("$(i)\t$(size(v))\t[$l, $u]\t($μ\t±\t$σ)")
+    end
+end
