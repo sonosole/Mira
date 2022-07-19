@@ -76,7 +76,7 @@ function Base.:-(x::Variable{T}) where T
 end
 
 
-function Base.:*(x::Variable{T}, constant) where T
+function Base.:*(x::Variable{T}, constant::Real) where T
     # a matrix multiplies a constant element by element
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .* C, x.backprop)
@@ -93,7 +93,7 @@ function Base.:*(x::Variable{T}, constant) where T
 end
 
 
-function Base.:*(constant, var::Variable{T}) where T
+function Base.:*(constant::Real, var::Variable{T}) where T
     return var * constant
 end
 
