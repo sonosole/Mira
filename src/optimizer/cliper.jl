@@ -5,9 +5,14 @@ export L1NormClip
 export L0NormClip
 export LPInfNormClip
 export LNInfNormClip
-export setNanInfZero, setNanInfZero!
+export setNanInfZero, setNanInfZero!, SetNanInfZero!
 export fillNanInf, fillNanInf!
 export clip!
+export maxnormalize
+export minnormalize
+export sumnormalize
+export normalize
+export pnorm
 
 """
     clip!(::Vector{XVariable}, kind='u'; L1decay=0.0, L2decay=0.0, clipvalue=1.0)
@@ -19,7 +24,7 @@ Limit the amplitude of parameters. `kind` has four options:\n
 `'a'` for `'u'`, `'b'` and `'w'` params\n
 as show in `yᵗ = f(w*xᵗ + u*hᵗ⁻¹ + b)` or other similar formulas
 """
-function clip!(xparams::Vector{XVariable}, kind='u'; L1decay=0.0, L2decay=0.0, clipvalue=1.0)
+function clip!(xparams::Vector{XVariable}, kind='u'; L1decay::Real=0.0, L2decay::Real=0.0, clipvalue::Real=1.0)
     @assert clipvalue>0 "clipvalue is positive, but got $clipvalue"
     if !(kind=='u' || kind=='b' || kind=='w' || kind=='a')
         @error "type of XVariable not among u/w/b/a, but got $kind"
@@ -46,7 +51,7 @@ function clip!(xparams::Vector{XVariable}, kind='u'; L1decay=0.0, L2decay=0.0, c
 end
 
 
-function decay(params::Vector{Variable}; ratio=0.999)
+function decay(params::Vector{Variable}; ratio::Real=0.999)
     for p in params
         p.value .*= ratio
     end
@@ -54,7 +59,7 @@ end
 
 
 """
-    setNanInfZero(x)
+    setNanInfZero(x::AbstractArray)
 ```julia
 x = randn(1,4)
 x[1] = Inf;
@@ -71,13 +76,13 @@ julia> x = setNanInfZero(x)
  0.0  0.0  0.0  0.602655
 ```
  """
-function setNanInfZero(x)
+function setNanInfZero(x::AbstractArray)
     x[ isnan.(x) .⊻ isinf.(x) ] .= 0.0
     return x
 end
 
 """
-    setNanInfZero!(x)
+    setNanInfZero!(x::AbstractArray)
 ```julia
 x = randn(1,4)
 x[1] = Inf;
@@ -94,7 +99,7 @@ julia> setNanInfZero!(x); x
  0.0  0.0  0.0  0.602655
 ```
  """
-function setNanInfZero!(x)
+function setNanInfZero!(x::AbstractArray)
     x[ isnan.(x) .⊻ isinf.(x) ] .= 0.0
     return nothing
 end
@@ -102,7 +107,7 @@ end
 
 
 """
-    fillNanInf(x, v)
+    fillNanInf(x::AbstractArray, v::Real)
 ```julia
 x = randn(1,4)
 x[1] = Inf;
@@ -119,7 +124,7 @@ julia> x = fillNanInf(x, 7.0)
  7.0  7.0  7.0  0.602655
 ```
  """
-function fillNanInf(x, v)
+function fillNanInf(x::AbstractArray, v::Real)
     x[ isnan.(x) .⊻ isinf.(x) ] .= v
     return x
 end
@@ -142,13 +147,13 @@ julia> fillNanInf!(x, 7.0); x
  7.0  7.0  7.0  0.602655
 ```
  """
-function fillNanInf!(x, v)
+function fillNanInf!(x::AbstractArray, v::Real)
     x[ isnan.(x) .⊻ isinf.(x) ] .= v
     return nothing
 end
 
 
-function L2NormClip(x::AbstractArray, clipvalue)
+function L2NormClip(x::AbstractArray, clipvalue::Real)
     pnorm = sqrt(sum(x.^2) / length(x))
     scale = clipvalue / pnorm
     if pnorm > clipvalue
@@ -158,7 +163,7 @@ function L2NormClip(x::AbstractArray, clipvalue)
 end
 
 
-function L1NormClip(x::AbstractArray, clipvalue)
+function L1NormClip(x::AbstractArray, clipvalue::Real)
     pnorm = sum(abs.(x)) / length(x)
     scale = clipvalue / pnorm
     if pnorm > clipvalue
@@ -168,7 +173,7 @@ function L1NormClip(x::AbstractArray, clipvalue)
 end
 
 
-function L0NormClip(x::AbstractArray, clipvalue)
+function L0NormClip(x::AbstractArray, clipvalue::Real)
     pnorm = sum(x .!= 0.0) / length(x)
     scale = clipvalue / pnorm
     if pnorm > clipvalue
@@ -178,7 +183,7 @@ function L0NormClip(x::AbstractArray, clipvalue)
 end
 
 
-function LPInfNormClip(x::AbstractArray, clipvalue)
+function LPInfNormClip(x::AbstractArray, clipvalue::Real)
     pnorm = maximum(abs.(x))
     scale = clipvalue / pnorm
     if pnorm > clipvalue
@@ -188,7 +193,7 @@ function LPInfNormClip(x::AbstractArray, clipvalue)
 end
 
 
-function LNInfNormClip(x::AbstractArray, clipvalue)
+function LNInfNormClip(x::AbstractArray, clipvalue::Real)
     pnorm = minimum(abs.(x))
     scale = clipvalue / pnorm
     if pnorm > clipvalue
@@ -198,7 +203,7 @@ function LNInfNormClip(x::AbstractArray, clipvalue)
 end
 
 
-function LpNormClip(x::AbstractArray, clipvalue; order::Union{Int,String}=2)
+function LpNormClip(x::AbstractArray, clipvalue::Real; order::Union{Int,String}=2)
     order==2 && return L2NormClip(x, clipvalue)
     order==1 && return L1NormClip(x, clipvalue)
     order==0 && return L0NormClip(x, clipvalue)
@@ -210,4 +215,57 @@ function LpNormClip(x::AbstractArray, clipvalue; order::Union{Int,String}=2)
         x .*= scale
     end
     return x
+end
+
+
+function maxnormalize(x::AbstractArray)
+    ϵ = eps(eltypy(x))
+    return x ./ (maximum(abs.(x)) + ϵ)
+end
+
+function minnormalize(x::AbstractArray)
+    ϵ = eps(eltypy(x))
+    return x ./ (minimum(abs.(x)) + ϵ)
+end
+
+function sumnormalize(x::AbstractArray)
+    ϵ = eps(eltypy(x))
+    return x ./ (sum(abs.(x)) + ϵ)
+end
+
+function normalize(x::AbstractArray; by::Function=maximum)
+    ϵ = eps(eltypy(x))
+    return x ./ (by(abs.(x)) + ϵ)
+end
+
+
+function pnorm(x::AbstractArray, p::Real=2)
+    if mod(p, 2) == 0
+        return sum(x .^ p) ^ (1/p)
+    else
+        return sum(abs.(x) .^ p) ^ (1/p)
+    end
+end
+
+
+
+"""
+    SetNanInfZero!(cv::Vector{XVariable})
+Set NaN or Inf zero, to keep trainning stable
+"""
+function SetNanInfZero!(cv::Vector{XVariable})
+    for (c, v) in cv
+        setNanInfZero!(v.value)
+    end
+end
+
+
+"""
+    SetNanInfZero!(v::Vector{Variable})
+Set NaN or Inf zero, to keep trainning stable
+"""
+function SetNanInfZero!(vs::Vector{Variable})
+    for v in vs
+        setNanInfZero!(v.value)
+    end
 end
