@@ -108,7 +108,7 @@ function weightseqvar(x::Variable{T}, seqlabels::VecVecInt, reduction::String) w
         return x .* T(bvec)
 
     elseif isequal(reduction, "timesteps")  # 时间长度归一化
-        return x .* D(1 / (timesteps * batchsize))
+        return x * D(1 / (timesteps * batchsize))
 
     elseif isequal(reduction, "trellis")    # 网格归一化
         bvec = zeros(eltype(x), 1, 1, batchsize)
@@ -119,7 +119,7 @@ function weightseqvar(x::Variable{T}, seqlabels::VecVecInt, reduction::String) w
         return x .* T(bvec)
 
     elseif isequal(reduction, "normal") # 只是 batchsize 归一化
-        return x .* D(1 / batchsize)
+        return x * D(1 / batchsize)
 
     elseif isequal(reduction, "nil")    # 无归一化
         return x
