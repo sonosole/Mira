@@ -7,6 +7,7 @@ export FRNNSoftmaxCTCProbs
 export SoftmaxCTCFocalCELoss
 export SoftmaxCTCInvPowerCELoss
 export SoftmaxCTCLikeWeightedCELoss
+export SoftmaxCTCLikeFocalCELoss
 
 """
     DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0)
@@ -389,4 +390,45 @@ function SoftmaxCTCLikeWeightedCELoss(x::Variable,
     end
     wce = weightfn(p) .* CrossEntropy(p, r)
     return Loss(weightseqvar(wce, seqlabels, reduction))
+end
+
+
+function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
+                                   seqlabels::VecVecInt;
+                                   reduction::String="seqlen",
+                                   gammafn::Function=CTC,
+                                   focus::Real=0.5f0) where T
+
+    featdims, timesteps, batchsize = size(x)
+    𝒑 = softmax(ᵛ(x), dims=1)
+    𝜸 = zero(𝒑)
+
+    for b = 1:batchsize
+        𝜸[:,:,b], _ = gammafn(𝒑[:,:,b], seqlabels[b])
+    end
+
+    TO = eltype(𝒑)
+    ϵ  = TO(1e-38)
+    𝒍  = TO(1.0f0)
+    𝒏 = TO(focus)
+
+    p⁺  = 𝒑 .+ ϵ    # a little greater
+    p⁻  = 𝒑 .- ϵ    # a little smaller
+    𝒍𝒏𝒑 = log.(p⁺)  # alias for log(p)
+    𝒍𝒔𝒑 = 𝒍 .- p⁻   # alias for 1 - p
+
+    t = @. - 𝜸 * 𝒍𝒔𝒑 ^ 𝒏 * 𝒍𝒏𝒑
+    y = Variable{T}(t, x.backprop)
+
+    if y.backprop
+        𝒛 = @. 𝜸 * 𝒍𝒔𝒑^(𝒏-𝒍) * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - 𝒍𝒔𝒑)
+        y.backward = function ∇SoftmaxCTCLikeFocalCELoss()
+            if need2computeδ!(x)
+                δ(x) .+= δ(y) .* (𝒛 .- 𝒑 .* sum(𝒛, dims=1))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return Loss(weightseqvar(y, seqlabels, reduction))
 end
