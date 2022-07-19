@@ -32,9 +32,9 @@ julia> zeropoint(0,1.0, -127,127)
 ```
 """
 function zeropoint(Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
-    S = scale(Xmin, Xmax, Qmin, Qmax)
-    Z = Qmax - Xmax / S
-    return round(I, Z)
+    S = scale(Xmin, Xmax, Qmin, Qmax) # scale
+    Z = Qmax - round(I, Xmax / S)     # zero-point
+    return Z
 end
 
 
@@ -66,9 +66,8 @@ julia> quantize(0.5, 0.0, 1.0, 0, 5)
 """
 function quantize(x::Real, Xmin::Real, Xmax::Real, Qmin::I, Qmax::I) where I <: Integer
     S, Z = scale_and_zeropoint(Xmin, Xmax, Qmin, Qmax)
-    K = 1 / S
     x = clamp(x, Xmin, Xmax)
-    q = round(I, x * K) + Z
+    q = round(I, x / S) + Z
     return q
 end
 
@@ -106,9 +105,9 @@ end
 
 
 """
-    xqx(X::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> Xq::typeof(X)
+    xqx(X::Real, Xmin::Real, Xmax::Real, Qmin::Integer, Qmax::Integer) -> Ẋ::typeof(X)
 
-    Xq = DeQuantize( Quantize( X ) )
+    Ẋ = dequantize( quantize( X ) )
 ```
 julia> xqx(0.5, 0.0, 1.0, 0, 5)
 0.4
