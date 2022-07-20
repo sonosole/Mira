@@ -218,24 +218,20 @@ function LpNormClip(x::AbstractArray, clipvalue::Real; order::Union{Int,String}=
 end
 
 
-function maxnormalize(x::AbstractArray)
-    ϵ = eps(eltypy(x))
-    return x ./ (maximum(abs.(x)) + ϵ)
+function maxnormalize(x::AbstractArray, eps::Real=1e-38)
+    return x ./ (maximum(abs.(x)) + eps)
 end
 
-function minnormalize(x::AbstractArray)
-    ϵ = eps(eltypy(x))
-    return x ./ (minimum(abs.(x)) + ϵ)
+function minnormalize(x::AbstractArray, eps::Real=1e-38)
+    return x ./ (minimum(abs.(x)) + eps)
 end
 
-function sumnormalize(x::AbstractArray)
-    ϵ = eps(eltypy(x))
-    return x ./ (sum(abs.(x)) + ϵ)
+function sumnormalize(x::AbstractArray, eps::Real=1e-38)
+    return x ./ (sum(abs.(x)) + eps)
 end
 
-function normalize(x::AbstractArray; by::Function=maximum)
-    ϵ = eps(eltypy(x))
-    return x ./ (by(abs.(x)) + ϵ)
+function normalize(x::AbstractArray, eps::Real=1e-38; by::Function=maximum)
+    return x ./ (by(abs.(x)) + eps)
 end
 
 
