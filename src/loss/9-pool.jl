@@ -39,11 +39,10 @@ function onehotpool(l::VecVecInt,
     y = zeros(dtype, C, 1, B)
 
     for b in 1:B
-        for c in l[b]
-            if c==0
-                break
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] = 𝟙
             end
-            y[c,1,b] = 𝟙
         end
         y[blank,1,b] = 𝟙
     end
@@ -82,11 +81,10 @@ function multihotpool(l::VecVecInt,
     y = zeros(dtype, C, 1, B)
 
     for b in 1:B
-        for c in l[b]
-            if c==0
-                break
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] = 𝟙
             end
-            y[c,1,b] = 𝟙
         end
     end
     return y
