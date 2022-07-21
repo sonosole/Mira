@@ -25,19 +25,20 @@ function acelabel(l::VecVecInt,
                   B::Int;
                   blank::Int=1,
                   dtype::DataType=Float32)
-    𝟙 = dtype(1.0f0)
+    𝟙 = dtype(1)
+    Τ = dtype(T)
     y = zeros(dtype, C, 1, B)
-
     for b in 1:B
-        for c in l[b]
-            if c==0
-                break
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] += 𝟙
             end
-            y[c,1,b] += 𝟙
+            y[blank,1,b] = Τ - dtype(length(l[b]))
+        else
+            y[blank,1,b] = Τ
         end
-        y[blank,1,b] = T - length(l[b])
     end
-    return y ./ T
+    return y ./ Τ
 end
 
 
