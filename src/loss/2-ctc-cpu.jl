@@ -146,3 +146,63 @@ function CTCGreedySearchWithTimestamp(x::Array; blank::Int=1, dims=1)
     end
     return hyp, stp
 end
+
+
+export CTCLabelRatio
+function CTCLabelRatio(l::VecVecInt,
+                       C::Int,
+                       B::Int;
+                       a::Real=0.9,
+                       blank::Int=1,
+                       dtype::DataType=Float32)
+    α = dtype(a) # 0 < α < 1
+    𝟙 = dtype(1)
+    β = 𝟙 - α
+    y = zeros(dtype, C, 1, B)
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] += α
+            end
+            y[blank,1,b] = (𝟙 + length(l[b])) * β
+        else
+            y[blank,1,b] = 𝟙
+        end
+    end
+    return y
+end
+
+
+export modifygamma
+function modifygamma(r::AbstractArray, seqlabels::VecVecInt, a::Real, blank::Int, T::Type)
+    C = size(r, 1)
+    B = length(seqlabels)
+    N = CTCLabelRatio(seqlabels, C, B, a=a, blank=blank)
+    V = sum(r, dims=2)
+    γ = r .* T(V ./ N)
+    return γ ./ sum(γ, dims=1)
+end
+
+
+export CTCLabelFreq
+function CTCLabelFreq(l::VecVecInt,
+                      C::Int,
+                      B::Int;
+                      blank::Int=1,
+                      dtype::DataType=Float32)
+    𝟙 = dtype(1)
+    y = zeros(dtype, C, 1, B)
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] += 𝟙
+            end
+            y[blank,1,b] = 𝟙 + length(l[b])
+        else
+            y[blank,1,b] = 𝟙
+        end
+    end
+    return y
+end
