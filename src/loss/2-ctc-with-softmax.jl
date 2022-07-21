@@ -432,3 +432,40 @@ function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
     end
     return Loss(weightseqvar(y, seqlabels, reduction))
 end
+
+
+export SoftmaxIterativeCTCLikeLoss
+function SoftmaxIterativeCTCLikeLoss(x::Variable{T},
+                                     seqlabels::VecVecInt;
+                                     reduction::String="seqlen",
+                                     blank::Int=1,
+                                     ratio::Real=0.9) where T
+    featdims, timesteps, batchsize = size(x)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
+    p = softmax(ᵛ(x), dims=1)
+    r = zero(p)
+
+    for b = 1:batchsize
+        r[:,:,b], nlnp[b] = CTC(p[:,:,b], seqlabels[b], blank=blank)
+    end
+
+    l = T(nlnp)
+    Δ = p - modifygamma(r, seqlabels, ratio, blank, T)
+    reduce3d(Δ, l, seqlabels, reduction)
+    y = Variable{T}([sum(l)], x.backprop)
+
+    if y.backprop
+        y.backward = function ∇FRNNSoftmaxCTCLoss()
+            if need2computeδ!(x)
+                if weight==1.0
+                    δ(x) .+= δ(y) .* Δ
+                else
+                    δ(x) .+= δ(y) .* Δ .* weight
+                end
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
