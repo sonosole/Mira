@@ -206,3 +206,119 @@ function CTCLabelFreq(l::VecVecInt,
     end
     return y
 end
+
+
+"""
+    CTCLabelInvRatio(l::VecVecInt, # batched sequences
+                     C::Int,       # channels
+                     B::Int;       # batch size
+                     blank::Int=1, # blank index
+                     dtype::DataType=Float32)
+
+Count the number of occurrences of non-blank and blank states from CTC topology.
+And then return its inverse. Sequence like [2, 2, 3, 2] would be converted to
+[∅, 2, ∅, 2, ∅, 3, ∅, 2, ∅], where ∅ is the blank index.
+
+# Example
+    julia> CTCLabelInvRatio([ [0] , [2,2,3,2] ], 4, 2, blank=1)
+    4×1×2 Array{Float32, 3}:
+    [:, :, 1] =
+     1.0
+     0.0
+     0.0
+     0.0
+
+    [:, :, 2] =
+     0.2
+     0.33333334
+     1.0
+     0.0
+"""
+function CTCLabelInvRatio(l::VecVecInt,
+                          C::Int,
+                          B::Int;
+                          blank::Int=1,
+                          dtype::DataType=Float32)
+    𝟙 = dtype(1)
+    y = zeros(dtype, C, 1, B)
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] += 𝟙
+            end
+            y[blank,1,b] = 𝟙 / (𝟙 + length(l[b]))
+        else
+            y[blank,1,b] = 𝟙
+        end
+    end
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in unique(l[b])
+                y[c,1,b] = 𝟙 / y[c,1,b]
+            end
+        end
+    end
+    return y
+end
+
+
+"""
+    CTCLabelWInvRatio(l::VecVecInt, # batched sequences
+                      C::Int,       # channels
+                      B::Int;       # batch size
+                      a::Real=0.9,  # weight for non-blank classes
+                      blank::Int=1, # blank index
+                      dtype::DataType=Float32)
+
+Count the number of occurrences of non-blank and blank states from CTC topology.
+And then return its weighted inverse. Sequence like [2, 2, 3, 2] would be converted
+to [∅, 2, ∅, 2, ∅, 3, ∅, 2, ∅], where ∅ is the blank index.
+
+# Example
+    julia> CTCLabelInvRatio([ [0] , [2,2,3,2] ], 4, 2, blank=1)
+    4×1×2 Array{Float32, 3}:
+    [:, :, 1] =
+     1.0
+     0.0
+     0.0
+     0.0
+
+    [:, :, 2] =
+     0.2
+     0.33333334
+     1.0
+     0.0
+"""
+function CTCLabelWInvRatio(l::VecVecInt,
+                           C::Int,
+                           B::Int;
+                           a::Real=0.9,
+                           blank::Int=1,
+                           dtype::DataType=Float32)
+    𝟙 = dtype(1)
+    y = zeros(dtype, C, 1, B)
+    α = dtype(a)
+    β = 𝟙 - α
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in l[b]
+                y[c,1,b] += 𝟙
+            end
+            y[blank,1,b] = β / (𝟙 + length(l[b]))
+        else
+            y[blank,1,b] = β
+        end
+    end
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in unique(l[b])
+                y[c,1,b] = α / y[c,1,b]
+            end
+        end
+    end
+    return y
+end
