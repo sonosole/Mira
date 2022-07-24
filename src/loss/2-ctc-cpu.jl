@@ -148,7 +148,23 @@ function CTCGreedySearchWithTimestamp(x::Array; blank::Int=1, dims=1)
 end
 
 
+# Paper: Reinterpreting CTC Training as Iterative Fitting
 export CTCLabelRatio
+"""
+    julia> CTCLabelRatio([ [0] , [2,2,3] ], 4, 2, a=0.4)
+    4×1×2 Array{Float32, 3}:
+    [:, :, 1] =
+    0.6
+    0.0
+    0.0
+    0.0
+
+    [:, :, 2] =
+    2.4
+    0.8
+    0.4
+    0.0
+"""
 function CTCLabelRatio(l::VecVecInt,
                        C::Int,
                        B::Int;
@@ -165,9 +181,9 @@ function CTCLabelRatio(l::VecVecInt,
             for c in l[b]
                 y[c,1,b] += α
             end
-            y[blank,1,b] = (𝟙 + length(l[b])) * β
+            y[blank,1,b] = β * (𝟙 + length(l[b]))
         else
-            y[blank,1,b] = 𝟙
+            y[blank,1,b] = β
         end
     end
     return y
@@ -176,16 +192,68 @@ end
 
 export modifygamma
 function modifygamma(r::AbstractArray, seqlabels::VecVecInt, a::Real, blank::Int, T::Type)
-    C = size(r, 1)
-    B = length(seqlabels)
-    N = CTCLabelRatio(seqlabels, C, B, a=a, blank=blank)
+    C = size(r, 1)          # channels
+    B = length(seqlabels)   # batchsize
+    N = T(CTCLabelRatio(seqlabels, C, B, a=a, blank=blank))
     V = sum(r, dims=2)
-    γ = r .* T(V ./ N)
+    γ = r .* (N ./ V)
+    return γ ./ sum(γ, dims=1)
+end
+
+
+# Paper: Reinterpreting CTC Training as Iterative Fitting
+function weightedgamma(r::AbstractArray, l::VecVecInt, a::Real, blank::Int, T::Type)
+    dtype = eltype(T)
+    C = size(r, 1)  # channels
+    B = length(l)   # batchsize
+    α = dtype(a)    # 0 < α < 1
+    𝟙 = dtype(1)
+    β = 𝟙 - α
+    N = zeros(dtype, C, 1, B)
+
+    for b in 1:B
+        if l[b][1] ≠ 0
+            for c in l[b]
+                N[c,1,b] += α
+            end
+            N[blank,1,b] = β * (𝟙 + length(l[b]))
+        else
+            N[blank,1,b] = β
+        end
+    end
+
+    V = sum(r, dims=2)
+    γ = r .* (T(N) ./ V)
     return γ ./ sum(γ, dims=1)
 end
 
 
 export CTCLabelFreq
+"""
+    CTCLabelFreq(l::VecVecInt,
+                 C::Int,
+                 B::Int;
+                 blank::Int=1,
+                 dtype::DataType=Float32)
+
+Count the number of occurrences of non-blank and blank states from CTC topology.
+Sequence like `[2, 2, 3, 2]` would be converted to `[*, 2, *, 2, *, 3, *, 2, *]`,
+where `*` is the blank index.
+# Example
+    julia> CTCLabelFreq([ [0] , [2,2,3,2] ], 4, 2, blank=1)
+    4×1×2 Array{Float32, 3}:
+    [:, :, 1] =
+     1.0
+     0.0
+     0.0
+     0.0
+
+    [:, :, 2] =
+     5.0
+     3.0
+     1.0
+     0.0
+"""
 function CTCLabelFreq(l::VecVecInt,
                       C::Int,
                       B::Int;
@@ -208,19 +276,20 @@ function CTCLabelFreq(l::VecVecInt,
 end
 
 
+export CTCLabelInvFreq
 """
-    CTCLabelInvRatio(l::VecVecInt, # batched sequences
-                     C::Int,       # channels
-                     B::Int;       # batch size
-                     blank::Int=1, # blank index
-                     dtype::DataType=Float32)
+    CTCLabelInvFreq(l::VecVecInt, # batched sequences
+                    C::Int,       # channels
+                    B::Int;       # batch size
+                    blank::Int=1, # blank index
+                    dtype::DataType=Float32)
 
 Count the number of occurrences of non-blank and blank states from CTC topology.
-And then return its inverse. Sequence like [2, 2, 3, 2] would be converted to
-[∅, 2, ∅, 2, ∅, 3, ∅, 2, ∅], where ∅ is the blank index.
+And then return its inverse. Sequence like `[2, 2, 3, 2]` would be converted to
+`[*, 2, *, 2, *, 3, *, 2, *]`, where `*` is the blank index.
 
 # Example
-    julia> CTCLabelInvRatio([ [0] , [2,2,3,2] ], 4, 2, blank=1)
+    julia> CTCLabelInvFreq([ [0] , [2,2,3,2] ], 4, 2, blank=1)
     4×1×2 Array{Float32, 3}:
     [:, :, 1] =
      1.0
@@ -234,11 +303,11 @@ And then return its inverse. Sequence like [2, 2, 3, 2] would be converted to
      1.0
      0.0
 """
-function CTCLabelInvRatio(l::VecVecInt,
-                          C::Int,
-                          B::Int;
-                          blank::Int=1,
-                          dtype::DataType=Float32)
+function CTCLabelInvFreq(l::VecVecInt,
+                         C::Int,
+                         B::Int;
+                         blank::Int=1,
+                         dtype::DataType=Float32)
     𝟙 = dtype(1)
     y = zeros(dtype, C, 1, B)
 
@@ -264,20 +333,21 @@ function CTCLabelInvRatio(l::VecVecInt,
 end
 
 
+export CTCLabelWInvFreq
 """
-    CTCLabelWInvRatio(l::VecVecInt, # batched sequences
-                      C::Int,       # channels
-                      B::Int;       # batch size
-                      a::Real=0.9,  # weight for non-blank classes
-                      blank::Int=1, # blank index
-                      dtype::DataType=Float32)
+    CTCLabelWInvFreq(l::VecVecInt, # batched sequences
+                     C::Int,       # channels
+                     B::Int;       # batch size
+                     a::Real=0.9,  # weight for non-blank classes
+                     blank::Int=1, # blank index
+                     dtype::DataType=Float32)
 
 Count the number of occurrences of non-blank and blank states from CTC topology.
-And then return its weighted inverse. Sequence like [2, 2, 3, 2] would be converted
-to [∅, 2, ∅, 2, ∅, 3, ∅, 2, ∅], where ∅ is the blank index.
+And then return its weighted inverse. Sequence like `[2, 2, 3, 2]` would be converted
+to `[*, 2, *, 2, *, 3, *, 2, *]`, where `*` is the blank index.
 
 # Example
-    julia> CTCLabelInvRatio([ [0] , [2,2,3,2] ], 4, 2, blank=1)
+    julia> CTCLabelWInvFreq([ [0] , [2,2,3,2] ], 4, 2, blank=1)
     4×1×2 Array{Float32, 3}:
     [:, :, 1] =
      1.0
@@ -291,12 +361,12 @@ to [∅, 2, ∅, 2, ∅, 3, ∅, 2, ∅], where ∅ is the blank index.
      1.0
      0.0
 """
-function CTCLabelWInvRatio(l::VecVecInt,
-                           C::Int,
-                           B::Int;
-                           a::Real=0.9,
-                           blank::Int=1,
-                           dtype::DataType=Float32)
+function CTCLabelWInvFreq(l::VecVecInt,
+                          C::Int,
+                          B::Int;
+                          a::Real=0.9,
+                          blank::Int=1,
+                          dtype::DataType=Float32)
     𝟙 = dtype(1)
     y = zeros(dtype, C, 1, B)
     α = dtype(a)

@@ -455,13 +455,9 @@ function SoftmaxIterativeCTCLikeLoss(x::Variable{T},
     y = Variable{T}([sum(l)], x.backprop)
 
     if y.backprop
-        y.backward = function ∇FRNNSoftmaxCTCLoss()
+        y.backward = function ∇SoftmaxIterativeCTCLikeLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
