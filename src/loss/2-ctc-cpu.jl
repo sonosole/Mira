@@ -285,8 +285,8 @@ export CTCLabelInvFreq
                     dtype::DataType=Float32)
 
 Count the number of occurrences of non-blank and blank states from CTC topology.
-And then return its inverse. Sequence like `[2, 2, 3, 2]` would be converted to
-`[*, 2, *, 2, *, 3, *, 2, *]`, where `*` is the blank index.
+And then take its inverse as weight for those states. Sequence like `[2, 2, 3, 2]`
+would be converted to `[*, 2, *, 2, *, 3, *, 2, *]`, where `*` is the blank index.
 
 # Example
     julia> CTCLabelInvFreq([ [0] , [2,2,3,2] ], 4, 2, blank=1)
