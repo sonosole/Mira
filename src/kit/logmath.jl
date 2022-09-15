@@ -40,10 +40,7 @@ function LogSum4Exp(a::Real, b::Real, c::Real, d::Real)
 end
 
 
-function LogSumExp(a)
-    tmp = LogZero(eltype(a))
-    for i = 1:length(a)
-        tmp = LogSum2Exp(tmp, a[i])
-    end
-    return tmp
+function LogSumExp(x::AbstractArray; dims=1)
+    M = maximum(x, dims=dims)
+    return log.( sum( exp.(x .- M), dims=dims) ) .+ M
 end
