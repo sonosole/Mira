@@ -44,3 +44,9 @@ function LogSumExp(x::AbstractArray; dims=1)
     M = maximum(x, dims=dims)
     return log.( sum( exp.(x .- M), dims=dims) ) .+ M
 end
+
+
+function logΣexp(x::AbstractArray)
+    M = maximum(x)
+    return log( sum( exp.(x .- M)) ) + M
+end
