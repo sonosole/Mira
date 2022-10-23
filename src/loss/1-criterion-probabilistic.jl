@@ -171,7 +171,9 @@ BinaryCrossEntropyLoss(x::AbstractArray, label::AbstractArray; reduction::String
 """
     FocalBCE(p::Variable, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5f0)
 
-focal loss version BinaryCrossEntropy
+focal loss version of BinaryCrossEntropy:\n
+`loss = α * (1-p)ᵞ * [- label * ln(p)] + (1 - α) * pᵞ * [-(1-label) * ln(1-p)]`\n
+where `γ` is the `focus` value, `α` is the weight for positive class.
 """
 function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5f0) where T
     @assert p.shape == size(label)
@@ -209,30 +211,33 @@ end
 
 
 """
-    FocalCE(p::Variable, label::AbstractArray; focus::Real=1.0f0)
+    FocalCE(p::Variable, label::AbstractArray; focus::Real=1.0f0) -> y::Variable
 
-focal loss version CrossEntropy
+focal loss version of CrossEntropy:\n
+`loss = (1-p)ᵞ * [- label * ln(p)]`, \n
+where `γ` is the `focus` value.
 """
 function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where T
     @assert p.shape == size(label)
     TO = eltype(p)
-    ϵ  = TO(1e-38)
-    l  = TO(1.0f0)
+    ϵ  = TO(1e-38)  # alias for value closing to zero
+    l  = TO(1.0f0)  # alias for value one
     γ  = TO(focus)
     𝝆  = label
     𝒑  = value(p)
     p⁺ = 𝒑 .+ ϵ    # little greater
     p⁻ = 𝒑 .- ϵ    # little smaller
 
-    t = @. - 𝝆 * (l - p⁻) ^ γ * log(p⁺)
+    t = @. (l - p⁻) ^ γ * (- 𝝆 * log(p⁺))
     y = Variable{T}(t, p.backprop)
 
     if y.backprop
         y.backward = function ∇FocalCE()
             if need2computeδ!(p)
+                n  = γ - l
                 δp = δ(p)
                 δy = δ(y)
-                @. δp += δy * 𝝆 * (l - p⁻)^(γ - l) * (γ * log(p⁺) + l - l / p⁺)
+                @. δp += δy * 𝝆 * (l - p⁻)^n * (γ * log(p⁺) + l - l / p⁺)
             end
             ifNotKeepδThenFreeδ!(y)
         end

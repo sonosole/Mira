@@ -41,5 +41,7 @@ end
 
 export VecVecInt
 export VecInt
+export Dims
 const VecVecInt = Vector{Vector{Int}}
 const    VecInt =        Vector{Int}
+const Dims = Union{Int,NTuple{N,Int}} where {N}

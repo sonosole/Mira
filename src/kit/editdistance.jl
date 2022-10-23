@@ -23,7 +23,7 @@ function editcost(tar::V, src::V, subcost=1) where V
     d[2:T,1] = 1:T-1
     for t = 2:T
         for s = 2:S
-            c = ifelse(src[s-1]!=tar[t-1], subcost, 0)
+            c = ifelse(src[s-1]≠tar[t-1], subcost, 0)
             d[t,s] = min(d[t-1,s]+1, d[t,s-1]+1, d[t-1,s-1]+c)
             # -----------ins---------del---------sub----------
         end
@@ -69,16 +69,16 @@ function editcosts(tar::V, src::V, subcost=1) where V
     # forward
     for t = 2:T
         for s = 2:S
-            c = ifelse(src[s-1]!=tar[t-1], subcost, 0)
+            c = ifelse(src[s-1]≠tar[t-1], subcost, 0)
             way3 = [d[t-1,s]+1, d[t,s-1]+1, d[t-1,s-1]+c]
             #-------ins---------del---------sub----------
             indx = argmin(way3)
             d[t,s] = way3[indx]
-            if indx==1
+            if indx == 1
                 row[t,s], col[t,s] = t-1, s   # ins
-            elseif indx==2
+            elseif indx == 2
                 row[t,s], col[t,s] = t, s-1   # del
-            elseif indx==3
+            elseif indx == 3
                 row[t,s], col[t,s] = t-1, s-1 # sub
             end
         end
@@ -88,7 +88,7 @@ function editcosts(tar::V, src::V, subcost=1) where V
     trace = [];
     push!(trace, (T, S))
     push!(trace, (row[T,S], col[T,S]))
-    while trace[end] != (0,0)
+    while trace[end] ≠ (0,0)
         t,s = trace[end]
         push!(trace, (row[t,s], col[t,s]))
     end
@@ -97,15 +97,15 @@ function editcosts(tar::V, src::V, subcost=1) where V
     for (t,s) in trace[end-1:-1:1]
         r, c = row[t,s], col[t,s]
         if r==0 || c==0 continue end
-        𝕥 = t!=1 ? t-1 : t  # edge case
-        𝕤 = s!=1 ? s-1 : s  # edge case
-        if d[t,s]==d[r,c]
+        𝕥 = t≠1 ? t-1 : t  # edge case
+        𝕤 = s≠1 ? s-1 : s  # edge case
+        if d[t,s] == d[r,c]
             continue
-        elseif d[t,s]==d[𝕥,s]+1
+        elseif d[t,s] == d[𝕥,s]+1
             ins += 1
-        elseif d[t,s]==d[t,𝕤]+1
+        elseif d[t,s] == d[t,𝕤]+1
             del += 1
-        elseif d[t,s]==d[r,c]+subcost
+        elseif d[t,s] == d[r,c]+subcost
             sub += 1
         end
     end
@@ -181,7 +181,9 @@ function alignops(tar::V, src::V; subcost=1, show=true, cn=false) where V
         row[t,s] = 𝕥
         col[t,s] = s
         Tlen[𝕥] = length(tar[𝕥])
-        if Tmax < Tlen[𝕥] Tmax=Tlen[𝕥] end
+        if Tmax < Tlen[𝕥]
+            Tmax=Tlen[𝕥]
+        end
     end
 
     # forward
@@ -192,11 +194,11 @@ function alignops(tar::V, src::V; subcost=1, show=true, cn=false) where V
             #-------ins---------del---------sub----------
             indx = argmin(way3)
             d[t,s] = way3[indx]
-            if indx==1
+            if indx == 1
                 row[t,s], col[t,s] = t-1, s   # ins
-            elseif indx==2
+            elseif indx == 2
                 row[t,s], col[t,s] = t, s-1   # del
-            elseif indx==3
+            elseif indx == 3
                 row[t,s], col[t,s] = t-1, s-1 # sub
             end
         end
@@ -205,7 +207,7 @@ function alignops(tar::V, src::V; subcost=1, show=true, cn=false) where V
     trace = [];
     push!(trace, (T, S))
     push!(trace, (row[T,S], col[T,S]))
-    while trace[end] != (0,0)
+    while trace[end] ≠ (0,0)
         t,s = trace[end]
         push!(trace, (row[t,s], col[t,s]))
     end
@@ -222,37 +224,37 @@ function alignops(tar::V, src::V; subcost=1, show=true, cn=false) where V
     for (i,(t,s)) in enumerate(trace[end-1:-1:1])
         r, c = row[t,s], col[t,s]
         if r==0 || c==0 continue end
-        𝕥 = t!=1 ? t-1 : t  # edge case
-        𝕤 = s!=1 ? s-1 : s  # edge case
+        𝕥 = t≠1 ? t-1 : t  # edge case
+        𝕤 = s≠1 ? s-1 : s  # edge case
         𝕚 = i - 1
-        if d[t,s]==d[r,c]
+        if d[t,s] == d[r,c]
             marks[1,𝕚] = tar[𝕥]
             marks[2,𝕚] = src[𝕤]
             marks[3,𝕚] = NIL
             TAR = tar[𝕥] * repeat(" ", Tmax - Tlen[𝕥])
             SRC = src[𝕤] * repeat(" ", Smax - Slen[𝕤])
             show && println(TAR, _V_, SRC) # Correct
-        elseif d[t,s]==d[𝕥,s]+1
+        elseif d[t,s] == d[𝕥,s]+1
             marks[1,𝕚] = tar[𝕥]
             marks[2,𝕚] = ""
             marks[3,𝕚] = INS
             TAR = tar[𝕥] * repeat(" ", Tmax - Tlen[𝕥])
             SRC = repeat(" ", Smax)
-            show && println(TAR, _V_, SRC, _V_, "ins"|>blue!) # Insertion
-        elseif d[t,s]==d[t,𝕤]+1
+            show && println(TAR, _V_, SRC, _V_, "ins" |> blue!) # Insertion
+        elseif d[t,s] == d[t,𝕤]+1
             marks[1,𝕚] = ""
             marks[2,𝕚] = src[𝕤]
             marks[3,𝕚] = DEL
             TAR = repeat(" ", Tmax)
             SRC = src[𝕤] * repeat(" ", Smax - length(src[𝕤]))
-            show && println(TAR, _V_, SRC, _V_, "del"|>red!) # Deletion
-        elseif d[t,s]==d[r,c]+subcost
+            show && println(TAR, _V_, SRC, _V_, "del" |> red!) # Deletion
+        elseif d[t,s] == d[r,c]+subcost
             marks[1,𝕚] = tar[𝕥]
             marks[2,𝕚] = src[𝕤]
             marks[3,𝕚] = SUB
             TAR = tar[𝕥] * repeat(" ", Tmax - Tlen[𝕥])
             SRC = src[𝕤] * repeat(" ", Smax - Slen[𝕤])
-            show && println(TAR, _V_, SRC, _V_, "sub"|>yellow!) # Substitution
+            show && println(TAR, _V_, SRC, _V_, "sub" |> yellow!) # Substitution
         end
     end
     return marks
@@ -310,16 +312,16 @@ function alignerrs(tar::V, src::V; subcost=1, show=true, cn=false) where V
     # forward
     for t = 2:T
         for s = 2:S
-            c = ifelse(src[s-1]!=tar[t-1], subcost, 0)
+            c = ifelse(src[s-1]≠tar[t-1], subcost, 0)
             way3 = [d[t-1,s]+1, d[t,s-1]+1, d[t-1,s-1]+c]
             #-------ins---------del---------sub----------
             indx = argmin(way3)
             d[t,s] = way3[indx]
-            if indx==1
+            if indx == 1
                 row[t,s], col[t,s] = t-1, s   # ins op on src
-            elseif indx==2
+            elseif indx == 2
                 row[t,s], col[t,s] = t, s-1   # del op on src
-            elseif indx==3
+            elseif indx == 3
                 row[t,s], col[t,s] = t-1, s-1 # sub op on src
             end
         end
@@ -328,7 +330,7 @@ function alignerrs(tar::V, src::V; subcost=1, show=true, cn=false) where V
     trace = [];
     push!(trace, (T, S))
     push!(trace, (row[T,S], col[T,S]))
-    while trace[end] != (0,0)
+    while trace[end] ≠ (0,0)
         t,s = trace[end]
         push!(trace, (row[t,s], col[t,s]))
     end
@@ -348,37 +350,37 @@ function alignerrs(tar::V, src::V; subcost=1, show=true, cn=false) where V
     for (i,(t,s)) in enumerate(trace[end-1:-1:1])
         r, c = row[t,s], col[t,s]
         if r==0 || c==0 continue end
-        𝕥 = t!=1 ? t-1 : t  # edge case
-        𝕤 = s!=1 ? s-1 : s  # edge case
+        𝕥 = t≠1 ? t-1 : t  # edge case
+        𝕤 = s≠1 ? s-1 : s  # edge case
         𝕚 = i - 1
-        if d[t,s]==d[r,c]
+        if d[t,s] == d[r,c]
             marks[1,𝕚] = tar[𝕥]
             marks[2,𝕚] = src[𝕤]
             marks[3,𝕚] = NIL
             TAR = tar[𝕥] * repeat(" ", Tmax - Tlen[𝕥])
             SRC = src[𝕤] * repeat(" ", Smax - Slen[𝕤])
             show && println(TAR, _V_, SRC) # Correct
-        elseif d[t,s]==d[𝕥,s]+1
+        elseif d[t,s] == d[𝕥,s]+1
             marks[1,𝕚] = tar[𝕥]
             marks[2,𝕚] = ""
             marks[3,𝕚] = INS
             TAR = tar[𝕥] * repeat(" ", Tmax - Tlen[𝕥])
             SRC = repeat(" ", Smax)
-            show && println(TAR, _V_, SRC, _V_, "del"|>red!) # Deletion errors
-        elseif d[t,s]==d[t,𝕤]+1
+            show && println(TAR, _V_, SRC, _V_, "del" |> red!) # Deletion errors
+        elseif d[t,s] == d[t,𝕤]+1
             marks[1,𝕚] = ""
             marks[2,𝕚] = src[𝕤]
             marks[3,𝕚] = DEL
             TAR = repeat(" ", Tmax)
             SRC = src[𝕤] * repeat(" ", Smax - length(src[𝕤]))
-            show && println(TAR, _V_, SRC, _V_, "ins"|>blue!) # Insertion errors
-        elseif d[t,s]==d[r,c]+subcost
+            show && println(TAR, _V_, SRC, _V_, "ins" |> blue!) # Insertion errors
+        elseif d[t,s] == d[r,c]+subcost
             marks[1,𝕚] = tar[𝕥]
             marks[2,𝕚] = src[𝕤]
             marks[3,𝕚] = SUB
             TAR = tar[𝕥] * repeat(" ", Tmax - Tlen[𝕥])
             SRC = src[𝕤] * repeat(" ", Smax - Slen[𝕤])
-            show && println(TAR, _V_, SRC, _V_, "sub"|>yellow!) # Substitution errors
+            show && println(TAR, _V_, SRC, _V_, "sub" |> yellow!) # Substitution errors
         end
     end
     return marks
