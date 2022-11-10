@@ -5,18 +5,17 @@ export TDCGreedySearchWithTimestamp
 
 
 function seqtdc(seq::VecInt, blank::Int=1, front::Int=2)
-    L = length(seq)       # sequence length
-    if L ≠ 0
-        N = 4 * L         # topology length
-        label = zeros(Int, N)
-        label[1:4:N] .= blank
-        label[2:4:N] .= front
-        label[3:4:N] .= seq
-        label[4:4:N] .= blank
-        return label
-    else
-        return fill!(zeros(Int, 1), blank)
+    if seq[1] == 0
+        return [blank]
     end
+    L = length(seq)   # sequence length
+    N = 4 * L         # topology length
+    label = zeros(Int, N)
+    label[1:4:N] .= blank
+    label[2:4:N] .= front
+    label[3:4:N] .= seq
+    label[4:4:N] .= blank
+    return label
 end
 
 
@@ -41,8 +40,8 @@ function TDC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1, front::Int=2) whe
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)  # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
 
     if L == 1
-        r[seq[1],:] .= TYPE(1)
-        return r, - sum(log.(p[seq[1],:]))
+        r[blank,:] .= TYPE(1)
+        return r, - sum(log.(p[blank,:]))
     end
 
     a = fill!(Array{TYPE,2}(undef,L,T), Log0)  # 𝜶 = p(s[k,t], x[1:t]), k in TDC topology's indexing

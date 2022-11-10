@@ -58,7 +58,7 @@ function TCS(p::Array{TYPE,2}, seqlabel::VecInt; background::Int=1, foreground::
 	for t = 2:T
         τ = t-1
 	    for s = 1:L
-	        if s!=1
+	        if s≠1
 				R = mod(s,3)
 	            if R==1 || s==2 || R==0
 	                a[s,t] = LogSum2Exp(a[s,τ], a[s-1,τ])
@@ -77,7 +77,7 @@ function TCS(p::Array{TYPE,2}, seqlabel::VecInt; background::Int=1, foreground::
         τ = t+1
 		for s = L:-1:1
 			Q⁰ = b[s,τ] + log(p[seq[s],τ])
-			if s!=L
+			if s≠L
 				R = mod(s,3)
 				Q¹ = b[s+1,τ] + log(p[seq[s+1],τ])
 				if R==1 || R==2 || s==L-1
@@ -93,7 +93,7 @@ function TCS(p::Array{TYPE,2}, seqlabel::VecInt; background::Int=1, foreground::
 	end
 
     # loglikely of TCS
-    logsum = LogSum3Exp(Log0, a[1,1] + b[1,1], a[2,1] + b[2,1])
+    logsum = LogSum2Exp(a[1,1] + b[1,1], a[2,1] + b[2,1])
 
     # log weight --> normal probs
 	g = exp.((a + b) .- logsum)
