@@ -1211,3 +1211,35 @@ function Base.:inv(x::Variable{T}) where T
     end
     return y
 end
+
+
+"""
+    polymax(x::AbstractArray, n::Int; dims=1) -> y::AbstractArray
+`y = xⁿ ./ sum(xⁿ, dims=dims)`
+"""
+function polymax(x::AbstractArray, n::Int; dims::Union{Int,NTuple{N,Int}}=1) where N
+    xⁿ = x .^ n
+    return xⁿ ./ sum(xⁿ, dims=dims)
+end
+
+
+"""
+    polymax(x::Variable, n::Int; dims=1) -> y::Variable
+`y = xⁿ ./ sum(xⁿ, dims=dims)`
+"""
+function polymax(x::Variable{T}, n::Int; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
+    y = Variable{T}(polymax(ᵛ(x), n; dims=dims), x.backprop)
+    if y.backprop
+        S = eltype(ᵛ(x))
+        k = S(n)
+        y.backward = function ∇softmax()
+            if need2computeδ!(x)
+                ẏy = δ(y) .* ᵛ(y)
+                δ(x) .+= (ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)) .* k ./ ᵛ(x)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
