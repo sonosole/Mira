@@ -135,3 +135,44 @@ function PoolLoss(p::Variable{S},
         return FocalBCELoss(y, S(label), focus=focus, alpha=alpha, reduction=reduction)
     end
 end
+
+
+function SoftmaxPoolLoss(x::Variable{S},
+                         seqlabels::Mira.VecVecInt;
+                         reduction::String="sum",
+                         poolingfn::Function=linearpool,
+                         blank::Int=1,
+                         focus::Mira.RealOrNil=nothing,
+                         alpha::Real=0.50000000f0) where S
+
+    C, T, B = size(x)
+    p = softmax(x, dims=1)
+    y = poolingfn(p, dims=2)
+
+    label = onehotpool(seqlabels, C, B, blank=blank, dtype=eltype(p))
+
+    if isnothing(focus)
+        return BinaryCrossEntropyLoss(y, S(label), reduction=reduction)
+    else
+        return FocalBCELoss(y, S(label), focus=focus, alpha=alpha, reduction=reduction)
+    end
+end
+
+
+function SigmoidPoolLoss(p::Variable{S},
+                         seqlabels::VecVecInt;
+                         reduction::String="sum",
+                         poolingfn::Function=linearpool,
+                         focus::RealOrNil=nothing,
+                         alpha::Real=0.50000000f0) where S
+
+    C, T, B = size(p)
+    y = poolingfn(p, dims=2)
+    label = multihotpool(seqlabels, C, B, dtype=eltype(p))
+
+    if isnothing(focus)
+        return BinaryCrossEntropyLoss(y, S(label), reduction=reduction)
+    else
+        return FocalBCELoss(y, S(label), focus=focus, alpha=alpha, reduction=reduction)
+    end
+end

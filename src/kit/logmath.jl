@@ -2,8 +2,9 @@ export LogZero
 export LogSum2Exp
 export LogSum3Exp
 export LogSum4Exp
+export LogSum5Exp
 export LogSumExp
-
+export logsumexp
 
 LogZero(T::DataType) = - floatmax(T)
 
@@ -40,13 +41,18 @@ function LogSum4Exp(a::Real, b::Real, c::Real, d::Real)
 end
 
 
+function LogSum5Exp(a::Real, b::Real, c::Real, d::Real, e::Real)
+    return LogSum2Exp(LogSum2Exp(LogSum2Exp(LogSum2Exp(a,b),c),d),e)
+end
+
+
 function LogSumExp(x::AbstractArray; dims=1)
     M = maximum(x, dims=dims)
     return log.( sum( exp.(x .- M), dims=dims) ) .+ M
 end
 
 
-function logΣexp(x::AbstractArray)
+function logsumexp(x::AbstractArray)
     M = maximum(x)
     return log( sum( exp.(x .- M)) ) + M
 end
