@@ -96,16 +96,24 @@ end
 
 
 """
-    FastCTCGreedySearch(x::Array; blank::Int=1, dim::Int=1) -> hypothesis
+    FastCTCGreedySearch(x::Array; blank::Int=1, dims::Dimtype=1) -> hypothesis
 remove repeats and blanks of argmax(x, dims=dims)
 """
-function FastCTCGreedySearch(x::Array; blank::Int=1, dim::Int=1)
+function FastCTCGreedySearch(x::Array; blank::Int=1, dims::Dimtype=1)
     hyp = Vector{Int}(undef, 0)
-    idx = argmax(x, dims=dim)
-    for t = 1:length(idx)
-        previous = idx[t≠1 ? t-1 : t][1]
+    idx = argmax(x, dims=dims)
+
+    # first time-step
+    previous = 0
+    current  = idx[1][1]
+    if current ≠ blank
+        push!(hyp, current)
+    end
+    # rest time-steps
+    for t = 2:length(idx)
+        previous = current
         current  = idx[t][1]
-        if !((t≠1 && current==previous) || (current==blank))
+        if !(current==previous || current==blank)
             push!(hyp, current)
         end
     end
@@ -116,15 +124,24 @@ end
 """
     FastCTCGreedySearchWithTimestamp(x::Array; blank::Int=1, dim::Int=1) -> hypothesis, timestamp
 """
-function FastCTCGreedySearchWithTimestamp(x::Array; blank::Int=1, dim::Int=1)
+function FastCTCGreedySearchWithTimestamp(x::Array; blank::Int=1, dims::Dimtype=1)
     hyp = Vector{Int}(undef, 0)
     stp = Vector{Float32}(undef, 0)
-    idx = argmax(x, dims=dim)
+    idx = argmax(x, dims=dims)
     T   = length(idx)
-    for t = 1:T
-        previous = idx[t≠1 ? t-1 : t][1]
+
+    # first time-step
+    previous = 0
+    current  = idx[1][1]
+    if current ≠ blank
+        push!(hyp, current)
+        push!(stp, t / T)
+    end
+    # rest time-steps
+    for t = 2:T
+        previous = current
         current  = idx[t][1]
-        if !((t≠1 && current==previous) || (current==blank))
+        if !(current==previous || current==blank)
             push!(hyp, current)
             push!(stp, t / T)
         end
@@ -338,4 +355,62 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
         addchild(𝒑, x)
     end
     return 𝒑
+end
+
+"""
+    ViterbiFastCTC(p::Array{F,2}, seqlabel::VecInt; blank::Int=1)
+force alignment by viterbi algo
+"""
+function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where TYPE
+    seq  = seqfastctc(seqlabel, blank)
+    Log0 = LogZero(TYPE)                         # approximate -Inf of TYPE
+    ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
+    ONE  = TYPE(1)
+    nlnp = ZERO
+    S, T = size(p)                               # assert p is a 2-D tensor
+    L = length(seq)                              # topology length with blanks
+    r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
+
+    if L == 1
+        r[blank,:] .= ONE
+        return r, - sum(log.(p[blank,:]))
+    end
+
+    d = fill!(Array{TYPE,2}(undef,L,T), Log0)
+    ϕ = zeros(Int, L, T-1)
+    h = zeros(Int, T)
+
+    d[1,1] = log(p[seq[1],1])
+    d[2,1] = log(p[seq[2],1])
+
+    # --- forward in log scale ---
+    for t = 2:T
+        τ = t-1
+        first = max(1, L-2*(T-t)-1)
+        lasst = min(2*t, L)
+        for s = first:lasst
+            if s≠1
+                i = ifelse(d[s,τ] > d[s-1,τ], s, s-1)
+                d[s,t] = d[i,τ] + log(p[seq[s],t])
+                ϕ[s,τ] = i
+            else
+                d[s,t] = d[s,τ] + log(p[seq[s],t])
+                ϕ[s,τ] = s
+            end
+        end
+    end
+
+    # --- backtrace ---
+    h[T] = ifelse(d[L,T] > d[L-1,T], L, L-1)
+    for t = T-1:-1:1
+        h[t] = ϕ[h[t+1],t]
+    end
+
+    for t = 1:T
+        i = seq[h[t]]
+        r[i,t] = ONE
+        nlnp += log(p[i,t])
+    end
+
+    return r, -nlnp
 end
