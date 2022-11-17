@@ -6,6 +6,7 @@ export FRNNSoftmaxFastCTCLoss
 export FRNNFastCTCLoss
 export FRNNSoftmaxFocalFastCTCLoss
 export FRNNFocalFastCTCLoss
+export ViterbiFastCTC
 
 function seqfastctc(seq::VecInt, blank::Int=1)
     if seq[1] == 0
@@ -368,7 +369,7 @@ function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where 
     ONE  = TYPE(1)
     lnp  = ZERO
     S, T = size(p)                               # assert p is a 2-D tensor
-    L = length(seq)                              # topology length with blanks
+    L = length(seq)                              # topology length with blanks, assert L ≤ T
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
 
     if L == 1
@@ -379,10 +380,11 @@ function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where 
     d = fill!(Array{TYPE,2}(undef,L,T), Log0)
     ϕ = zeros(Int, L, T-1)
     h = zeros(Int, T)
+    ϵ = TYPE(1e-38)
 
     # init at fisrt timestep
-    d[1,1] = log(p[seq[1],1])
-    d[2,1] = log(p[seq[2],1])
+    d[1,1] = log(p[seq[1],1] + ϵ)
+    d[2,1] = log(p[seq[2],1] + ϵ)
 
     # --- forward in log scale ---
     for t = 2:T
