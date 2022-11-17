@@ -52,8 +52,8 @@ function FastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where TYPE
     # --- forward in log scale ---
     for t = 2:T
         τ = t-1
-        first = max(1, L-2*(T-t)-1)
-        lasst = min(2*t, L)
+        first = max(1, t-T+L-1)
+        lasst = min(1+t, L)
         for s = first:lasst
             if s≠1
                 a[s,t] = LogSum2Exp(a[s,τ], a[s-1,τ])
@@ -67,8 +67,8 @@ function FastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where TYPE
     # --- backward in log scale ---
     for t = T-1:-1:1
         τ = t+1
-        first = max(1, L-2*(T-t)-1)
-        lasst = min(2*t, L)
+        first = max(1, t-T+L-1)
+        lasst = min(1+t, L)
         for s = first:lasst
             Q = b[s,τ] + log(p[seq[s],τ])
             if s≠L
@@ -366,7 +366,7 @@ function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where 
     Log0 = LogZero(TYPE)                         # approximate -Inf of TYPE
     ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
     ONE  = TYPE(1)
-    nlnp = ZERO
+    lnp  = ZERO
     S, T = size(p)                               # assert p is a 2-D tensor
     L = length(seq)                              # topology length with blanks
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
@@ -380,14 +380,15 @@ function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where 
     ϕ = zeros(Int, L, T-1)
     h = zeros(Int, T)
 
+    # init at fisrt timestep
     d[1,1] = log(p[seq[1],1])
     d[2,1] = log(p[seq[2],1])
 
     # --- forward in log scale ---
     for t = 2:T
         τ = t-1
-        first = max(1, L-2*(T-t)-1)
-        lasst = min(2*t, L)
+        first = max(1, t-T+L-1)
+        lasst = min(1+t, L)
         for s = first:lasst
             if s≠1
                 i = ifelse(d[s,τ] > d[s-1,τ], s, s-1)
@@ -409,8 +410,8 @@ function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where 
     for t = 1:T
         i = seq[h[t]]
         r[i,t] = ONE
-        nlnp += log(p[i,t])
+        lnp += log(p[i,t])
     end
 
-    return r, -nlnp
+    return r, -lnp
 end
