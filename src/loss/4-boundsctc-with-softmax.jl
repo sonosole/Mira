@@ -6,8 +6,7 @@ function CRNN_BoundsCTC_With_Softmax(x::Variable{Array{T}},
                                      blank::Int=1,
                                      risebound::Int=2,
                                      fallbound::Int=3,
-                                     reduction::String="seqlen",
-                                     weight::Float64=1.0) where T
+                                     reduction::String="seqlen") where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(T, 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
@@ -24,11 +23,7 @@ function CRNN_BoundsCTC_With_Softmax(x::Variable{Array{T}},
     if y.backprop
         y.backward = function ∇CRNN_BoundsCTC_With_Softmax()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end

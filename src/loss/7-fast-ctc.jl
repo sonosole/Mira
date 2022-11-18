@@ -358,9 +358,16 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
     return 𝒑
 end
 
+
 """
     ViterbiFastCTC(p::Array{F,2}, seqlabel::VecInt; blank::Int=1)
-force alignment by viterbi algo
+force alignment by viterbi algorithm
+
+# Topology Example
+     ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐    ┌─►─┐
+    ┌┴───┴┐  ┌┴───┴┐  ┌┴───┴┐  ┌┴───┴┐  ┌┴───┴┐  ┌┴───┴┐  ┌┴───┴┐
+    │blank├─►│  S  ├─►│blank├─►│  U  ├─►│blank├─►│  N  ├─►│blank│
+    └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘
 """
 function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where TYPE
     seq  = seqfastctc(seqlabel, blank)
@@ -382,38 +389,41 @@ function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where 
     h = zeros(Int, T)
     ϵ = TYPE(1e-38)
 
-    # init at fisrt timestep
+    # ══ init at fisrt timestep ══
     d[1,1] = log(p[seq[1],1] + ϵ)
     d[2,1] = log(p[seq[2],1] + ϵ)
 
-    # --- forward in log scale ---
+    # ══ viterbi in log scale ══
     for t = 2:T
         τ = t-1
         first = max(1, t-T+L-1)
         lasst = min(1+t, L)
-        for s = first:lasst
-            if s≠1
-                i = ifelse(d[s,τ] > d[s-1,τ], s, s-1)
-                d[s,t] = d[i,τ] + log(p[seq[s],t])
+        if first ≠ 1 # then each node has two kids
+            for s = first:lasst
+                i = ifelse(d[s-1,τ] > d[s,τ], s-1, s)
+                d[s,t] = d[i,τ] + log(p[seq[s],t] + ϵ)
                 ϕ[s,τ] = i
-            else
-                d[s,t] = d[s,τ] + log(p[seq[s],t])
-                ϕ[s,τ] = s
+            end
+        else
+            d[first,t] = d[first,τ] + log(p[blank,t] + ϵ)
+            ϕ[first,τ] = 1
+            for s = first+1:lasst
+                i = ifelse(d[s-1,τ] > d[s,τ], s-1, s)
+                d[s,t] = d[i,τ] + log(p[seq[s],t] + ϵ)
+                ϕ[s,τ] = i
             end
         end
     end
-
-    # --- backtrace ---
+    # ══ backtrace ══
     h[T] = ifelse(d[L,T] > d[L-1,T], L, L-1)
     for t = T-1:-1:1
         h[t] = ϕ[h[t+1],t]
     end
-
+    # ══ one-hot assignment ══
     for t = 1:T
         i = seq[h[t]]
         r[i,t] = ONE
-        lnp += log(p[i,t])
+        lnp += log(p[i,t] + ϵ)
     end
-
     return r, -lnp
 end

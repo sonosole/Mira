@@ -164,8 +164,7 @@ function CRNNSoftmaxTDC(x::Variable{T},
                         seqlabels::VecVecInt;
                         reduction::String="seqlen",
                         blank::Int=1,
-                        front::Int=2,
-                        weight=1.0) where T
+                        front::Int=2) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
@@ -183,11 +182,7 @@ function CRNNSoftmaxTDC(x::Variable{T},
     if y.backprop
         y.backward = function CRNNSoftmaxTDCBackward()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end

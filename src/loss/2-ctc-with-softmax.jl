@@ -10,34 +10,28 @@ export SoftmaxCTCLikeWeightedCELoss
 export SoftmaxCTCLikeFocalCELoss
 
 """
-    DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0)
+    DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1)
 
 case batchsize==1 for test case. `x` is the output of a whole complete input sequence
 
 # Inputs
 `x`      : 2-D Variable, input sequence\n
 `seq`    : 1-D Array, input sequence's label\n
-`weight` : weight for CTC loss
 
 # Structure
-    ┌───┐
-    │ │ │
-    │ W ├──►─┐
-    │ │ │    │
-    └───┘    │
-    ┌───┐    │    ┌───┐          ┌───┐
-    │ │ │  ┌─┴─┐  │ │ │ softmax  │ │ │   ┌───────┐
-    │ Z ├─►│ × ├─►│ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
-    │ │ │  └───┘  │ │ │          │ │ │   └───┬───┘
-    └───┘         └─┬─┘          └─┬─┘       │
-                    │              │+        ▼
-                  ┌─┴─┐            ▼       ┌─┴─┐
-                  │ │ │          ┌─┴─┐ -   │ │ │
-                  │ δ │◄─────────┤ - │──◄──┤ r │
-                  │ │ │          └───┘     │ │ │
-                  └───┘                    └───┘
+    ┌───┐          ┌───┐
+    │ │ │ softmax  │ │ │   ┌───────┐
+    │ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
+    │ │ │          │ │ │   └───┬───┘
+    └─┬─┘          └─┬─┘       │
+      │              │+        ▼
+    ┌─┴─┐            ▼       ┌─┴─┐
+    │ │ │          ┌─┴─┐ -   │ │ │
+    │ δ │◄─────────┤ - │──◄──┤ r │
+    │ │ │          └───┘     │ │ │
+    └───┘                    └───┘
 """
-function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, weight=1.0) where T
+function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1) where T
     p = softmax(ᵛ(x), dims=1)
     L = length(seq) * 2 + 1
     r, nlnp = CTC(p, seq, blank=blank)
@@ -48,11 +42,7 @@ function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1, w
     if y.backprop
         y.backward = function ∇DNNSoftmaxCTCLossSingleSeq()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -63,7 +53,7 @@ end
 
 
 """
-    FNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::VecVecInt, inputlens; blank=1, weight=1.0) where T
+    FNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::VecVecInt, inputlens; blank=1) where T
 
 a batch of concatenated input sequence is processed by neural networks into `x`
 
@@ -71,31 +61,24 @@ a batch of concatenated input sequence is processed by neural networks into `x`
 `x`         : 2-D Variable, inputs of softmax\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : records each input sequence's length, like [20,17,...]\n
-`weight`    : weight for CTC loss
 
 # Structure
-    ┌───┐
-    │ │ │
-    │ W ├──►─┐
-    │ │ │    │
-    └───┘    │
-    ┌───┐    │    ┌───┐          ┌───┐
-    │ │ │  ┌─┴─┐  │ │ │ softmax  │ │ │   ┌───────┐
-    │ Z ├─►│ × ├─►│ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
-    │ │ │  └───┘  │ │ │          │ │ │   └───┬───┘
-    └───┘         └─┬─┘          └─┬─┘       │
-                    │              │+        ▼
-                  ┌─┴─┐            ▼       ┌─┴─┐
-                  │ │ │          ┌─┴─┐ -   │ │ │
-                  │ δ │◄─────────┤ - │──◄──┤ r │
-                  │ │ │          └───┘     │ │ │
-                  └───┘                    └───┘
+    ┌───┐          ┌───┐
+    │ │ │ softmax  │ │ │   ┌───────┐
+    │ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
+    │ │ │          │ │ │   └───┬───┘
+    └─┬─┘          └─┬─┘       │
+      │              │+        ▼
+    ┌─┴─┐            ▼       ┌─┴─┐
+    │ │ │          ┌─┴─┐ -   │ │ │
+    │ δ │◄─────────┤ - │──◄──┤ r │
+    │ │ │          └───┘     │ │ │
+    └───┘                    └───┘
 """
 function FNNSoftmaxCTCLoss(x::Variable{T},
                            seqlabels::VecVecInt,
                            inputlens::VecInt;
-                           blank::Int=1,
-                           weight=1.0) where T
+                           blank::Int=1) where T
     batchsize = length(inputLengths)
     nlnp = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
@@ -113,11 +96,7 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇FNNSoftmaxCTCLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -128,7 +107,7 @@ end
 
 
 """
-    RNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::VecVecInt, inputlens; blank=1, weight=1.0) where T
+    RNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::VecVecInt, inputlens; blank=1) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -136,31 +115,24 @@ a batch of padded input sequence is processed by neural networks into `x`
 `x`         : 3-D Variable with shape (featdims,timesteps,batchsize), inputs of softmax\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : each input's length, like [19,97,...]\n
-`weight`    : weight for CTC loss
 
 # Structure
-    ┌───┐
-    │ │ │
-    │ W ├──►─┐
-    │ │ │    │
-    └───┘    │
-    ┌───┐    │    ┌───┐          ┌───┐
-    │ │ │  ┌─┴─┐  │ │ │ softmax  │ │ │   ┌───────┐
-    │ Z ├─►│ × ├─►│ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
-    │ │ │  └───┘  │ │ │          │ │ │   └───┬───┘
-    └───┘         └─┬─┘          └─┬─┘       │
-                    │              │+        ▼
-                  ┌─┴─┐            ▼       ┌─┴─┐
-                  │ │ │          ┌─┴─┐ -   │ │ │
-                  │ δ │◄─────────┤ - │──◄──┤ r │
-                  │ │ │          └───┘     │ │ │
-                  └───┘                    └───┘
+    ┌───┐          ┌───┐
+    │ │ │ softmax  │ │ │   ┌───────┐
+    │ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
+    │ │ │          │ │ │   └───┬───┘
+    └─┬─┘          └─┬─┘       │
+      │              │+        ▼
+    ┌─┴─┐            ▼       ┌─┴─┐
+    │ │ │          ┌─┴─┐ -   │ │ │
+    │ δ │◄─────────┤ - │──◄──┤ r │
+    │ │ │          └───┘     │ │ │
+    └───┘                    └───┘
 """
 function RNNSoftmaxCTCLoss(x::Variable{T},
                            seqlabels::VecVecInt,
                            inputlens::VecInt;
-                           blank::Int=1,
-                           weight=1.0) where T
+                           blank::Int=1) where T
     batchsize = length(inputlens)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = zero(ᵛ(x))
@@ -180,11 +152,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇RNNSoftmaxCTCLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -195,38 +163,31 @@ end
 
 
 """
-    FRNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::VecVecInt; blank=1, weight=1.0) where T
+    FRNNSoftmaxCTCLoss(x::Variable{T}, seqlabels::VecVecInt; blank=1) where T
 
 a batch of padded input sequence is processed by neural networks into `x`
 
 # Inputs
 `x`         : 3-D Variable (featdims,timesteps,batchsize), inputs of softmax\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`weight`    : weight for CTC loss
 
 # Structure
-    ┌───┐
-    │ │ │
-    │ W ├──►─┐
-    │ │ │    │
-    └───┘    │
-    ┌───┐    │    ┌───┐          ┌───┐
-    │ │ │  ┌─┴─┐  │ │ │ softmax  │ │ │   ┌───────┐
-    │ Z ├─►│ × ├─►│ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
-    │ │ │  └───┘  │ │ │          │ │ │   └───┬───┘
-    └───┘         └─┬─┘          └─┬─┘       │
-                    │              │+        ▼
-                  ┌─┴─┐            ▼       ┌─┴─┐
-                  │ │ │          ┌─┴─┐ -   │ │ │
-                  │ δ │◄─────────┤ - │──◄──┤ r │
-                  │ │ │          └───┘     │ │ │
-                  └───┘                    └───┘
+    ┌───┐          ┌───┐
+    │ │ │ softmax  │ │ │   ┌───────┐
+    │ X ├─────────►│ P ├──►│CTCLOSS│◄── (seqLabel)
+    │ │ │          │ │ │   └───┬───┘
+    └─┬─┘          └─┬─┘       │
+      │              │+        ▼
+    ┌─┴─┐            ▼       ┌─┴─┐
+    │ │ │          ┌─┴─┐ -   │ │ │
+    │ δ │◄─────────┤ - │──◄──┤ r │
+    │ │ │          └───┘     │ │ │
+    └───┘                    └───┘
 """
 function FRNNSoftmaxCTCLoss(x::Variable{T},
                             seqlabels::VecVecInt;
                             reduction::String="seqlen",
-                            blank::Int=1,
-                            weight=1.0) where T
+                            blank::Int=1) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x), dims=1)
@@ -244,11 +205,7 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇FRNNSoftmaxCTCLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -262,9 +219,8 @@ end
 function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
                                  seqlabels::VecVecInt;
                                  reduction::String="seqlen",
-                                 blank::Int=1,
                                  focus::Real=1.0f0,
-                                 weight=1.0) where T
+                                 blank::Int=1) where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -288,11 +244,7 @@ function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇FRNNSoftmaxFocalCTCLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ
-                else
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* S(weight)
-                end
+                δ(x) .+= δ(y) .* 𝒌 .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -308,7 +260,6 @@ end
 # Inputs
 `x`         : 3-D Variable (featdims,timesteps,batchsize), input of softmax\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`weight`    : weight for CTC loss
 
 # Output
 `p`         : 3-D Variable (1,1,batchsize), i.e. `p` is the probabilities of each sequence

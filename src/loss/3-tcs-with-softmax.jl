@@ -9,14 +9,12 @@ export FRNNSoftmaxTCSProbs
                       seqlabels::VecVecInt,
                       inputlens::VecInt;
                       background::Int=1,
-                      foreground::Int=2,
-                      weight=1.0)
+                      foreground::Int=2)
 
 # Inputs
 `x`         : 2-D Variable, a batch of concatenated input sequence\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : records each input sequence's length, like [20,17,...]\n
-`weight`    : weight for TCS loss
 
 # Structure
     ┌───┐
@@ -40,8 +38,7 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
                            seqlabels::VecVecInt,
                            inputlens::VecInt;
                            background::Int=1,
-                           foreground::Int=2,
-                           weight=1.0) where T
+                           foreground::Int=2) where T
     batchsize = length(seqlabels)
     nlnp = zeros(eltype(x), batchsize)
     I, F = indexbounds(inputlens)
@@ -59,11 +56,7 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇FNNSoftmaxTCSLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -79,8 +72,7 @@ end
                       inputlens::VecInt;
                       reduction::String="seqlen",
                       background::Int=1,
-                      foreground::Int=2,
-                      weight=1.0)
+                      foreground::Int=2)
 
 a batch of padded input sequence is processed by neural networks into `x`
 
@@ -88,7 +80,6 @@ a batch of padded input sequence is processed by neural networks into `x`
 `x`         : 3-D Variable with shape (featdims,timesteps,batchsize), a batch of padded input sequence\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : records each input sequence's length, like [20,17,...]\n
-`weight`    : weight for TCS loss
 
 # Structure
     ┌───┐
@@ -113,8 +104,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
                            inputlens::VecInt;
                            reduction::String="seqlen",
                            background::Int=1,
-                           foreground::Int=2,
-                           weight=1.0) where T
+                           foreground::Int=2) where T
     batchsize = length(seqlabels)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = zero(ᵛ(x))
@@ -134,11 +124,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇RNNSoftmaxTCSLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -153,13 +139,11 @@ end
                        seqlabels::VecVecInt;
                        reduction::String="seqlen",
                        background::Int=1,
-                       foreground::Int=2,
-                       weight=1.0)
+                       foreground::Int=2)
 
 # Main Inputs
 `x`            : 3-D Variable with shape (featdims,timesteps,batchsize), resulted by a batch of padded input sequence\n
 `seqlabels`    : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`weight`       : weight for TCS loss
 
 # Structure
     ┌───┐
@@ -183,8 +167,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
                             seqlabels::VecVecInt;
                             reduction::String="seqlen",
                             background::Int=1,
-                            foreground::Int=2,
-                            weight=1.0) where T
+                            foreground::Int=2) where T
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
     p = softmax(ᵛ(x); dims=1)
@@ -202,11 +185,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇FRNNSoftmaxTCSLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
-                else
-                    δ(x) .+= δ(y) .* Δ .* weight
-                end
+                δ(x) .+= δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -250,8 +229,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
                                  reduction::String="seqlen",
                                  background::Int=1,
                                  foreground::Int=2,
-                                 focus::Real=1.0f0,
-                                 weight=1.0) where T
+                                 focus::Real=1.0f0) where T
     featdims, timesteps, batchsize = size(x)
     S = eltype(x)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -275,11 +253,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇FRNNSoftmaxFocalTCSLoss()
             if need2computeδ!(x)
-                if weight==1.0
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ
-                else
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* S(weight)
-                end
+                δ(x) .+= δ(y) .* 𝒌 .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end

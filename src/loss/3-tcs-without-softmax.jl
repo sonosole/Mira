@@ -9,8 +9,7 @@ export FRNNFocalTCSLoss
                seqlabels::VecVecInt,
                inputlens::VecInt;
                background::Int=1,
-               foreground::Int=2,
-               weight=1.0)
+               foreground::Int=2)
 
 a batch of concatenated input sequence is processed by neural networks into `p`
 
@@ -18,7 +17,6 @@ a batch of concatenated input sequence is processed by neural networks into `p`
 `p`         : 2-D Variable, probability or weighted probability\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : records each input sequence's length, like [20,17,...]\n
-`weight`    : weight for TCS loss
 
 # Structure
                    ┌───┐
@@ -42,8 +40,7 @@ function FNNTCSLoss(p::Variable{T},
                     seqlabels::VecVecInt,
                     inputlens::VecInt;
                     background::Int=1,
-                    foreground::Int=2,
-                    weight=1.0) where T
+                    foreground::Int=2) where T
     batchsize = length(seqlabels)
     nlnp = zeros(S, batchsize)
     I, F = indexbounds(inputlens)
@@ -59,11 +56,7 @@ function FNNTCSLoss(p::Variable{T},
     if y.backprop
         y.backward = function ∇FNNTCSLoss()
             if need2computeδ!(p)
-                if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
-                else
-                    δ(p) .-= r ./ ᵛ(p) .* weight
-                end
+                δ(p) .-= r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -79,8 +72,7 @@ end
                inputlens::VecInt;
                reduction::String="seqlen",
                background::Int=1,
-               foreground::Int=2,
-               weight=1.0)
+               foreground::Int=2)
 
 a batch of padded input sequence is processed by neural networks into `p`
 
@@ -88,7 +80,6 @@ a batch of padded input sequence is processed by neural networks into `p`
 `p`         : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
 `inputlens` : records each input sequence's length, like [20,17,...]\n
-`weight`    : weight for TCS loss
 
 # Structure
                    ┌───┐
@@ -113,8 +104,7 @@ function RNNTCSLoss(p::Variable{T},
                     inputlens::VecInt;
                     reduction::String="seqlen",
                     background::Int=1,
-                    foreground::Int=2,
-                    weight=1.0) where T
+                    foreground::Int=2) where T
     S = eltype(p)
     batchsize = length(seqlabels)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -132,11 +122,7 @@ function RNNTCSLoss(p::Variable{T},
     if y.backprop
         y.backward = function ∇RNNTCSLoss()
             if need2computeδ!(p)
-                if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
-                else
-                    δ(p) .-= r ./ ᵛ(p) .* weight
-                end
+                δ(p) .-= r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -150,15 +136,13 @@ end
                 seqlabels::VecVecInt;
                 reduction::String="seqlen",
                 background::Int=1,
-                foreground::Int=2,
-                weight=1.0)
+                foreground::Int=2)
 
 a batch of padded input sequence is processed by neural networks into `p`
 
 # Main Inputs
 `p`            : 3-D Variable with shape (featdims,timesteps,batchsize), probability or weighted probability\n
 `seqlabels`    : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`weight`       : weight for TCS loss
 
 # Structure
                    ┌───┐
@@ -182,8 +166,7 @@ function FRNNTCSLoss(p::Variable{T},
                      seqlabels::VecVecInt;
                      reduction::String="seqlen",
                      background::Int=1,
-                     foreground::Int=2,
-                     weight=1.0) where T
+                     foreground::Int=2) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -200,11 +183,7 @@ function FRNNTCSLoss(p::Variable{T},
     if y.backprop
         y.backward = function ∇FRNNTCSLoss()
             if need2computeδ!(p)
-                if weight==1.0
-                    δ(p) .-= r ./ ᵛ(p)
-                else
-                    δ(p) .-= r ./ ᵛ(p) .* S(weight)
-                end
+                δ(p) .-= r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -219,8 +198,7 @@ function FRNNFocalTCSLoss(p::Variable{T},
                           reduction::String="seqlen",
                           background::Int=1,
                           foreground::Int=2,
-                          focus::Real=1.0f0,
-                          weight=1.0) where T
+                          focus::Real=1.0f0) where T
     S = eltype(p)
     featdims, timesteps, batchsize = size(p)
     nlnp = zeros(S, 1, 1, batchsize)
@@ -243,11 +221,7 @@ function FRNNFocalTCSLoss(p::Variable{T},
     if y.backprop
         y.backward = function ∇FRNNFocalCTCLoss()
             if need2computeδ!(p)
-                if weight==1.0
-                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
-                else
-                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* weight
-                end
+                δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
         end
