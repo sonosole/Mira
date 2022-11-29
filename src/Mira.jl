@@ -22,7 +22,7 @@ include("./quant/include.jl")
 include("./loss/include.jl")
 include("./engine/include.jl")
 include("./metrics/include.jl")
-
+include("./trigger/include.jl")
 
 
 end
