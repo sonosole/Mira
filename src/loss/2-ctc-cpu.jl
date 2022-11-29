@@ -150,7 +150,7 @@ function CTCGreedySearchWithTimestamp(x::Array; blank::Int=1, dims::Dimtype=1)
     current  = idx[1][1]
     if current ≠ blank
         push!(hyp, current)
-        push!(stp, t / T)
+        push!(stp, 1 / T)
     end
     # rest time-steps
     for t = 2:T
