@@ -21,7 +21,7 @@ end
 
 # pretty printing
 function Base.show(io::IO, x::Conv1dSmoother) where T
-    println(cyan!("\n═══ Conv1dSmoother ═══"))
+    println(cyan!("═══ Conv1dSmoother ═══"))
     display(x.w)
 end
 
