@@ -1,18 +1,17 @@
 """
 # Summary ScalePath
     mutable struct ScalePath <: Scaler
+Scale a N-dimensional input by learnable `w` parameter.
 # Fields
-    scale::VarOrNil
-Applies scalar multiplication over a N-dimensional input.
-This `scale` is a learnable parameter.
+    w::VarOrNil
 # Example
 If the `input` has size (C,H,W,B), then you should use :
 
-`ScaleChannels(xxx; ndims=4)` and size(`scale`)==(1,1,1,1)
+`ScalePath(xxx; ndims=4)` and size(`w`)==(1,1,1,1)
 
 """
 mutable struct ScalePath <: Scaler
-    scale::VarOrNil
+    w::VarOrNil
     function ScalePath(scalar::AbstractFloat; ndims::Int, type::Type=Array{Float32})
         @assert ndims >= 1 "ndims >= 1 shall be met, but got ndims=$ndims"
         shape = ntuple(i->1, ndims)
@@ -27,23 +26,23 @@ end
 
 function clone(this::ScalePath; type::Type=Array{Float32})
     cloned = ScalePath()
-    cloned.scale = clone(this.scale, type=type)
+    cloned.w = clone(this.w, type=type)
     return cloned
 end
 
 function Base.show(io::IO, m::ScalePath)
-    print(io, "ScalePath(scale=$(m.scale.value[1]); type=$(typeof(m.scale.value)))")
+    print(io, "ScalePath($(m.w.value[1]); type=$(typeof(m.w.value)))")
 end
 
 function paramsof(m::ScalePath)
     params = Vector{Variable}(undef,1)
-    params[1] = m.scale
+    params[1] = m.w
     return params
 end
 
 function xparamsof(m::ScalePath)
     xparams = Vector{XVariable}(undef,1)
-    xparams[1] = ('w', m.scale)
+    xparams[1] = ('w', m.w)
     return xparams
 end
 
@@ -52,28 +51,28 @@ function nparamsof(m::ScalePath)
 end
 
 function bytesof(m::ScalePath, unit::String="MB")
-    return blocksize(sizeof(m.scale), uppercase(unit))
+    return blocksize(sizeof(m.w), uppercase(unit))
 end
 
 
 function forward(m::ScalePath, x::Variable{T}) where T
-    k = m.scale
-    y = Variable{T}(ᵛ(x) .* ᵛ(k), x.backprop)
+    w = m.w
+    y = Variable{T}(ᵛ(x) .* ᵛ(w), x.backprop)
 
     if y.backprop
         y.backward = function ∇ScalePath()
-            if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(k)  end
-            if need2computeδ!(k) δ(k) .+= sum(δ(y) .* ᵛ(x)) end
+            if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(w)  end
+            if need2computeδ!(w) δ(w) .+= sum(δ(y) .* ᵛ(x)) end
             ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
-        addchild(y, k)
+        addchild(y, w)
     end
     return y
 end
 
 
 function predict(m::ScalePath, x::AbstractArray)
-    k = ᵛ(m.scale)
-    return ᵛ(x) .* k
+    w = ᵛ(m.w)
+    return w .* x
 end

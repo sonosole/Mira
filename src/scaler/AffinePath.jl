@@ -1,26 +1,28 @@
 """
 # Summary AffinePath
     mutable struct AffinePath <: Scaler
+    `x -> w .* x .+ b`
+
 # Fields
-    scale :: VarOrNil
-    bias  :: VarOrNil
-Applies scalar multiplication and scalar bias over a N-dimensional input, i.e.
-`x -> k .* x .+ b`
+    w :: VarOrNil
+    b :: VarOrNil
+
 # Example
 If the `input` has size (C,H,W,B), then you should use :
 
-`AffinePath(xxx; ndims=4)` and size(`scale`)==(1,1,1,1)
+`AffinePath(xxx; ndims=4)` and size(`w`)==(1,1,1,1)
 
 """
 mutable struct AffinePath <: Scaler
-    scale::VarOrNil
-    bias::VarOrNil
-    function AffinePath(k::Real, b::Real; ndims::Int, type::Type=Array{Float32})
+    w::VarOrNil
+    b::VarOrNil
+    function AffinePath(w::Real, b::Real; ndims::Int, type::Type=Array{Float32})
         @assert ndims >= 1 "ndims >= 1 shall be met, but got ndims=$ndims"
+        typed = eltype(type)
         shape = ntuple(i->1, ndims)
-        scale = Variable{type}(Zeros(type, shape) .+ eltype(type)(k), true, true, true);
-        bias  = Variable{type}(Zeros(type, shape) .+ eltype(type)(b), true, true, true);
-        new(scale, bias)
+        slope = Variable{type}(Zeros(type, shape) .+ typed(w), true, true, true);
+        bias  = Variable{type}(Zeros(type, shape) .+ typed(b), true, true, true);
+        new(slope, bias)
     end
     function AffinePath()
         new(nothing, nothing)
@@ -30,28 +32,28 @@ end
 
 function clone(this::AffinePath; type::Type=Array{Float32})
     cloned = AffinePath()
-    cloned.scale = clone(this.scale, type=type)
-    cloned.bias  = clone(this.bias,  type=type)
+    cloned.w = clone(this.w, type=type)
+    cloned.b = clone(this.b, type=type)
     return cloned
 end
 
 function Base.show(io::IO, m::AffinePath)
-    k = Array(m.scale.value)[1]
-    b = Array(m.bias.value)[1]
-    print(io, "AffinePath(scale=$k, bias=$b; type=$(typeof(m.scale.value)))")
+    w = Array(m.w.value)[1]
+    b = Array(m.b.value)[1]
+    print(io, "AffinePath(w=$w, b=$b; type=$(typeof(m.w.value)))")
 end
 
 function paramsof(m::AffinePath)
     params = Vector{Variable}(undef,2)
-    params[1] = m.scale
-    params[2] = m.bias
+    params[1] = m.w
+    params[2] = m.b
     return params
 end
 
 function xparamsof(m::AffinePath)
     xparams = Vector{XVariable}(undef,2)
-    xparams[1] = ('w', m.scale)
-    xparams[2] = ('b', m.bias)
+    xparams[1] = ('w', m.w)
+    xparams[2] = ('b', m.b)
     return xparams
 end
 
@@ -59,28 +61,28 @@ function nparamsof(m::AffinePath)
     return 2
 end
 
-elsizeof(a::AffinePath) = elsizeof(a.scale)
+elsizeof(a::AffinePath) = elsizeof(a.w)
 
 function bytesof(m::AffinePath, unit::String="MB")
-    return blocksize(2*sizeof(m.scale), uppercase(unit))
+    return blocksize(2*sizeof(m.w), uppercase(unit))
 end
 
-nops(a::AffinePath) = (0, 0, 0)
+nops(AffinePath) = (0, 0, 0)
 
 function forward(m::AffinePath, x::Variable{T}) where T
-    k = m.scale
-    b = m.bias
-    y = Variable{T}(ᵛ(k) .* ᵛ(x) .+ ᵛ(b), x.backprop)
+    w = m.w
+    b = m.b
+    y = Variable{T}(ᵛ(w) .* ᵛ(x) .+ ᵛ(b), x.backprop)
 
     if y.backprop
         y.backward = function ∇ScalePath()
-            if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(k)  end
-            if need2computeδ!(k) δ(k) .+= sum(δ(y) .* ᵛ(x)) end
+            if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(w)  end
+            if need2computeδ!(w) δ(w) .+= sum(δ(y) .* ᵛ(x)) end
             if need2computeδ!(b) δ(b) .+= sum(δ(y)        ) end
             ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
-        addchild(y, k)
+        addchild(y, w)
         addchild(y, b)
     end
     return y
@@ -88,7 +90,7 @@ end
 
 
 function predict(m::AffinePath, x::AbstractArray)
-    k = ᵛ(m.scale)
-    b = ᵛ(m.bias)
-    return k .* x .+ b
+    w = ᵛ(m.w)
+    b = ᵛ(m.b)
+    return w .* x .+ b
 end

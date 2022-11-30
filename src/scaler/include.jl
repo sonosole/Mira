@@ -11,3 +11,7 @@ include("./ScaleChannels.jl")
 
 export AffinePath
 include("./AffinePath.jl")
+
+
+export WeightedChannels
+include("./WeightedChannels.jl")

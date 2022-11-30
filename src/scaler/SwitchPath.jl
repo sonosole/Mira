@@ -30,7 +30,7 @@ function clone(this::SwitchPath; type::Type=Array{Float32})
 end
 
 function Base.show(io::IO, m::SwitchPath)
-    print(io, "SwitchPath(slope=$slope, scale=$(m.scale.value[1]); type=$TYPE)")
+    print(io, "SwitchPath(slope=$(m.slope), scale=$(m.scale.value[1]); type=$TYPE)")
 end
 
 function paramsof(m::SwitchPath)
@@ -48,6 +48,8 @@ end
 function nparamsof(m::SwitchPath)
     return 1
 end
+
+nops(a::SwitchPath) = (0, 0, 0)
 
 function bytesof(m::SwitchPath, unit::String="MB")
     return blocksize(sizeof(m.scale), uppercase(unit))
