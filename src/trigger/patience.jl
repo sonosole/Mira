@@ -2,11 +2,11 @@
 # mutable struct PatienceSinceLast
     If the loss grows up for a given consecutive counts, then trigger.
 # Constructor
-    PatienceSinceLast(n::Int)
+    PatienceSinceLast(n::Int=1, lastloss::Real=Inf)
 # Example
     julia> p = PatienceSinceLast(2);
     julia> for loss in [7, 7, 8, 6, 7, 9]
-            if actnow(p, loss)
+            if trigger(p, loss)
                 println(loss);break
             end
         end
@@ -16,9 +16,9 @@ mutable struct PatienceSinceLast
     patience :: Int   # if reached then stop
     counter  :: Int   # counter for bad loss
     lastloss :: Real  # last loss recorded
-    function PatienceSinceLast(n::Int=1)
+    function PatienceSinceLast(n::Int=1, lastloss::Real=Inf)
         @assert n > 0 "patience is positive, but got $n"
-        return new(n, 0, Inf)
+        return new(n, 0, lastloss)
     end
 end
 
@@ -31,6 +31,10 @@ function Base.show(io::IO, p::PatienceSinceLast)
 end
 
 
+"""
+    trigger(p::PatienceSinceLast, loss::Real)
+if `p` is trigger by the input `loss`, then returns true.
+"""
 function trigger(p::PatienceSinceLast, loss::Real)
     if loss > p.lastloss
         p.counter += 1
@@ -47,6 +51,21 @@ function trigger(p::PatienceSinceLast, loss::Real)
 end
 
 
+function (p::PatienceSinceLast)(loss::Real)
+    if loss > p.lastloss
+        p.counter += 1
+    else
+        p.counter = 0
+    end
+    p.lastloss = loss
+    if p.counter < p.patience
+        return false
+    else
+        p.counter = 0
+        return true
+    end
+end
+
 
 """
 # mutable struct PatienceSinceBest
@@ -57,7 +76,7 @@ end
 # Example
     julia> p = PatienceSinceBest(3);
     julia> for loss in [7, 7, 9, 8, 7]
-            if actnow(p, loss)
+            if trigger(p, loss)
                 println(loss);break
             end
         end
@@ -66,7 +85,7 @@ end
 mutable struct PatienceSinceBest
     patience :: Int  # if reached then stop
     counter  :: Int  # counter for bad loss
-    bestloss  :: Real # last best loss recorded
+    bestloss :: Real # last best loss recorded
     function PatienceSinceBest(n::Int, bestloss::Real=Inf)
         @assert n > 0 "patience is positive, but got $n"
         return new(n, 0, bestloss)
@@ -82,7 +101,27 @@ function Base.show(io::IO, p::PatienceSinceBest)
 end
 
 
+"""
+    trigger(p::PatienceSinceBest, loss::Real)
+if `p` is trigger by the input `loss`, then returns true.
+"""
 function trigger(p::PatienceSinceBest, loss::Real)
+    if loss < p.bestloss
+        p.bestloss = loss
+        p.counter  = 0
+    else
+        p.counter += 1
+    end
+
+    if p.counter < p.patience
+        return false
+    else
+        return true
+    end
+end
+
+
+function (p::PatienceSinceBest)(loss::Real)
     if loss < p.bestloss
         p.bestloss = loss
         p.counter  = 0

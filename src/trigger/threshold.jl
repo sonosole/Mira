@@ -6,7 +6,7 @@
 # Example
     julia> p = ThresholdSinceLast(1.0);
     julia> for loss in [7, 7, 8, 6, 7, 9]
-            if actnow(p, loss)
+            if trigger(p, loss)
                 println(loss);break
             end
         end
@@ -29,7 +29,22 @@ function Base.show(io::IO, t::ThresholdSinceLast)
 end
 
 
+"""
+    trigger(t::ThresholdSinceLast, loss::Real)
+if `t` is trigger by the input `loss`, then returns true.
+"""
 function trigger(t::ThresholdSinceLast, loss::Real)
+    decrement  = t.lastloss - loss
+    t.lastloss = loss
+    if decrement ≥ t.threshold
+        return false
+    else
+        return true
+    end
+end
+
+
+function (t::ThresholdSinceLast)(loss::Real)
     decrement  = t.lastloss - loss
     t.lastloss = loss
     if decrement ≥ t.threshold
