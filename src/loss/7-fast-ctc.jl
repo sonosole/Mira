@@ -369,13 +369,13 @@ force alignment by viterbi algorithm
     │blank├─►│  S  ├─►│blank├─►│  U  ├─►│blank├─►│  N  ├─►│blank│
     └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘
 """
-function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1) where TYPE
-    seq  = seqfastctc(seqlabel, blank)
-    Log0 = LogZero(TYPE)                         # approximate -Inf of TYPE
-    ZERO = TYPE(0)                               # typed zero,e.g. Float32(0)
-    ONE  = TYPE(1)
-    lnp  = ZERO
+function ViterbiFastCTC(p::Array{TYPE,2}, seqlabel::VecInt; blank::Int=1, eps::Real=1f-5) where TYPE
     S, T = size(p)                               # assert p is a 2-D tensor
+    seq  = seqfastctc(seqlabel, blank)           # extend by topology constraint
+    Log0 = LogZero(TYPE)                         # approximate -Inf of TYPE
+    ZERO = TYPE(eps / (S-1))                     # typed value closing to 0 but bigger than 0
+    ONE  = TYPE(1.0f0 - eps)                     # typed value closing to 1 but less than 1
+    lnp  = TYPE(0.0f0)
     L = length(seq)                              # topology length with blanks, assert L ≤ T
     r = fill!(Array{TYPE,2}(undef,S,T), ZERO)    # 𝜸 = p(s[k,t] | x[1:T]), k in softmax's indexing
 
