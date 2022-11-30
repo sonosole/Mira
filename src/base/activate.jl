@@ -1,5 +1,5 @@
 # ----------------------------------------
-#     Non-linear activation functions
+#      activation functions
 # ----------------------------------------
 
 export min2max, min2max!
@@ -1243,3 +1243,6 @@ function polymax(x::Variable{T}, n::Int; dims::Union{Int,NTuple{N,Int}}=1) where
     end
     return y
 end
+
+export same
+same(x) = x
