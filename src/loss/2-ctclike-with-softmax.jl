@@ -3,121 +3,149 @@ export SoftmaxCTCLikeLoss
     SoftmaxCTCLikeLoss(x::Variable,
                        seqlabels::VecVecInt;
                        reduction::String="seqlen",
-                       gammafn::Function=FastCTC)
+                       pathfn::Function=FastCTC)
 # Inputs
-`x`         : 3-D Variable, inputs of softmax\n
-`seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`reduction` : one of seqlen/timesteps/trellis/normal/nil\n
-`gammafn`   : like gammafn(x, l) = CTC(x, l, blank=1990), which only acceps 2 \n
-arguments, the first is the 2-d probability, 2nd the corresponding sequential label.
++ `x`         : 3-D Variable, inputs of softmax\n
++ `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
++ `reduction` : one of seqlen/timesteps/trellis/normal/nil\n
++ `pathfn`    : function to calculate soft or hard alignment like :
+## pathfn example
+    pathfn(x, l) = CTC(x, l, blank=1990)
+  which only acceps 2 arguments, the first is the 2-d probability, 2nd the corresponding sequential label.
+# Mechanism
+    y = softmax(x)
+    p = CTCLikeProb(y, seqlabels)
+    l = -log(p)
 """
 function SoftmaxCTCLikeLoss(x::Variable{T},
                             seqlabels::VecVecInt;
                             reduction::String="seqlen",
-                            gammafn::Function=FastCTC) where T
+                            pathfn::Function=FastCTC) where T
 
     featdims, timesteps, batchsize = size(x)
     nlnp = zeros(eltype(x), 1, 1, batchsize)
-    p = softmax(ᵛ(x), dims=1)
-    r = zero(p)
+    y = softmax(ᵛ(x), dims=1)
+    r = zero(y)
 
     for b = 1:batchsize
-        r[:,:,b], nlnp[b] = gammafn(p[:,:,b], seqlabels[b])
+        r[:,:,b], nlnp[b] = pathfn(y[:,:,b], seqlabels[b])
     end
 
-    Δ = p - r
+    Δ = y - r
     l = T(nlnp)
     reduce3d(Δ, l, seqlabels, reduction)
-    y = Variable{T}([sum(l)], x.backprop)
+    c = Variable{T}([sum(l)], x.backprop)
 
-    if y.backprop
-        y.backward = function ∇SoftmaxCTCLikeLoss()
+    if c.backprop
+        c.backward = function ∇SoftmaxCTCLikeLoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* Δ
+                δ(x) .+= δ(c) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
+            ifNotKeepδThenFreeδ!(c)
         end
-        addchild(y, x)
+        addchild(c, x)
     end
-    return y
+    return c
 end
 
 
 export SoftmaxFocalCTCLikeLoss
+"""
+    SoftmaxFocalCTCLikeLoss(x::Variable,
+                            seqlabels::VecVecInt;
+                            reduction::String="seqlen",
+                            pathfn::Function=FastCTC,
+                            focus::Real=1.0f0)
+# Inputs
++ `x`         : 3-D Variable, inputs of softmax\n
++ `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
++ `reduction` : one of seqlen/timesteps/trellis/normal/nil\n
++ `pathfn`    : function to calculate soft or hard alignment like :
+## pathfn example
+    pathfn(x, l) = CTC(x, l, blank=1990)
+  which only acceps 2 arguments, the first is the 2-d probability, 2nd the corresponding sequential label.
+# Mechanism
+    y = softmax(x)
+    p = CTCLikeProb(y, seqlabels)
+    l = (1-p)ᶠ[-log(p)]
+where `ᶠ` is the focus param.
+"""
 function SoftmaxFocalCTCLikeLoss(x::Variable{T},
                                  seqlabels::VecVecInt;
                                  reduction::String="seqlen",
-                                 gammafn::Function=FastCTC,
+                                 pathfn::Function=FastCTC,
                                  focus::Real=1.0f0) where T
     featdims, timesteps, batchsize = size(x)
-    S = eltype(x)
-    nlnp = zeros(S, 1, 1, batchsize)
-    p = softmax(ᵛ(x), dims=1)
-    r = zero(p)
-    𝜸 = S(focus)
-    𝟙 = S(1.0f0)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
+    y = softmax(ᵛ(x), dims=1)
+    r = zero(y)
+    f = S(focus)
+    l = S(1.0f0)
 
     for b = 1:batchsize
-        r[:,:,b], nlnp[b] = gammafn(p[:,:,b], seqlabels[b])
+        r[:,:,b], nlnp[b] = pathfn(y[:,:,b], seqlabels[b])
     end
 
-    𝒍𝒏𝒑 = T(-nlnp)
-    𝒑 = exp(𝒍𝒏𝒑)
-    𝒌 = @.  (𝟙 - 𝒑)^(𝜸-𝟙) * (𝟙 - 𝒑 - 𝜸*𝒑*𝒍𝒏𝒑)
-    t = @. -(𝟙 - 𝒑)^𝜸 * 𝒍𝒏𝒑
-    Δ = p - r
-    reduce3d(Δ, t, seqlabels, reduction)
-    y = Variable{T}([sum(t)], x.backprop)
+    lnp = T(-nlnp)
+    p = @. exp(lnp)
+    L = @. (l - p)^ f * (-lnp)
+    ζ = @. (l - p)^(f-l) * (l - p - f * p * lnp)
+    Δ = y - r
+    reduce3d(Δ, L, seqlabels, reduction)
+    c = Variable{T}([sum(L)], x.backprop)
 
-    if y.backprop
-        y.backward = function ∇SoftmaxFocalCTCLikeLoss()
+    if c.backprop
+        c.backward = function ∇SoftmaxFocalCTCLikeLoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* 𝒌 .* Δ
+                δ(x) .+= δ(c) .* ζ .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
+            ifNotKeepδThenFreeδ!(c)
         end
-        addchild(y, x)
+        addchild(c, x)
     end
-    return y
+    return c
 end
 
 
 export SoftmaxCTCLikeProbs
 """
-    SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; gammafn::Function=FastCTC) -> p::Variable
+    SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; pathfn::Function=FastCTC) -> p::Variable
 
 # Inputs
 `x`         : 3-D Variable (featdims,timesteps,batchsize), input of softmax\n
 `seqlabels` : a batch of sequential labels, like [[i,j,k],[x,y],...]\n
-`gammafn`   : like gammafn(x, l) = CTC(x, l, blank=1), where x is the input of softmax, l is the sequential label
+`pathfn`   : like pathfn(x, l) = CTC(x, l, blank=1), where x is the input of softmax, l is the sequential label
 
 # Output
 `p`         : 3-D Variable (1,1,batchsize), i.e. `p` is the probabilities of each sequence
+
+# Mechanism
+    y = softmax(x)
+    p = CTCLikeProb(y, seqlabels)
 """
-function SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; gammafn::Function=FastCTC) where T
-    S = eltype(x)
+function SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; pathfn::Function=FastCTC) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(S, 1, 1, batchsize)
-    p = softmax(ᵛ(x), dims=1)
+    nlnp = zeros(eltype(x), 1, 1, batchsize)
+    y = softmax(ᵛ(x), dims=1)
     r = zero(p)
 
     for b = 1:batchsize
-        r[:,:,b], nlnp[b] = gammafn(p[:,:,b], seqlabels[b])
+        r[:,:,b], nlnp[b] = pathfn(y[:,:,b], seqlabels[b])
     end
 
-    𝒑 = Variable{T}(exp(T(-nlnp)), x.backprop)
-    Δ = r - p
+    p = Variable{T}(exp(T(-nlnp)), x.backprop)
 
-    if 𝒑.backprop
-        𝒑.backward = function ∇SoftmaxCTCLikeProbs()
+    if p.backprop
+        Δ = r - y
+        p.backward = function ∇SoftmaxCTCLikeProbs()
             if need2computeδ!(x)
-                δ(x) .+= δ(𝒑) .* ᵛ(𝒑) .*  Δ
+                δ(x) .+= δ(p) .* ᵛ(p) .*  Δ
             end
-            ifNotKeepδThenFreeδ!(𝒑)
+            ifNotKeepδThenFreeδ!(p)
         end
-        addchild(𝒑, x)
+        addchild(p, x)
     end
-    return 𝒑
+    return p
 end
 
 
@@ -125,41 +153,41 @@ export SoftmaxCTCLikeFocalCELoss
 function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
                                    seqlabels::VecVecInt;
                                    reduction::String="seqlen",
-                                   gammafn::Function=FastCTC,
+                                   pathfn::Function=FastCTC,
                                    focus::Real=0.500000000f0) where T
 
     featdims, timesteps, batchsize = size(x)
-    𝒑 = softmax(ᵛ(x), dims=1)
-    𝜸 = zero(𝒑)
+    p = softmax(ᵛ(x), dims=1)
+    γ = zero(p)
 
     for b = 1:batchsize
-        𝜸[:,:,b], _ = gammafn(𝒑[:,:,b], seqlabels[b])
+        γ[:,:,b], _ = pathfn(p[:,:,b], seqlabels[b])
     end
 
-    TO = eltype(𝒑)
+    TO = eltype(p)
     ϵ  = TO(1e-38)
-    𝒍  = TO(1.0f0)
-    𝒏 = TO(focus)
+    l  = TO(1.0f0)
+    f  = TO(focus)
 
-    p⁺  = 𝒑 .+ ϵ    # a little greater
-    p⁻  = 𝒑 .- ϵ    # a little smaller
-    𝒍𝒏𝒑 = log.(p⁺)  # alias for log(p)
-    𝒍𝒔𝒑 = 𝒍 .- p⁻   # alias for 1 - p
+    p⁺  = p .+ ϵ    # a little greater
+    p⁻  = p .- ϵ    # a little smaller
+    lnp = log.(p⁺)  # alias for log(p)
+    lsp = l .- p⁻   # alias for 1 - p
 
-    t = @. - 𝜸 * 𝒍𝒔𝒑 ^ 𝒏 * 𝒍𝒏𝒑
-    y = Variable{T}(t, x.backprop)
+    c = @. lsp ^ f * (- γ * lnp)
+    C = Variable{T}(c, x.backprop)
 
-    if y.backprop
-        𝒛 = @. 𝜸 * 𝒍𝒔𝒑^(𝒏-𝒍) * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - 𝒍𝒔𝒑)
-        y.backward = function ∇SoftmaxCTCLikeFocalCELoss()
+    if C.backprop
+        ̇pp = @. γ * lsp^(f-l) * (f * p * lnp - lsp)
+        C.backward = function ∇SoftmaxCTCLikeFocalCELoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (𝒛 .- 𝒑 .* sum(𝒛, dims=1))
+                δ(x) .+= δ(C) .* (̇pp .- p .* sum(̇pp, dims=1))
             end
-            ifNotKeepδThenFreeδ!(y)
+            ifNotKeepδThenFreeδ!(C)
         end
-        addchild(y, x)
+        addchild(C, x)
     end
-    return Loss(weightseqvar(y, seqlabels, reduction))
+    return Loss(weightseqvar(C, seqlabels, reduction))
 end
 
 
@@ -167,14 +195,14 @@ export SoftmaxCTCLikeWeightedCELoss
 function SoftmaxCTCLikeWeightedCELoss(x::Variable,
                                       seqlabels::VecVecInt;
                                       reduction::String="seqlen",
-                                      gammafn::Function=CTC,
+                                      pathfn::Function=CTC,
                                       weightfn::Function=t->(1-t))
     featdims, timesteps, batchsize = size(x)
     p = softmax(x, dims=1)
     r = zero(ᵛ(x))
 
     for b = 1:batchsize
-        r[:,:,b], _ = gammafn(p.value[:,:,b], seqlabels[b])
+        r[:,:,b], _ = pathfn(p.value[:,:,b], seqlabels[b])
     end
     wce = weightfn(p) .* CrossEntropy(p, r)
     return Loss(weightseqvar(wce, seqlabels, reduction))
