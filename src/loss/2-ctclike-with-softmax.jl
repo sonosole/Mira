@@ -76,20 +76,24 @@ function SoftmaxFocalCTCLikeLoss(x::Variable{T},
                                  pathfn::Function=FastCTC,
                                  focus::Real=1.0f0) where T
     featdims, timesteps, batchsize = size(x)
-    nlnp = zeros(eltype(x), 1, 1, batchsize)
+    typed = eltype(x)
+    nlnp  = zeros(typed, 1, 1, batchsize)
     y = softmax(ᵛ(x), dims=1)
-    r = zero(y)
-    f = S(focus)
-    l = S(1.0f0)
+    r = zero(y)         # path cache
+    f = typed(focus)    # alias for focus param
+    l = typed(1.0f0)    # alias for value 1.0
 
     for b = 1:batchsize
         r[:,:,b], nlnp[b] = pathfn(y[:,:,b], seqlabels[b])
     end
 
     lnp = T(-nlnp)
-    p = @. exp(lnp)
-    L = @. (l - p)^ f * (-lnp)
-    ζ = @. (l - p)^(f-l) * (l - p - f * p * lnp)
+    p   = @. exp(lnp)   # all path's probability
+    lsp = @. (l - p)    # alias for value 1 - p
+
+    L = @. lsp^f * (-lnp)   # focal loss
+    ζ = @. lsp^(f-l) * (lsp - f * p * lnp)
+
     Δ = y - r
     reduce3d(Δ, L, seqlabels, reduction)
     c = Variable{T}([sum(L)], x.backprop)
@@ -136,10 +140,10 @@ function SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; pathfn::Funct
     p = Variable{T}(exp(T(-nlnp)), x.backprop)
 
     if p.backprop
-        Δ = r - y
+        Δ = ᵛ(p) .* (r - y)
         p.backward = function ∇SoftmaxCTCLikeProbs()
             if need2computeδ!(x)
-                δ(x) .+= δ(p) .* ᵛ(p) .*  Δ
+                δ(x) .+= δ(p) .* Δ
             end
             ifNotKeepδThenFreeδ!(p)
         end
@@ -178,10 +182,11 @@ function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
     C = Variable{T}(c, x.backprop)
 
     if C.backprop
-        ̇ṗp = @. γ * lsp^(f-l) * (f * p * lnp - lsp)
+        ṗp = @. γ * lsp^(f-l) * (f * p * lnp - lsp)
         C.backward = function ∇SoftmaxCTCLikeFocalCELoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(C) .* (̇ṗp .- p .* sum(̇pp, dims=1))
+                ṗp   .*= δ(C)
+                δ(x) .+= ṗp .- p .* sum(ṗp, dims=1)
             end
             ifNotKeepδThenFreeδ!(C)
         end
