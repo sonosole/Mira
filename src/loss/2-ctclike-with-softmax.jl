@@ -178,10 +178,10 @@ function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
     C = Variable{T}(c, x.backprop)
 
     if C.backprop
-        ̇pp = @. γ * lsp^(f-l) * (f * p * lnp - lsp)
+        ̇ṗp = @. γ * lsp^(f-l) * (f * p * lnp - lsp)
         C.backward = function ∇SoftmaxCTCLikeFocalCELoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(C) .* (̇pp .- p .* sum(̇pp, dims=1))
+                δ(x) .+= δ(C) .* (̇ṗp .- p .* sum(̇pp, dims=1))
             end
             ifNotKeepδThenFreeδ!(C)
         end
