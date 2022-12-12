@@ -293,19 +293,19 @@ elsizeof(i::IndRNN) = elsizeof(i.w)
 elsizeof(i::IndRNNs) = elsizeof(i[1].w)
 
 
-function nops(indrnn::IndRNN)
+function nops(indrnn::IndRNN, c::Int=1)
     m, n = size(indrnn.w)
     mops = m * n + m
     aops = m * (n-1) + 2 * m
     acts = m
-    return (mops, aops, acts)
+    return (mops, aops, acts) .* c
 end
 
 
-function nops(indrnns::IndRNNs)
+function nops(indrnns::IndRNNs, c::Int=1)
     mops, aops, acts = 0, 0, 0
     for m in indrnns
-        mo, ao, ac = nops(m)
+        mo, ao, ac = nops(m, c)
         mops += mo
         aops += ao
         acts += ac

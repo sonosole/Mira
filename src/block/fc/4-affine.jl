@@ -113,10 +113,10 @@ function to!(type::Type, m::Affine)
 end
 
 
-function nops(a::Affine)
+function nops(a::Affine, c::Int=1)
     m, n = size(a.w)
     mops = m * n
     aops = m * (n-1)
     acts = 0
-    return (mops, aops, acts)
+    return (mops, aops, acts) .* c
 end

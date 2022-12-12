@@ -272,10 +272,10 @@ function to!(type::Type, m::MLP)
 end
 
 
-function nops(d::Dense)
+function nops(d::Dense, c::Int=1)
     m, n = size(d.w)
-    mops = m * n
-    aops = m * (n-1) + m
-    acts = m
-    return (mops, aops, acts) # (mul, add, act)
+    mops = m * n            # mul ops
+    aops = m * (n-1) + m    # add ops
+    acts = m                # active ops
+    return (mops, aops, acts) .* c
 end

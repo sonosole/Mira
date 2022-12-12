@@ -132,10 +132,10 @@ function bytesof(model::Conv1d1x1, unit::String="MB")
 end
 
 
-function nops(d::Conv1d1x1)
+function nops(d::Conv1d1x1, c::Int=1)
     m, n = size(d.w)
     mops = m * n
     aops = m * (n-1) + m
     acts = m
-    return (mops, aops, acts) # (mul, add, act)
+    return c .* (mops, aops, acts) # (mul, add, act)
 end

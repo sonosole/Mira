@@ -127,10 +127,10 @@ function to!(type::Type, m::Linear)
 end
 
 
-function nops(l::Linear)
+function nops(l::Linear, c::Int=1)
     m, n = size(l.w)
-    mops = m * n
-    aops = m * (n-1) + m
-    acts = 0
-    return (mops, aops, acts) # (mul, add, act)
+    mops = m * n            # mul ops
+    aops = m * (n-1) + m    # add ops
+    acts = 0                # active ops
+    return (mops, aops, acts) .* c
 end

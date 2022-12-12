@@ -289,19 +289,19 @@ function to!(type::Type, m::RNNs)
 end
 
 
-function nops(rnn::RNN)
+function nops(rnn::RNN, c::Int=1)
     m, n = size(rnn.w)
     mops = m * n + m * m
-    aops = m * (n-1) + m * (m-1) + m
+    aops = m * (n-1) + m * (m-1) + 2*m
     acts = m
-    return (mops, aops, acts)
+    return (mops, aops, acts) .* c
 end
 
 
-function nops(rnns::RNNs)
+function nops(rnns::RNNs, c::Int=1)
     mops, aops, acts = 0, 0, 0
     for m in rnns
-        mo, ao, ac = nops(m)
+        mo, ao, ac = nops(m, c)
         mops += mo
         aops += ao
         acts += ac

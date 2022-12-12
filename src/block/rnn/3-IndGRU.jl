@@ -152,11 +152,12 @@ function predict(model::IndGRU, x::T) where T
     bc = model.bc.value
 
     h = model.h ≠ nothing ? model.h : Zeros(T, size(Wr,1), size(x,2))
+    l = eltype(T)(1)
 
     z = sigmoid(Wz * x + Uz .* h .+ bz)
     r = sigmoid(Wr * x + Ur .* h .+ br)
     c = tanh(   Wc * x + Uc .* (r .* h) .+ bc )
-    h = z .* h + (eltype(T)(1) .- z) .* c
+    h = z .* h + (l .- z) .* c
 
     model.h = h
 
@@ -388,19 +389,19 @@ elsizeof(i::IndGRU) = elsizeof(i.Wr)
 elsizeof(i::IndGRUs) = elsizeof(i[1].Wr)
 
 
-function nops(indgru::IndGRU)
+function nops(indgru::IndGRU, c::Int=1)
     m, n = size(indgru.Wz)
     mops = 3 * m * n + 3 * m + 3 * m
     aops = 3 * m * (n-1) + 8 * m
     acts = 3 * m
-    return (mops, aops, acts)
+    return (mops, aops, acts) .* c
 end
 
 
-function nops(indgrus::IndGRUs)
+function nops(indgrus::IndGRUs, c::Int=1)
     mops, aops, acts = 0, 0, 0
     for m in indgrus
-        mo, ao, ac = nops(m)
+        mo, ao, ac = nops(m, c)
         mops += mo
         aops += ao
         acts += ac

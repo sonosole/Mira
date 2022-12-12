@@ -73,6 +73,15 @@ function bytesof(block::PlainDepthConv1d, unit::String="MB")
 end
 
 
+function nops(d::PlainDepthConv1d, n::Int=1)
+    c, k = size(d.w)        # channels, kernel
+    mops = c * k            # mul ops
+    aops = c * (k-1) + c    # add ops
+    acts = c                # active ops
+    return (mops, aops, acts) .* n
+end
+
+
 function forward(block::PlainDepthConv1d, x::Variable{T}) where T
     @assert ndims(x)==3 "input shape is of (ichannels, width, batchsize)"
     channels, width, batchsize = size(x)

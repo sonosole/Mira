@@ -443,19 +443,19 @@ elsizeof(i::IndLSTM) = elsizeof(i.wi)
 elsizeof(i::IndLSTMs) = elsizeof(i[1].wi)
 
 
-function nops(indlstm::IndLSTM)
+function nops(indlstm::IndLSTM, c::Int=1)
     m, n = size(indlstm.wi)
     mops = 4 * m * n + 7 * m
     aops = 4 * m * (n-1) + 9 * m
     acts = 5 * m
-    return (mops, aops, acts)
+    return (mops, aops, acts) .* c
 end
 
 
-function nops(indlstms::IndLSTMs)
+function nops(indlstms::IndLSTMs, c::Int=1)
     mops, aops, acts = 0, 0, 0
     for m in indlstms
-        mo, ao, ac = nops(m)
+        mo, ao, ac = nops(m, c)
         mops += mo
         aops += ao
         acts += ac

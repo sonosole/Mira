@@ -103,11 +103,12 @@ function predict(p::PickyRNN, x::T) where T
     b = ᵛ(p.b)  # input's bias
     F = size(w,1)
     B = size(x,2)
-    𝟏 = eltype(T)(1.0f0)
+    l = eltype(T)(1.0f0)
     z = w * x .+ b                           # new info
     h = p.h ≠ nothing ? p.h : Zeros(T, F, B) # old info
     σ = sigmoid(sum(h .* z, dims=1)) # corr of old-info and new-info
-    γ = 𝟏 .- σ
+    γ = l .- σ
+    
     y   = f(h + σ .* z)
     p.h =   h + γ .* z
     return y
