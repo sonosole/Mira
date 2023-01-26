@@ -73,13 +73,13 @@ end
 
 
 """
-    Loss(x::AbstractArray; reduction::String="sum") -> y::Variable{T}
+    Loss(x::AbstractArray; reduction::String="sum") -> y::AbstractArray
 
 Sums or takes mean over all elements in `value` of `x` as the loss `Variable`, i.e. ⤦\n
 + `y = sum(x)`, if reduction="sum"
 + `y = sum(x)/length(x)`, if reduction="mean"
 """
-function Loss(x::AbstractArray; reduction::String="sum") where T
+function Loss(x::AbstractArray; reduction::String="sum")
     by = lowercase(reduction)
     by=="sum" && return _sum(x)
     by=="mean" && return _mean(x)

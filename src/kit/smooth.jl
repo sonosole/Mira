@@ -12,7 +12,7 @@ struct Conv1dSmoother
     k::Int           # kernel size
     function Conv1dSmoother(smoother::AbstractArray=[0.2, 0.6, 0.2]; type::Type=Array{Float32})
         k = length(smoother)
-        @assert mod(k,2)==1 "length of smoother should be a odd number"
+        @assert mod(k,2)==1 "length of smoother should be an odd number"
         w = reshape(smoother ./ sum(smoother), 1, k)
         new(type(w), k)
     end
@@ -20,7 +20,7 @@ end
 
 
 # pretty printing
-function Base.show(io::IO, x::Conv1dSmoother) where T
+function Base.show(io::IO, x::Conv1dSmoother)
     println(cyan!("═══ Conv1dSmoother ═══"))
     display(x.w)
 end
