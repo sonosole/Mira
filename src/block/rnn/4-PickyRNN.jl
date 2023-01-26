@@ -70,12 +70,12 @@ function bytesof(p::PickyRNN, unit::String="MB")
 end
 
 
-function nops(p::PickyRNN)
+function nops(p::PickyRNN, c::Int=1)
     m, n = size(p.w)
     mops = m * n
     aops = m * (n-1) + m
     acts = m
-    return (mops, aops, acts) # (mul, add, act)
+    return (mops, aops, acts) .* c
 end
 
 
@@ -108,7 +108,7 @@ function predict(p::PickyRNN, x::T) where T
     h = p.h ≠ nothing ? p.h : Zeros(T, F, B) # old info
     σ = sigmoid(sum(h .* z, dims=1)) # corr of old-info and new-info
     γ = l .- σ
-    
+
     y   = f(h + σ .* z)
     p.h =   h + γ .* z
     return y

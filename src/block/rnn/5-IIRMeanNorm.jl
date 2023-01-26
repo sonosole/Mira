@@ -87,6 +87,6 @@ function bytesof(block::IIRMeanNorm, unit::String="MB")
 end
 
 
-function nops(rnn::IIRMeanNorm)
+function nops(rnn::IIRMeanNorm, c::Int=1)
     return (0, 0, 0)
 end

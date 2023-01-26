@@ -452,7 +452,7 @@ elsizeof(i::LSTM) = elsizeof(i.wi)
 elsizeof(i::LSTMs) = elsizeof(i[1].wi)
 
 
-function nops(lstm::LSTM, c::Int=1))
+function nops(lstm::LSTM, c::Int=1)
     m, n = size(lstm.wi)
     mops = 4 * m * n + 4 * m * m + 3 * m
     aops = 4 * m * (n-1) + 4 * m * (m-1) + 9 * m
@@ -461,7 +461,7 @@ function nops(lstm::LSTM, c::Int=1))
 end
 
 
-function nops(lstms::LSTMs, c::Int=1))
+function nops(lstms::LSTMs, c::Int=1)
     mops, aops, acts = 0, 0, 0
     for m in lstms
         mo, ao, ac = nops(m, c)
