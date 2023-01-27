@@ -30,8 +30,12 @@ function Base.show(io::IO, O::Momentum)
 end
 
 
-function update!(O::Momentum; clipfn::Function=LPInfNormClip, clipvalue=10.0)
-    vel = O.v
+function update!(O::Momentum;
+                 clipfn::Function=LPInfNormClip,
+                 clipvalue::Real=10.0,
+                 applyL1::Function=decay_by_L₁,
+                 applyL2::Function=decay_by_L₂)
+    v = O.v
     μ = - O.lr
     ρ = O.inertia
     λ₁ = O.L1decay
@@ -43,19 +47,21 @@ function update!(O::Momentum; clipfn::Function=LPInfNormClip, clipvalue=10.0)
         setNanInfZero!(δ(θ))
         ∇ = clipfn(δ(θ), clipvalue)
         𝒗 = ᵛ(θ)
-        @. vel[i] = ρ * vel[i] + ∇
-        if c == 'w'
-            if λ₁==0 && λ₂==0
-                @. 𝒗 += μ * vel[i]
-            elseif λ₁==0 && λ₂!=0
-                @. 𝒗 += μ * (vel[i] + λ₂ * 𝒗)
-            elseif λ₁!=0 && λ₂==0
-                @. 𝒗 += μ * (vel[i] + λ₁ * sign(𝒗))
-            else  # λ₁!=0 && λ₂!=0
-                @. 𝒗 += μ * (vel[i] + λ₁ * sign(𝒗) + λ₂ * 𝒗)
-            end
-        else
-            @. 𝒗 += μ * vel[i]
+
+        L₁ = applyL1(c) && λ₁ ≠ 0   # whether do L₁ regularization
+        L₂ = applyL2(c) && λ₂ ≠ 0   # whether do L₂ regularization
+
+        if !L₁ && L₂
+            @. 𝒗 += μ * λ₂ * 𝒗
         end
+        if L₁ && !L₂
+            @. 𝒗 += μ * λ₁ * sign(𝒗)
+        end
+        if L₁ && L₂
+            @. 𝒗 += μ * λ₁ * sign(𝒗) + μ * λ₂ * 𝒗
+        end
+
+        @. v[i] = ρ * v[i] + ∇
+        @. 𝒗 += μ * v[i]
     end
 end

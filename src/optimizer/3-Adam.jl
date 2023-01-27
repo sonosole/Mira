@@ -38,7 +38,12 @@ function Base.show(io::IO, O::Adam)
 end
 
 
-function update!(O::Adam; clipfn::Function=LPInfNormClip, clipvalue=10.0)
+
+function update!(O::Adam;
+                 clipfn::Function=LPInfNormClip,
+                 clipvalue::Real=10.0,
+                 applyL1::Function=decay_by_L₁,
+                 applyL2::Function=decay_by_L₂)
     w₁ = O.w1
     w₂ = O.w2
     lr = O.lr
@@ -63,18 +68,19 @@ function update!(O::Adam; clipfn::Function=LPInfNormClip, clipvalue=10.0)
         @. w₁[i] = b₁ * w₁[i] + (1-b₁) * ∇
         @. w₂[i] = b₂ * w₂[i] + (1-b₂) * ∇ * ∇
 
-        if c == 'w'
-            if λ₁==0 && λ₂==0
-                @. 𝒗 += μ * w₁[i] / sqrt(w₂[i] + ϵ)
-            elseif λ₁==0 && λ₂!=0
-                @. 𝒗 += μ * (w₁[i] / sqrt(w₂[i] + ϵ) + λ₂ * 𝒗)
-            elseif λ₁!=0 && λ₂==0
-                @. 𝒗 += μ * (w₁[i] / sqrt(w₂[i] + ϵ) + λ₁ * sign(𝒗))
-            else  # λ₁!=0 && λ₂!=0
-                @. 𝒗 += μ * (w₁[i] / sqrt(w₂[i] + ϵ) + λ₁ * sign(𝒗) + λ₂ * 𝒗)
-            end
-        else
-            @. 𝒗 += μ * w₁[i] / sqrt(w₂[i] + ϵ)
+        L₁ = applyL1(c) && λ₁ ≠ 0   # whether do L₁ regularization
+        L₂ = applyL2(c) && λ₂ ≠ 0   # whether do L₂ regularization
+
+        if !L₁ && L₂
+            @. 𝒗 += μ * λ₂ * 𝒗
         end
+        if L₁ && !L₂
+            @. 𝒗 += μ * λ₁ * sign(𝒗)
+        end
+        if L₁ && L₂
+            @. 𝒗 += μ * λ₁ * sign(𝒗) + μ * λ₂ * 𝒗
+        end
+
+        @. 𝒗 += μ * w₁[i] / sqrt(w₂[i] + ϵ)
     end
 end

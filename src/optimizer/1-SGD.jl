@@ -22,7 +22,11 @@ function Base.show(io::IO, O::SGD)
 end
 
 
-function update!(O::SGD; clipfn::Function=LPInfNormClip, clipvalue=10.0)
+function update!(O::SGD;
+                 clipfn::Function=LPInfNormClip,
+                 clipvalue::Real=10.0,
+                 applyL1::Function=decay_by_L₁,
+                 applyL2::Function=decay_by_L₂)
     μ = - O.lr
     λ₁ = O.L1decay
     λ₂ = O.L2decay
@@ -33,18 +37,20 @@ function update!(O::SGD; clipfn::Function=LPInfNormClip, clipvalue=10.0)
         setNanInfZero!(δ(θ))
         ∇ = clipfn(δ(θ), clipvalue)
         𝒗 = ᵛ(θ)
-        if c == 'w'
-            if λ₁==0 && λ₂==0
-                @. 𝒗 += μ * ∇
-            elseif λ₁==0 && λ₂!=0
-                @. 𝒗 += μ * (∇ + λ₂ * 𝒗)
-            elseif λ₁!=0 && λ₂==0
-                @. 𝒗 += μ * (∇ + λ₁ * sign(𝒗))
-            else  # λ₁!=0 && λ₂!=0
-                @. 𝒗 += μ * (∇ + λ₁ * sign(𝒗) + λ₂ * 𝒗)
-            end
-        else
-            @. 𝒗 += μ * ∇
+
+        L₁ = applyL1(c) && λ₁ ≠ 0   # whether do L₁ regularization
+        L₂ = applyL2(c) && λ₂ ≠ 0   # whether do L₂ regularization
+
+        if !L₁ && L₂
+            @. 𝒗 += μ * λ₂ * 𝒗
         end
+        if L₁ && !L₂
+            @. 𝒗 += μ * λ₁ * sign(𝒗)
+        end
+        if L₁ && L₂
+            @. 𝒗 += μ * λ₁ * sign(𝒗) + μ * λ₂ * 𝒗
+        end
+
+        @. 𝒗 += μ * ∇
     end
 end

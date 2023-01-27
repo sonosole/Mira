@@ -3,6 +3,15 @@ export update!
 export zerograds!
 
 
+function decay_by_L₁(c::Char)
+    return c == 'w' ? true : false
+end
+
+function decay_by_L₂(c::Char)
+    return c == 'w' ? true : false
+end
+
+
 function clip(x::Real, clipval::Real)
     x = (abs(x) > clipval) ? clipval * sign(x) : x
 end

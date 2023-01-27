@@ -3,11 +3,18 @@ export LpNormClip
 export L2NormClip
 export L1NormClip
 export L0NormClip
+
 export LPInfNormClip
 export LNInfNormClip
-export setNanInfZero, setNanInfZero!, SetNanInfZero!
-export fillNanInf, fillNanInf!
+
+export setNanInfZero
+export setNanInfZero!
+export SetNanInfZero!
+
+export fillNanInf
+export fillNanInf!
 export clip!
+
 export maxnormalize
 export minnormalize
 export sumnormalize
@@ -25,7 +32,7 @@ Limit the amplitude of parameters. `kind` has four options:\n
 as show in `yᵗ = f(w*xᵗ + u*hᵗ⁻¹ + b)` or other similar formulas
 """
 function clip!(xparams::Vector{XVariable}, kind='u'; L1decay::Real=0.0, L2decay::Real=0.0, clipvalue::Real=1.0)
-    @assert clipvalue>0 "clipvalue is positive, but got $clipvalue"
+    @assert clipvalue > 0 "clipvalue is positive, but got $clipvalue"
     if !(kind=='u' || kind=='b' || kind=='w' || kind=='a')
         @error "type of XVariable not among u/w/b/a, but got $kind"
     end
