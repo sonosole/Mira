@@ -221,6 +221,36 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
 end
 
 
+function Base.:*(W::Variable{T}, X::AbstractArray) where T
+    Y = Variable{T}(ᵛ(W) * X, W.backprop)
+    if Y.backprop
+        Y.backward = function ∇matMul()
+            if need2computeδ!(W)
+                δ(W) .+= δ(Y)  * X'
+            end
+            ifNotKeepδThenFreeδ!(Y)
+        end
+        addchild(Y, W)
+    end
+    return Y
+end
+
+
+function Base.:*(W::AbstractArray, X::Variable{T}) where T
+    Y = Variable{T}(W * ᵛ(X), X.backprop)
+    if Y.backprop
+        Y.backward = function ∇matMul()
+            if need2computeδ!(X)
+                δ(X) .+= W' * δ(Y)
+            end
+            ifNotKeepδThenFreeδ!(Y)
+        end
+        addchild(Y, X)
+    end
+    return Y
+end
+
+
 """
     matAddVec(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
 a matrix tensor `var1` adds a vector tensor `var2`
