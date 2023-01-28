@@ -19,7 +19,7 @@ mutable struct Adam <: Optimizer
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function Adam(xparams::Vector{XVariable}; lr=1e-3, b1=0.9, b2=0.999, eps=1e-8, L1decay=0.001, L2decay=0.01)
+    function Adam(xparams::Vector{XVariable}; lr=1e-3, b1=0.9, b2=0.999, eps=1e-8, L1decay=0f0, L2decay=0f0)
         num = length(xparams)
         w1  = Vector(undef,num)
         w2  = Vector(undef,num)
@@ -68,17 +68,18 @@ function update!(O::Adam;
         @. w₁[i] = b₁ * w₁[i] + (1-b₁) * ∇
         @. w₂[i] = b₂ * w₂[i] + (1-b₂) * ∇ * ∇
 
+        # regularization should be done before 𝒗 has been changed by ∇
         L₁ = applyL1(c) && λ₁ ≠ 0   # whether do L₁ regularization
         L₂ = applyL2(c) && λ₂ ≠ 0   # whether do L₂ regularization
 
         if !L₁ && L₂
-            @. 𝒗 += μ * λ₂ * 𝒗
+            @. 𝒗 += (μ * λ₂) * 𝒗
         end
         if L₁ && !L₂
-            @. 𝒗 += μ * λ₁ * sign(𝒗)
+            @. 𝒗 += (μ * λ₁) * sign(𝒗)
         end
         if L₁ && L₂
-            @. 𝒗 += μ * λ₁ * sign(𝒗) + μ * λ₂ * 𝒗
+            @. 𝒗 += (μ * λ₁) * sign(𝒗) + (μ * λ₂) * 𝒗
         end
 
         @. 𝒗 += μ * w₁[i] / sqrt(w₂[i] + ϵ)

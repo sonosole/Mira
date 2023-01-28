@@ -13,7 +13,7 @@ mutable struct AdaGrad <: Optimizer
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function AdaGrad(xparams::Vector{XVariable}; lr=1e-2, eps=1e-10, L1decay=0.001, L2decay=0.01)
+    function AdaGrad(xparams::Vector{XVariable}; lr=1e-2, eps=1e-10, L1decay=0f0, L2decay=0f0)
         n = length(xparams)
         w = Vector(undef,n)
         for i = 1:n
@@ -49,17 +49,18 @@ function update!(O::AdaGrad;
         𝒗 = ᵛ(θ)
         @. w[i] += ∇ * ∇
 
+        # regularization should be done before 𝒗 has been changed by ∇
         L₁ = applyL1(c) && λ₁ ≠ 0   # whether do L₁ regularization
         L₂ = applyL2(c) && λ₂ ≠ 0   # whether do L₂ regularization
 
         if !L₁ && L₂
-            @. 𝒗 += μ * λ₂ * 𝒗
+            @. 𝒗 += (μ * λ₂) * 𝒗
         end
         if L₁ && !L₂
-            @. 𝒗 += μ * λ₁ * sign(𝒗)
+            @. 𝒗 += (μ * λ₁) * sign(𝒗)
         end
         if L₁ && L₂
-            @. 𝒗 += μ * λ₁ * sign(𝒗) + μ * λ₂ * 𝒗
+            @. 𝒗 += (μ * λ₁) * sign(𝒗) + (μ * λ₂) * 𝒗
         end
 
         @. 𝒗 += μ / (sqrt(w[i]) + ϵ) * ∇
