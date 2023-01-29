@@ -6,7 +6,7 @@ export Adam
 Implements Adam algorithm. Refer to `Adam: A Method for Stochastic Optimization`.
 """
 mutable struct Adam <: Optimizer
-    xparams::Vector{XVariable}
+    xparams::XVariables
     w1::Vector
     w2::Vector
     lr::AbstractFloat
@@ -19,7 +19,7 @@ mutable struct Adam <: Optimizer
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function Adam(xparams::Vector{XVariable}; lr=1e-3, b1=0.9, b2=0.999, eps=1e-8, L1decay=0f0, L2decay=0f0)
+    function Adam(xparams::XVariables; lr=1e-3, b1=0.9, b2=0.999, eps=1e-8, L1decay=0f0, L2decay=0f0)
         num = length(xparams)
         w1  = Vector(undef,num)
         w2  = Vector(undef,num)

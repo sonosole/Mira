@@ -6,12 +6,12 @@ export SGD
 Implements stochastic gradient descent
 """
 mutable struct SGD <: Optimizer
-    xparams::Vector{XVariable}
+    xparams::XVariables
     lr::AbstractFloat
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function SGD(xparams::Vector{XVariable}; lr=1e-4, L1decay=0f0, L2decay=0f0)
+    function SGD(xparams::XVariables; lr=1e-4, L1decay=0f0, L2decay=0f0)
         new(xparams, lr, L1decay, L2decay, "SGD")
     end
 end

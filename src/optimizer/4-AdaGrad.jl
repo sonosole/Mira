@@ -6,14 +6,14 @@ export AdaGrad
 Implements Adagrad algorithm. Refer to `Adaptive Subgradient Methods for Online Learning and Stochastic`
 """
 mutable struct AdaGrad <: Optimizer
-    xparams::Vector{XVariable}
+    xparams::XVariables
     w::Vector
     lr::AbstractFloat
     ϵ::AbstractFloat
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function AdaGrad(xparams::Vector{XVariable}; lr=1e-2, eps=1e-10, L1decay=0f0, L2decay=0f0)
+    function AdaGrad(xparams::XVariables; lr=1e-2, eps=1e-10, L1decay=0f0, L2decay=0f0)
         n = length(xparams)
         w = Vector(undef,n)
         for i = 1:n

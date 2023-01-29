@@ -6,7 +6,7 @@ export RMSProp
 Implements RMSProp algorithm.
 """
 mutable struct RMSProp <: Optimizer
-    xparams::Vector{XVariable}
+    xparams::XVariables
     w::Vector
     lr::AbstractFloat
     ϵ::AbstractFloat
@@ -14,7 +14,7 @@ mutable struct RMSProp <: Optimizer
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function RMSProp(xparams::Vector{XVariable}; lr=1e-2, inertia=0.99, eps=1e-8, L1decay=0f0, L2decay=0f0)
+    function RMSProp(xparams::XVariables; lr=1e-2, inertia=0.99, eps=1e-8, L1decay=0f0, L2decay=0f0)
         n = length(xparams)
         w = Vector(undef,n)
         for i = 1:n

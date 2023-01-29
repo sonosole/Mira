@@ -11,18 +11,20 @@ export haskid, kidsof, addkid, nkidsof
 export visited
 export setvisited
 export unsetvisited
-export Vecvar
+export VecVariable
+export VecXVariable
 
 export Variable, Variables
 export XVariable, XVariables
 export VarOrNil, FunOrNil
 const FunOrNil = Union{Function, Nothing}
 
-
+export freeze
+export unfreezed
 
 
 """
-    mutable struct Variable{T}
+    mutable struct Variable{T} where T <: AbstractArray
 
 # Constructor
     function Variable{T}(x,
@@ -65,10 +67,10 @@ end
 const XVariable  = Tuple{Char, Variable}
 const VarOrNil   = Union{Variable, Nothing}
 const Variables  = Vector{Variable}
-const XVariables = Vector{Tuple{Char, Variable}}
+const XVariables = Vector{XVariable}
 
 # pretty printing
-function Base.show(io::IO, x::Variable{T}) where T
+function Base.show(io::IO, x::Variable)
     if  x.isleaf println(cyan!("\n═══ Leaf Variable ═══")) end
     if !x.isleaf println(cyan!("\n═══ None Leaf Variable ═══")) end
 
@@ -96,8 +98,10 @@ function zerodelta(x::Variable{T}) where T
 end
 
 
-function need2computeδ!(x::Variable{T}) where T
-    # 不需要学习的叶子参数不需要初始化，其他情况都要
+function need2computeδ!(x::Variable)
+    # 1. 不需要学习的叶子参数不需要初始化，其他情况都要。
+    # 2. 当某叶子节点的 keepsgrad==false 时，则此叶子节
+    #   点不参与反向传播的计算，也即达到了冻结参数的目的
     if !(x.isleaf && !x.keepsgrad)
         zerodelta(x)
         return true
@@ -107,7 +111,7 @@ function need2computeδ!(x::Variable{T}) where T
 end
 
 
-function ifNotKeepδThenFreeδ!(x::Variable{T}) where T
+function ifNotKeepδThenFreeδ!(x::Variable)
     if !x.keepsgrad
         x.delta = nothing
     end
@@ -201,8 +205,12 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline   addkid(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
 
 
-function Vecvar(n::Int=0)
+function VecVariable(n::Int=0)
     return Vector{Variable}(undef, n)
+end
+
+function VecXVariable(n::Int=0)
+    return Vector{XVariable}(undef, n)
 end
 
 
@@ -212,5 +220,78 @@ function setleaf(x::Variable)
 end
 
 
+# having the below defines, the activation function
+# could be set nothing for blocks like Dense Conv
 (f::Nothing)(x::AbstractArray) = x
 (f::Nothing)(x::VarOrNil) = x
+
+
+"""
+    unfreezed(::XVariables)::XVariables
+Return the unfreezed XVariables. This is usually used with `xparamsof`.
+
+# Example
+```julia
+net = Dense(2,3);
+net.w.keepsgrad = false;              # freeze the weigths of net
+learnable = unfreezed(xparamsof(net)) # only the bias of net is kept
+```
+"""
+function unfreezed(xparams::XVariables)
+    valid = VecXVariable(0)
+    for i = 1:length(xparams)
+        if keepsgrad(last(xparams[i]))
+            push!(valid, xparams[i])
+        end
+    end
+    return valid
+end
+
+
+"""
+    unfreezed(::Variables)::Variables
+Return the unfreezed Variables. This is usually used with `paramsof`.
+
+# Example
+```julia
+net = Dense(2,3);
+net.w.keepsgrad = false;             # freeze the weigths of net
+learnable = unfreezed(paramsof(net)) # only the bias of net is kept
+```
+"""
+function unfreezed(params::Variables)
+    valid = VecVariable(0)
+    for i = 1:length(params)
+        if keepsgrad(params[i])
+            push!(valid, params[i])
+        end
+    end
+    return valid
+end
+
+
+
+"""
+    freeze(x::Union{Variable, Variables, XVariable, XVariables})
+Freeze the params, so they could not get involved into training.
+"""
+function freeze(x::Variable)
+    x.keepsgrad = false
+    return nothing
+end
+
+function freeze(x::XVariable)
+    return freeze(last(x))
+end
+
+function freeze(xs::Variables)
+    for x in xs
+        freeze(x)
+    end
+end
+
+function freeze(xs::XVariables)
+    for x in xs
+        freeze(x)
+    end
+end

@@ -6,14 +6,14 @@ export Momentum
 Implements stochastic gradient descent with momentum
 """
 mutable struct Momentum <: Optimizer
-    xparams::Vector{XVariable}
+    xparams::XVariables
     v::Vector
     lr::AbstractFloat
     inertia::AbstractFloat
     L1decay::AbstractFloat
     L2decay::AbstractFloat
     name::String
-    function Momentum(xparams::Vector{XVariable}; lr=1e-4, inertia=0.9, L1decay=0f0, L2decay=0f0)
+    function Momentum(xparams::XVariables; lr=1e-4, inertia=0.9, L1decay=0f0, L2decay=0f0)
         num = length(xparams)
         vel = Vector(undef,num)
         for i = 1:num
