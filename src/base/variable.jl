@@ -19,8 +19,6 @@ export XVariable, XVariables
 export VarOrNil, FunOrNil
 const FunOrNil = Union{Function, Nothing}
 
-export freeze
-export unfreezed
 
 
 """
@@ -224,74 +222,3 @@ end
 # could be set nothing for blocks like Dense Conv
 (f::Nothing)(x::AbstractArray) = x
 (f::Nothing)(x::VarOrNil) = x
-
-
-"""
-    unfreezed(::XVariables)::XVariables
-Return the unfreezed XVariables. This is usually used with `xparamsof`.
-
-# Example
-```julia
-net = Dense(2,3);
-net.w.keepsgrad = false;              # freeze the weigths of net
-learnable = unfreezed(xparamsof(net)) # only the bias of net is kept
-```
-"""
-function unfreezed(xparams::XVariables)
-    valid = VecXVariable(0)
-    for i = 1:length(xparams)
-        if keepsgrad(last(xparams[i]))
-            push!(valid, xparams[i])
-        end
-    end
-    return valid
-end
-
-
-"""
-    unfreezed(::Variables)::Variables
-Return the unfreezed Variables. This is usually used with `paramsof`.
-
-# Example
-```julia
-net = Dense(2,3);
-net.w.keepsgrad = false;             # freeze the weigths of net
-learnable = unfreezed(paramsof(net)) # only the bias of net is kept
-```
-"""
-function unfreezed(params::Variables)
-    valid = VecVariable(0)
-    for i = 1:length(params)
-        if keepsgrad(params[i])
-            push!(valid, params[i])
-        end
-    end
-    return valid
-end
-
-
-
-"""
-    freeze(x::Union{Variable, Variables, XVariable, XVariables})
-Freeze the params, so they could not get involved into training.
-"""
-function freeze(x::Variable)
-    x.keepsgrad = false
-    return nothing
-end
-
-function freeze(x::XVariable)
-    return freeze(last(x))
-end
-
-function freeze(xs::Variables)
-    for x in xs
-        freeze(x)
-    end
-end
-
-function freeze(xs::XVariables)
-    for x in xs
-        freeze(x)
-    end
-end

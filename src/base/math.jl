@@ -4,7 +4,7 @@ export matAddVec
 export matMulVec
 
 
-function Base.:+(x::Variable{T}, constant) where T
+function Base.:+(x::Variable{T}, constant::Real) where T
     # a matrix add a constant element by element
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .+ C, x.backprop)
@@ -21,12 +21,12 @@ function Base.:+(x::Variable{T}, constant) where T
 end
 
 
-function Base.:+(constant, var::Variable{T}) where T
+function Base.:+(constant::Real, var::Variable{T}) where T
     return var + constant;
 end
 
 
-function Base.:-(x::Variable{T}, constant) where T
+function Base.:-(x::Variable{T}, constant::Real) where T
     # a matrix minus a constant element by element
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .- C, x.backprop)
@@ -43,7 +43,7 @@ function Base.:-(x::Variable{T}, constant) where T
 end
 
 
-function Base.:-(constant, x::Variable{T}) where T
+function Base.:-(constant::Real, x::Variable{T}) where T
     # a matrix minus a constant element by element
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(C .- ᵛ(x), x.backprop)

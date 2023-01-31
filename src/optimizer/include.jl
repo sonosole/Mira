@@ -21,3 +21,6 @@ include("./cliper.jl")
 include("./learn-rate.jl")
 
 include("./regularize.jl")
+
+# freeze or unfreeze params
+include("./freeze.jl")
