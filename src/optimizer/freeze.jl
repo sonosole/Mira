@@ -64,14 +64,14 @@ Return the freezed XVariables. This is usually used with `xparamsof`.
 ```julia
 net = Dense(2,3);
 freeze(net.w);                      # freeze the weigths of net
-learnable = freezed(xparamsof(net)) # only the weigths of net is kept
+frozen = freezed(xparamsof(net))    # only the weigths of net is kept
 ```
 """
 function freezed(xparams::XVariables)
     valid = VecXVariable(0)
-    for i = 1:length(xparams)
-        if !keepsgrad(last(xparams[i]))
-            push!(valid, xparams[i])
+    for p in xparams
+        if !keepsgrad(last(p))
+            push!(valid, p)
         end
     end
     return valid
@@ -86,14 +86,14 @@ Return the freezed Variables. This is usually used with `paramsof`.
 ```julia
 net = Dense(2,3);
 freeze(net.w);                     # freeze the weigths of net
-learnable = freezed(paramsof(net)) # only the weigths of net is kept
+frozen = freezed(paramsof(net))    # only the weigths of net is kept
 ```
 """
 function freezed(params::Variables)
     valid = VecVariable(0)
-    for i = 1:length(params)
-        if !keepsgrad(params[i])
-            push!(valid, params[i])
+    for p in params
+        if !keepsgrad(p)
+            push!(valid, p)
         end
     end
     return valid
@@ -114,9 +114,9 @@ learnable = unfreezed(xparamsof(net)) # only the bias of net is kept
 """
 function unfreezed(xparams::XVariables)
     valid = VecXVariable(0)
-    for i = 1:length(xparams)
-        if keepsgrad(last(xparams[i]))
-            push!(valid, xparams[i])
+    for p in params
+        if keepsgrad(last(p))
+            push!(valid, p)
         end
     end
     return valid
@@ -136,9 +136,9 @@ learnable = unfreezed(paramsof(net)) # only the bias of net is kept
 """
 function unfreezed(params::Variables)
     valid = VecVariable(0)
-    for i = 1:length(params)
-        if keepsgrad(params[i])
-            push!(valid, params[i])
+    for p in params
+        if keepsgrad(p)
+            push!(valid, p)
         end
     end
     return valid

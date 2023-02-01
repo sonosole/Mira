@@ -46,7 +46,7 @@ mutable struct DataLoader{T}
 end
 
 
-function Base.iterate(d::DataLoader, i=0)
+function Base.iterate(d::DataLoader, i::Int=0)
     i >= d.imax && return nothing
     if d.shuffle && i == 0
         shuffle!(d.indices)
