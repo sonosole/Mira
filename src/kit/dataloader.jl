@@ -1,18 +1,25 @@
 using Random
-abstract type DataSet end
-
 export DataSet
 export DataLoader
 
+
 """
-    DataLoader(dataset::T;
+The `Dataset` is an abstract type which should be implemented
+by user. `Dataset` is responsible for accessing and processing
+single instances of data.
+"""
+abstract type DataSet end
+
+
+"""
+    DataLoader(dataset::DataSet;
                batchsize=1,
                shuffle=true,
                droplast=true,
-               collatefn::Union{Function,Nothing}=nothing) where {T<:DataSet}
+               collatefn::FunOrNil=nothing)
 
-Suppose each element of the dataset returns a tuple sample (feat, label), everytime the DataLoader instance
-fetchs a minibatch of data from a dataset and collates them into a batched sample (feats, labels).
+The `DataLoader` pulls instances of data from the `Dataset` and collects them
+into a minibatch. A `DataLoader` can be indexed or iterated for training.
 """
 mutable struct DataLoader{T}
     data::T
@@ -22,14 +29,14 @@ mutable struct DataLoader{T}
     shuffle::Bool
     imax::Int
     len::Int
-    indices::Vector{Int}
-    collate::Union{Function,Nothing}
+    indices::VecInt
+    collate::FunOrNil
 
     function DataLoader(dataset::T;
                         batchsize::Int=1,
                         shuffle::Bool=true,
                         droplast::Bool=true,
-                        collatefn::Union{Function,Nothing}=nothing) where {T<:DataSet}
+                        collatefn::FunOrNil=nothing) where {T<:DataSet}
         if batchsize <= 0
             throw(ArgumentError("batchsize should be positive, but got $batchsize"))
         end
