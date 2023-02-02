@@ -16,9 +16,7 @@ export VecXVariable
 
 export Variable, Variables
 export XVariable, XVariables
-export VarOrNil, FunOrNil
-const FunOrNil = Union{Function, Nothing}
-
+export VarOrNil
 
 
 """

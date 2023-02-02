@@ -37,11 +37,3 @@ end
     T = T1 <: T2 ? T2 : T1
     return T
 end
-
-
-export VecVecInt
-export VecInt
-export Dimtype
-const VecVecInt = Vector{Vector{Int}}
-const    VecInt =        Vector{Int}
-const Dimtype = Union{Int,NTuple{N,Int}} where {N}

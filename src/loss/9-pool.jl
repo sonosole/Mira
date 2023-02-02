@@ -4,8 +4,6 @@ export PoolLoss
 export SoftmaxPoolLoss
 export SigmoidPoolLoss
 
-const IntOrNil  = Union{Nothing, Int}
-const RealOrNil = Union{Nothing, Real}
 
 
 """
