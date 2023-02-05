@@ -223,10 +223,10 @@ function weightedgamma(r::AbstractArray, l::VecVecInt, a::Real, blank::Int, T::T
     dtype = eltype(T)
     C = size(r, 1)  # channels
     B = length(l)   # batchsize
-    α = dtype(a)    # 0 < α < 1
-    𝟙 = dtype(1)
-    β = 𝟙 - α
-    N = zeros(dtype, C, 1, B)
+    𝟙 = dtype(1)    # alias for typed one
+    α = dtype(a)    # 0 < α < 1, weight for non-blank
+    β = 𝟙 - α       # weight for blank
+    N = zeros(dtype, C, 1, B)   # text ratio
 
     for b in 1:B
         if l[b][1] ≠ 0
@@ -239,8 +239,8 @@ function weightedgamma(r::AbstractArray, l::VecVecInt, a::Real, blank::Int, T::T
         end
     end
 
-    V = sum(r, dims=2)
-    γ = r .* (T(N) ./ V)
+    V = sum(r, dims=2)      # acoustic ratio
+    γ = r .* (T(N) ./ V)    # r is weighted by the ratio of (text-ratio ÷ acoustic-ratio)
     return γ ./ sum(γ, dims=1)
 end
 

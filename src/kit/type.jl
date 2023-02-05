@@ -1,6 +1,6 @@
 export FunOrNil
 
-const FunOrNil = Union{Function, Nothing}
+const FunOrNil  = Union{Nothing, Function}
 const IntOrNil  = Union{Nothing, Int}
 const RealOrNil = Union{Nothing, Real}
 
