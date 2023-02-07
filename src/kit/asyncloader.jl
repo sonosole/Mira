@@ -2,7 +2,7 @@ export AsyncLoader
 
 
 """
-    AsyncLoader(loader::DataLoader)
+    AsyncLoader(loader::T)
 
 The `AsyncLoader` pulls minibatch of data from the `DataLoader`
 and it accelerates training by loading minibatch asynchronously.
@@ -10,13 +10,13 @@ and it accelerates training by loading minibatch asynchronously.
 same way as `DataLoader`. Julia is better started with more than
 one thread.
 """
-mutable struct AsyncLoader
-    dataloader::DataLoader
+mutable struct AsyncLoader{T}
+    dataloader::T
     imax :: Int
     this :: Any
     next :: Any
-    function AsyncLoader(loader::DataLoader)
-        new(loader, length(loader), nothing, loader[1])
+    function AsyncLoader(loader::T) where T
+        new{T}(loader, length(loader), nothing, loader[1])
     end
 end
 
@@ -24,6 +24,11 @@ end
 Base.length(loader::AsyncLoader)     = loader.imax
 Base.lastindex(loader::AsyncLoader)  = loader.imax
 Base.firstindex(loader::AsyncLoader) = 1
+
+
+function Base.show(io::IO, d::AsyncLoader{T}) where T
+    print("AsyncLoader{$T}")
+end
 
 
 function Base.getindex(loader::AsyncLoader, i::Int)
