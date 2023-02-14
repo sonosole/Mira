@@ -147,6 +147,22 @@ function Base.getindex(x::Variable{T}, k...) where T
 end
 
 
+function Base.getindex(x::Variable{T}, k::Int) where T
+    !x.backprop && return x.value[k:k]
+    y = Variable{T}(x.value[k:k], x.backprop, x.keepsgrad, x.isleaf)
+    if y.backprop
+        y.backward = function getindexBackward()
+            if need2computeδ!(x)
+                x.delta[k:k] .+= y.delta
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
 function (v::Variable)(i...)
     if v.delta ≠ nothing
         return v.delta[i...]
