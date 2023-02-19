@@ -11,6 +11,8 @@ include("./3-Adam.jl")
 include("./4-AdaGrad.jl")
 include("./5-RMSProp.jl")
 
+include("./mixf16f32.jl")
+
 # auto gradient clipping
 include("./auto-grad-cliper.jl")
 
