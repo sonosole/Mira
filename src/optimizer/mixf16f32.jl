@@ -1,4 +1,4 @@
-
+export MixPrecision
 
 """
 # float16 mix float32 process
@@ -18,7 +18,7 @@ W₁₆ = tofloat32(W₃₂)
 mutable struct MixPrecision{Opt}
     optimizer :: Opt
     backup :: XVariables
-    function name(opt::Opt; dtype=Array{Float32}) where Opt <: Optimizer
+    function MixPrecision(opt::Opt; dtype=Array{Float32}) where Opt <: Optimizer
         num = length(opt.xparams)
         W₃₂ = VecXVariable(num)
         for i = 1:num
