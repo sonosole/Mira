@@ -42,7 +42,9 @@ function update!(mixpre::MixPrecision,
             applyL1=applyL1,
             applyL2=applyL2)
     # sync W₁₆ with W₃₂
-    for (W₁₆, W₃₂) in zip(mixpre.optimizer.xparams, backup)
+    θ₁₆ = mixpre.optimizer.xparams
+    θ₃₂ = mixpre.backup
+    for ( (c₁₆, W₁₆), (c₃₂, W₃₂) ) in zip(θ₁₆, θ₃₂)
         W₁₆ .= W₃₂
     end
 end
