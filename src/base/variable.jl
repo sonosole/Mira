@@ -8,9 +8,9 @@ export isleaf, setleaf, backprop, keepsgrad, needsgrad
 export haschild, childrenof, addchild, nchildrenof
 export haskid, kidsof, addkid, nkidsof
 
-export visited
-export setvisited
-export unsetvisited
+export ismarked
+export setmarked
+export unsetmarked
 export VecVariable
 export VecXVariable
 
@@ -35,7 +35,8 @@ mutable struct Variable{T}
     isleaf    :: Bool                # whether leaf node
     backprop  :: Bool                # whether needs backprop when forward
     keepsgrad :: Bool                # whether keeps grad after backprop
-    visited   :: Bool                # whether visited during backprop
+    ismarked  :: Bool                # whether marked during backprop
+    indegree  :: Int                 # in backward view, the indegree of a node
     backward  :: FunOrNil            # backward function
     children  :: Vector{Variable{T}} # children Variables
     function Variable{T}(x, backprop  :: Bool=true,
@@ -43,10 +44,11 @@ mutable struct Variable{T}
                             isleaf    :: Bool=false) where T <: AbstractArray
         delta    = nothing
         shape    = size(x)
-        visited  = false
+        ismarked = false
+        indegree = 0
         backward = nothing
         children = Vector{Variable{T}}()
-        new{T}(x, delta, shape, isleaf, backprop, keepsgrad, visited, backward, children)
+        new{T}(x, delta, shape, isleaf, backprop, keepsgrad, ismarked, indegree, backward, children)
     end
 end
 
@@ -197,25 +199,45 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline delta(x::Variable) = x.delta
 
 # Variable's states fns
-@inline isleaf(x::Variable) = x.isleaf
-@inline backprop(x::Variable) = x.backprop
+@inline isleaf(x::Variable)    = x.isleaf
+@inline backprop(x::Variable)  = x.backprop
 @inline keepsgrad(x::Variable) = x.keepsgrad
 @inline needsgrad(x::Variable) = x.keepsgrad = true
-@inline haschild(x::Variable) = length(x.children) > 0 ? true : false
-@inline   haskid(x::Variable) = length(x.children) > 0 ? true : false
-@inline childrenof(x::Variable) = x.children
-@inline     kidsof(x::Variable) = x.children
-@inline nchildrenof(x::Variable) = length(x.children)
-@inline     nkidsof(x::Variable) = length(x.children)
 
-@inline visited(x::Variable)      = x.visited
-@inline setvisited(x::Variable)   = x.visited = true
-@inline unsetvisited(x::Variable) = x.visited = false
+@inline haskid(x::Variable)  = length(x.children) > 0 ? true : false
+@inline kidsof(x::Variable)  =        x.children
+@inline nkidsof(x::Variable) = length(x.children)
 
 
-@inline addchild(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
-@inline   addkid(p::Variable, c::Variable) = !c.isleaf && push!(p.children, c)
+@inline ismarked(x::Variable)    = x.ismarked
+@inline setmarked(x::Variable)   = x.ismarked = true
+@inline unsetmarked(x::Variable) = x.ismarked = false
 
+@inline isroot(x::Variable) = x.indegree == 0
+@inline notempty(x::Variables) = length(x) ≠ 0
+
+@inline addindegree(x::Variable)    = x.indegree += 1
+@inline reduceindegree(x::Variable) = x.indegree -= 1
+
+@inline function addchild(parent::Variable, kid::Variable)
+    if !isleaf(kid)
+        push!(parent.children, kid)
+        addindegree(kid)
+    end
+end
+
+@inline function addkid(parent::Variable, kid::Variable)
+    if !isleaf(kid)
+        push!(parent.children, kid)
+        addindegree(kid)
+    end
+end
+
+
+@inline function push!mark!(container::Vector, kid::Variable)
+    push!(container, kid)
+    setmarked(kid)
+end
 
 function VecVariable(n::Int=0)
     return Vector{Variable}(undef, n)
