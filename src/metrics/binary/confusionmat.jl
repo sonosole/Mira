@@ -16,7 +16,7 @@ export f1score
         └──────────────────┼────────────┘
                            │       C₋ = N₋  +  N₊
 """
-function confusionmat(y, label; threshold=0.5)
+function confusionmat(y, l; threshold::Real=0.5)
     y₊ = y .> threshold  # 预测为正样本的标记序列  0  0  1  1  1  1
     y₋ = .! y₊           # 预测为负样本的标记序列  1  1  0  0  0  0
     l₊ = l .> threshold  # 正样本的标记序列        0  1  1  1  1  0
@@ -52,8 +52,8 @@ mutable struct ConfusionMat
     function ConfusionMat(TP::Int, FN::Int, TN::Int, FP::Int)
         new(TP, FN, TN, FP)
     end
-    function ConfusionMat(y, label; threshold=0.5)
-        c = confusionmat(y, label, threshold=threshold)
+    function ConfusionMat(predicted, label; threshold=0.5)
+        c = confusionmat(predicted, label, threshold=threshold)
         new(c.TP, c.FN, c.TN, c.FP)
     end
 end
