@@ -1,20 +1,27 @@
 export backward
 
 
-function backward(topnode::Variable{T}, d::Union{Real,T}=1.0f0; keepgraph::Bool=false, by::String="dfs") where T
-    if need2computeδ!(topnode)
-        if d isa Real
-            δ(topnode) .= eltype(T)(d)
+function backward(y::Variable{T},
+                  δy::Union{Real,T}=1.0f0;
+                  partial::Bool=false,
+                  keepgraph::Bool=false,
+                  by::String="dfs") where T
+
+    if need2computeδ!(y)
+        if δy isa Real
+            δ(y) .= eltype(T)(δy)
         else
-            δ(topnode) .= d
+            δ(y) .= δy
         end
     end
 
+    partial && resetindegree(y)
+
     if by=="dfs"
-        sorted = sort_by_dfs(topnode)
+        sorted = sort_by_dfs(y)
     end
     if by=="bfs"
-        sorted = sort_by_bfs(topnode)
+        sorted = sort_by_bfs(y)
     end
 
     if !keepgraph

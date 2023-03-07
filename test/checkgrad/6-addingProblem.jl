@@ -30,7 +30,7 @@
     )
 
     # [1] prepare input data and its label
-    T = 15
+    T = 150
     x, s = addingProblemData(T)
 
     # [2] forward and backward propagation
@@ -40,7 +40,7 @@
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) );
     COST1 = MSELoss(y, Variable( reshape(s,1,1); type=TYPE) );
-    backward(COST1)
+    backward(COST1, partial=true)
     GRAD = model[1].w.delta[1]
 
     # [3] with a samll change of a weight
@@ -54,7 +54,7 @@
     end
     y = forward(model, Variable( reshape(x[:,T], 2,1); type=TYPE) )
     COST2 = MSELoss(y, Variable( reshape(s,1,1); type=TYPE) )
-    backward(COST2)
+    backward(COST2, partial=true)
 
     # [5] check if the auto-grad is true or not
     dLdW = (cost(COST2) - cost(COST1))/DELTA

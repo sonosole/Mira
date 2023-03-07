@@ -5,8 +5,9 @@ export sort_by_dfs
 """
     sort_by_recursive_dfs(rootnode::Variable) -> stack
 """
-function sort_by_recursive_dfs(topnode::Variable)
+function sort_by_recursive_dfs(entry::Variable)
     stack = Vector{Variable}()
+
     function visit(node::Variable)
         setmarked(node)
         if haskid(node)
@@ -18,7 +19,8 @@ function sort_by_recursive_dfs(topnode::Variable)
         end
         push!(stack, node)
     end
-    visit(rootnode)
+
+    visit(entry)
     return stack
 end
 
