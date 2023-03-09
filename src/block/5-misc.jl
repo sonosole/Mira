@@ -190,7 +190,7 @@ end
 """
 function staticsof(x::AbstractArray)
     μ = mean(x)
-    σ = std(x)
+    σ = std(x, mean=μ)
     return μ, σ, minimum(x), maximum(x)
 end
 
@@ -217,3 +217,7 @@ function staticsof(vs::Vector{Variable})
         println("$(i)\t$(size(v))\t[$l, $u]\t($μ\t±\t$σ)")
     end
 end
+
+
+forward(f::Function, x::Variable)      = f(x)
+predict(f::Function, x::AbstractArray) = f(x)
