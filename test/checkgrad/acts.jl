@@ -32,13 +32,23 @@
     _reshape_(x) = reshape(x, (4,4))
     @test checkgrad(_reshape_, Variable(randn(2, 8), type=T))
 
+    @test checkgrad(exp2, Variable(randn(2, 8), type=T))
+
+    @test checkgrad(exp10, Variable(randn(2, 8), type=T))
+
+    @test checkgrad(log2, Variable(randn(2, 8) .+ 10, type=T))
+
+    @test checkgrad(log10, Variable(randn(2, 8) .+ 10, type=T))
+
+    @test checkgrad(sec, Variable(rand(2, 8), type=T))
+
     @test checkgrad(sqrt, Variable(rand(2, 8), type=T))
 
     @test checkgrad(tan, Variable(rand(2, 8), type=T))
 
-    @test checkgrad(tanh, Variable(rand(2, 8), type=T))
-
     @test checkgrad(tand, Variable(rand(2, 8), type=T))
+
+    @test checkgrad(tanh, Variable(rand(2, 8), type=T))
 
     @test checkgrad(tanhshrink, Variable(rand(2, 8), type=T))
 
@@ -55,5 +65,5 @@
     @test checkgrad(cos, Variable(rand(2, 8), type=T))
 
     @test checkgrad(inv, Variable(rand(2, 8), type=T))
-    
+
 end

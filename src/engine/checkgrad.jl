@@ -12,7 +12,7 @@ end
 """
     checkgrad(block::Block,            # a block contains params
               x::Variable;             # input of block
-              dw::AbstractFloat=1e-7,  # increment of each params to check gradient
+              eps::AbstractFloat=1e-7, # increment of each params to check gradient
               tol::AbstractFloat=0.1,  # tolerance of error
               onlyone::Bool=false)     # true for only one param shall be checked
 
@@ -20,9 +20,10 @@ if all gradients were true, then it returns true.
 """
 function checkgrad(block::B,
                    x::Variable;
-                   dw::AbstractFloat=1e-7,
+                   eps::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.05,
                    onlyone::Bool=false) where B <: Block
+    dw = eps
     istrue = true
     params = paramsof(block)
     for w in params
@@ -62,7 +63,7 @@ end
 """
 checkgrad(fn::Function,
           x::Variable;
-          dx::AbstractFloat=1e-8,
+          eps::AbstractFloat=1e-8,
           tol::AbstractFloat=0.1)
 
 if gradients were true, then it returns true. Attention, functions with ! ending
@@ -70,8 +71,9 @@ can NOT used here.
 """
 function checkgrad(fn::Function,
                    x::Variable;
-                   dx::AbstractFloat=1e-8,
+                   eps::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.05)
+    dx = eps
     x.keepsgrad = true
     # [1] forward 1st time
     y₁ = fn(x)

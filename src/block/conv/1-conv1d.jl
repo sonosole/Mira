@@ -141,7 +141,7 @@ function PlainConv1dReceptiveField(StrideKernelPair::Vector{NTuple{2,Int}})
 end
 
 
-function PlainConv1dReceptiveField(chain::Chain)
+function PlainConv1dReceptiveField(chain)
     # 计算感受野时从顶层往底层计算,为了流式计算时候缓存空间的设计
     # 本函数返回：顶层第一个时间步感受到的底层时间步范围
     #            顶层第二个时间步感受到的底层时间步范围

@@ -13,5 +13,5 @@
     @test checkgrad(BLOCK, x)
 
     fn(x) = forward(BLOCK, x)
-    @test checkgrad(fn, x, dx=1e-7, tol=1.0)
+    @test checkgrad(fn, x, eps=1e-7, tol=1.0)
 end
