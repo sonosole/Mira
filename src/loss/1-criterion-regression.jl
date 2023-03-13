@@ -63,7 +63,7 @@ mean absolute error (MAE) between each element in the input `x` and target `labe
     y = |xᵢ - lᵢ|
 """
 function MAE(x::AbstractArray, label::AbstractArray)
-    @assert sum(x) == size(label)
+    @assert size(x) == size(label)
     return abs.(x - label)
 end
 
@@ -110,7 +110,7 @@ end
 
 
 function MSE(x::AbstractArray, label::AbstractArray)
-    @assert sum(x) == size(label)
+    @assert size(x) == size(label)
     𝟚 = eltype(x)(2.0)
     return (x - label) .^ 𝟚
 end
