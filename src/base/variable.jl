@@ -258,3 +258,4 @@ end
 # could be set nothing for blocks like Dense Conv
 (f::Nothing)(x::AbstractArray) = x
 (f::Nothing)(x::VarOrNil) = x
+(f::Nothing)() = nothing

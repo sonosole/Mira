@@ -98,6 +98,26 @@ function nparamsof(blocks::Vector)
 end
 
 
+
+function paramsof(f::Function)
+    return nothing
+end
+
+
+function xparamsof(f::Function)
+    return nothing
+end
+
+
+function nparamsof(f::Function)
+    return 0
+end
+
+
+function nops(f::Function, c::Int=1)
+    return (0, 0, 0) .* c
+end
+
 # const FC = Union{Affine,
 #                  Linear,
 #                  Dense,
