@@ -1,7 +1,7 @@
 export lrarray
 
 """
-    lrarray(init,final,steps;func="exp") -> Array{Float32,1}
+    lrarray(init,final,steps;func="exp") -> Vector{Float32}
 # Arguments
 - ` init`: initial learning rate
 - `final`: final learning rate

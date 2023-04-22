@@ -225,22 +225,25 @@ function LpNormClip(x::AbstractArray, clipvalue::Real; order::Union{Int,String}=
 end
 
 
-function maxnormalize(x::AbstractArray, eps::Real=1e-38)
-    return x ./ (maximum(abs.(x)) + eps)
+function maxnormalize(x::AbstractArray; eps::Real=1e-38, dims=1)
+    f = eltype(x)(1) ./ (maximum(abs.(x), dims=dims) .+ eps)
+    return x .* f
 end
 
-function minnormalize(x::AbstractArray, eps::Real=1e-38)
-    return x ./ (minimum(abs.(x)) + eps)
+function minnormalize(x::AbstractArray; eps::Real=1e-38, dims=1)
+    f = eltype(x)(1) ./ (minimum(abs.(x), dims=dims) .+ eps)
+    return x .* f
 end
 
-function sumnormalize(x::AbstractArray, eps::Real=1e-38)
-    return x ./ (sum(abs.(x)) + eps)
+function sumnormalize(x::AbstractArray; eps::Real=1e-38, dims=1)
+    f = eltype(x)(1) ./ (sum(abs.(x), dims=dims) .+ eps)
+    return x .* f
 end
 
-function normalize(x::AbstractArray, eps::Real=1e-38; by::Function=maximum)
-    return x ./ (by(abs.(x)) + eps)
+function normalize(x::AbstractArray; eps::Real=1e-38, by::Function=maximum)
+    f = eltype(x)(1) ./ (by(abs.(x)) .+ eps)
+    return x .* f
 end
-
 
 function pnorm(x::AbstractArray, p::Real=2)
     if mod(p, 2) == 0

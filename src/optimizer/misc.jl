@@ -16,6 +16,11 @@ function clip(x::Real, clipval::Real)
     x = (abs(x) > clipval) ? clipval * sign(x) : x
 end
 
+function clip(x::AbstractArray, clipval::Real)
+    i = abs.(x) .> clipval
+    x[i] .= clipval .* sign(x[i])
+    return x
+end
 
 function update!(x::Variable, lr::AbstractFloat)
     # update single Variable
