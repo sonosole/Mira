@@ -15,6 +15,7 @@ function backward(y::Variable{T},
         end
     end
 
+    # partial==true means y is one of the loss functions
     partial && resetindegree(y)
 
     if by=="dfs"
@@ -33,5 +34,21 @@ function backward(y::Variable{T},
         for v in sorted
             v.backward()
         end
+    end
+end
+
+
+export backprop
+function backprop(sorted::Vector{Variable})
+    for node in sorted
+        node.backward()
+    end
+end
+
+
+function backprop(sorted::Vector{Variable}, dest::Variable)
+    for node in sorted
+        node.backward()
+        dest.indegree == 0 && break
     end
 end
