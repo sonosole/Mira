@@ -1,9 +1,12 @@
 export sort_by_recursive_dfs
 export sort_by_bfs
 export sort_by_dfs
+export level_sort_by_bfs
+export level_sort_by_dfs
+
 
 """
-    sort_by_recursive_dfs(rootnode::Variable) -> stack
+    sort_by_recursive_dfs(entry::Variable) -> stack::Vector{Variable}
 """
 function sort_by_recursive_dfs(entry::Variable)
     stack = Vector{Variable}()
@@ -27,7 +30,7 @@ end
 
 
 """
-    sort_by_bfs(rootnode::Variable) -> queue::Vector{Variable}
+    sort_by_bfs(entry::Variable) -> sorted::Vector{Variable}
 """
 function sort_by_bfs(entry::Variable)
     @assert isroot(entry) "not a root node"
@@ -53,7 +56,7 @@ end
 
 
 """
-    sort_by_bfs(rootnode::Variable) -> stack::Vector{Variable}
+    sort_by_dfs(entry::Variable) -> sorted::Vector{Variable}
 """
 function sort_by_dfs(entry::Variable)
     @assert isroot(entry) "not a root node"
@@ -71,6 +74,70 @@ function sort_by_dfs(entry::Variable)
                     push!(stack, kid)
                 end
             end
+        end
+    end
+
+    return sorted
+end
+
+
+"""
+    level_sort_by_bfs(entry::Variable) -> sorted::Vector{Vector{Variable}}
+"""
+function level_sort_by_bfs(entry::Variable)
+    @assert isroot(entry) "not a root node"
+    sorted = Vector{Vector{Variable}}()
+    queue  = Vector{Vector{Variable}}()
+
+    push!(queue, Variable[entry])
+    while !isempty(queue)
+        level = Vector{Variable}()
+        cells = popfirst!(queue)
+        push!(sorted, cells)
+        for cell in cells
+            if haskid(cell)
+                for kid in kidsof(cell)
+                    kid.indegree -= 1
+                    if kid.indegree == 0
+                        push!(level, kid)
+                    end
+                end
+            end
+        end
+        if !isempty(level)
+            push!(queue, level)
+        end
+    end
+
+    return sorted
+end
+
+
+"""
+    level_sort_by_dfs(entry::Variable) -> sorted::Vector{Vector{Variable}}
+"""
+function level_sort_by_dfs(entry::Variable)
+    @assert isroot(entry) "not a root node"
+    sorted = Vector{Vector{Variable}}()
+    stack  = Vector{Vector{Variable}}()
+
+    push!(stack, Variable[entry])
+    while !isempty(stack)
+        level = Vector{Variable}()
+        cells = pop!(stack)
+        push!(sorted, cells)
+        for cell in cells
+            if haskid(cell)
+                for kid in kidsof(cell)
+                    kid.indegree -= 1
+                    if kid.indegree == 0
+                        push!(level, kid)
+                    end
+                end
+            end
+        end
+        if !isempty(level)
+            push!(stack, level)
         end
     end
 
