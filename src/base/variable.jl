@@ -8,6 +8,7 @@ export isleaf, setleaf, backprop, keepsgrad, needsgrad
 export haschild, childrenof, addchild, nchildrenof
 export haskid, kidsof, addkid, nkidsof
 
+export isroot
 export ismarked
 export setmarked
 export unsetmarked

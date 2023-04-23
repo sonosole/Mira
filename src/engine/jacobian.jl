@@ -8,33 +8,35 @@ J = ∂y/∂x , if y ∈ Rᵐ and x ∈ Rⁿ , then J ∈ Rᵐⁿ, so J is a mat
 grouped by m-row gradient together.
 """
 function jacobian(y::Variable{T}, x::Variable{T}) where T <: AbstractArray
-    # suppose y ∈ Rᵐ and x ∈ Rⁿ , then J ∈ Rᵐⁿ
     S = eltype(y)
-    m = length(y)
-    n = length(x)
-    J = T(undef, m, n)
-
-    if need2computeδ!(y)
-        if y.indegree == 0
-            sorted = sort_by_dfs(y)
-        else
-            resetindegree(y)
-            sorted = sort_by_dfs(y)
-        end
-    end
-
-    x.keepsgrad = true
-    y.keepsgrad = true
-    zerodelta(x)
     o = S(0)
     l = S(1)
-    
+
+    m = length(y)
+    n = length(x)
+    J = Zeros(T, m, n)
+
+    # note: x is not included in sorted
+    sorted = sort_by_dfs(y, x)
+    for node in sorted
+        node.keepsgrad = true
+        node.delta = zero(node.value)
+    end
+    x.keepsgrad = true
+    x.delta = zero(x.value)
+
     for i = 1:m
-        x.delta .= o    # x.delta is accumulated each time so shall be set zero
-        y.delta .= o    # set all elements of y as zero expect
-        y.delta[i] = l  # the i-th element as one
-        backprop(sorted, x)
+        # δy is one hot vector
+        y.delta[i] = l
+        backprop(sorted)
         J[i,:] = reshape(x.delta, 1, n)
+
+        # node.delta is accumulated each time so shall be set zero
+        for node in sorted
+            node.delta .= o
+        end
+        # x.delta is accumulated each time so shall be set zero
+        x.delta .= o
     end
     return J
 end
