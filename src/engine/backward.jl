@@ -44,11 +44,3 @@ function backprop(sorted::Vector{Variable})
         node.backward()
     end
 end
-
-
-function backprop(sorted::Vector{Variable}, dest::Variable)
-    for node in sorted
-        node.backward()
-        dest.indegree == 0 && break
-    end
-end
