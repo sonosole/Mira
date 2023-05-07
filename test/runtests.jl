@@ -16,4 +16,5 @@ using Mira
     include("./checkgrad/8-ctc.jl")
     include("./checkgrad/9-ace.jl")
     include("./checkgrad/10-pool.jl")
+    include("./advanced/jacobian.jl")
 end
