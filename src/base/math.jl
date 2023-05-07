@@ -299,3 +299,18 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     end
     return Z
 end
+
+
+function Base.adjoint(x::Variable{T}) where T
+    y = Variable{T}(ᵛ(x)', x.backprop, x.keepsgrad, x.isleaf)
+    if y.backprop
+        y.backward = function ∇adjoint()
+            if need2computeδ!(x)
+                δ(x) .+= δ(y)'
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
