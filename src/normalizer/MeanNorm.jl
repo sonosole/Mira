@@ -85,10 +85,10 @@ function forward(M::MeanNorm, x::Variable{T}) where T
         @. μ = (1 - ρ) * μ + ρ * μₓ    # running mean
         y.backward = function ∇MeanNorm()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .- sum(δ(y), dims=v) .* n
+                x ← δ(y) .- sum(δ(y), dims=v) .* n
             end
             if need2computeδ!(β)
-                δ(β) .+= sum(δ(y), dims=v)
+                β ← sum(δ(y), dims=v) .+ zero(β)
             end
             ifNotKeepδThenFreeδ!(y)
         end

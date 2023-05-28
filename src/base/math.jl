@@ -11,7 +11,7 @@ function Base.:+(x::Variable{T}, constant::Real) where T
     if y.backprop
         y.backward = function ∇matAddScalar()
             if need2computeδ!(x)
-                δ(x) .+= δ(y)
+                x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -33,7 +33,7 @@ function Base.:-(x::Variable{T}, constant::Real) where T
     if y.backprop
         y.backward = function ∇matMinusScalar()
             if need2computeδ!(x)
-                δ(x) .+= δ(y)
+                x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -50,7 +50,7 @@ function Base.:-(constant::Real, x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇scalarMinusMat()
             if need2computeδ!(x)
-                δ(x) .-= δ(y)
+                x ← - δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -66,7 +66,7 @@ function Base.:-(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇setNegative()
             if need2computeδ!(x)
-                δ(x) .-= δ(y)
+                x ← - δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -83,7 +83,7 @@ function Base.:*(x::Variable{T}, constant::Real) where T
     if y.backprop
         y.backward = function ∇matMulScalar()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* C
+                x ← δ(y) .* C
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -105,7 +105,7 @@ function Base.:^(x::Variable{T}, n::Real) where T
     if y.backprop
         y.backward = function ∇power()
             if need2computeδ!(x)
-                δ(x) .+= n .* ᵛ(y) ./ ᵛ(x) .* δ(y)
+                x ← n .* ᵛ(y) ./ ᵛ(x) .* δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -123,8 +123,8 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
    if backprop
        z.backward = function ∇add2var()
-           if need2computeδ!(x) δ(x) .+= δ(z) end
-           if need2computeδ!(y) δ(y) .+= δ(z) end
+           need2computeδ!(x) && (x ← δ(z))
+           need2computeδ!(y) && (y ← δ(z))
            ifNotKeepδThenFreeδ!(z)
        end
        addchild(z, x)
@@ -142,8 +142,8 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
     if backprop
         z.backward = function ∇minus2var()
-            if need2computeδ!(x) δ(x) .+= δ(z) end
-            if need2computeδ!(y) δ(y) .-= δ(z) end
+            need2computeδ!(x) && (x ←  δ(z))
+            need2computeδ!(y) && (y ← -δ(z))
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -162,11 +162,11 @@ function dotAdd(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     @assert (x.shape == y.shape) "2 inputs shall be the same size"
     backprop = (x.backprop || y.backprop)
     T = vartype(T1, T2)
-    z = Variable{T}(ᵛ(x) .+ ᵛ(y), backprop)
+    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
     if backprop
         z.backward = function ∇dotAdd()
-            if need2computeδ!(x) δ(x) .+= δ(z) end
-            if need2computeδ!(y) δ(y) .+= δ(z) end
+            need2computeδ!(x) && (x ← δ(z))
+            need2computeδ!(y) && (y ← δ(z))
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -188,11 +188,53 @@ function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
         z.backward = function ∇dotMul()
-            if need2computeδ!(x) δ(x) .+= δ(z) .* ᵛ(y) end
-            if need2computeδ!(y) δ(y) .+= δ(z) .* ᵛ(x) end
+            need2computeδ!(x) && (x ← δ(z) .* ᵛ(y))
+            need2computeδ!(y) && (y ← δ(z) .* ᵛ(x))
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
+        addchild(z, y)
+    end
+    return z
+end
+
+
+"""
+    dotMul(x::Variable, y::AbstractArray)
+a tensor multiplies a tensor element by element
+"""
+function dotMul(x::Variable{T}, y::AbstractArray) where T
+    # a tensor multiplies a tensor element by element: z = x .* y
+    @assert (x.shape == size(y)) "2 inputs shall be the same size"
+    z = Variable{T}(ᵛ(x) .* y, x.backprop)
+    if backprop
+        z.backward = function ∇dotMul()
+            if need2computeδ!(x)
+                x ← δ(z) .* ᵛ(y)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+
+"""
+    dotMul(x::AbstractArray, y::Variable)
+a tensor multiplies a tensor element by element
+"""
+function dotMul(x::AbstractArray, y::Variable{T}) where T
+    # a tensor multiplies a tensor element by element: z = x .* y
+    @assert (size(x) == y.shape) "2 inputs shall be the same size"
+    z = Variable{T}(x .* ᵛ(y), x.backprop)
+    if backprop
+        z.backward = function ∇dotMul()
+            if need2computeδ!(y)
+                y ← δ(z) .* ᵛ(x)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
         addchild(z, y)
     end
     return z
@@ -210,8 +252,8 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
     Y = Variable{T}(ᵛ(W) * ᵛ(X), backprop)
     if backprop
         Y.backward = function ∇matMul()
-            if need2computeδ!(W) δ(W) .+= δ(Y)  * ᵛ(X)' end
-            if need2computeδ!(X) δ(X) .+= ᵛ(W)' * δ(Y)  end
+            need2computeδ!(W) && (W ← δ(Y)  * ᵛ(X)')
+            need2computeδ!(X) && (X ← ᵛ(W)' * δ(Y) )
             ifNotKeepδThenFreeδ!(Y)
         end
         addchild(Y, W)
@@ -226,7 +268,7 @@ function Base.:*(W::Variable{T}, X::AbstractArray) where T
     if Y.backprop
         Y.backward = function ∇matMul()
             if need2computeδ!(W)
-                δ(W) .+= δ(Y)  * X'
+                W ← δ(Y) * X'
             end
             ifNotKeepδThenFreeδ!(Y)
         end
@@ -241,7 +283,7 @@ function Base.:*(W::AbstractArray, X::Variable{T}) where T
     if Y.backprop
         Y.backward = function ∇matMul()
             if need2computeδ!(X)
-                δ(X) .+= W' * δ(Y)
+                X ← W' * δ(Y)
             end
             ifNotKeepδThenFreeδ!(Y)
         end
@@ -265,8 +307,8 @@ function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
     if backprop
         Z.backward = function ∇matAddVec()
-            if need2computeδ!(M) δ(M) .+=     δ(Z)          end
-            if need2computeδ!(V) δ(V) .+= sum(δ(Z), dims=2) end
+            need2computeδ!(M) && (M ← δ(Z))
+            need2computeδ!(V) && (V ← sum(δ(Z), dims=2))
             ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
@@ -290,8 +332,8 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)
     if backprop
         Z.backward = function ∇matMulVec()
-            if need2computeδ!(M) δ(M) .+=     δ(Z) .* ᵛ(V)          end
-            if need2computeδ!(V) δ(V) .+= sum(δ(Z) .* ᵛ(M), dims=2) end
+            need2computeδ!(M) && (M ←     δ(Z) .* ᵛ(V))
+            need2computeδ!(V) && (V ← sum(δ(Z) .* ᵛ(M), dims=2))
             ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
@@ -302,11 +344,11 @@ end
 
 
 function Base.adjoint(x::Variable{T}) where T
-    y = Variable{T}(ᵛ(x)', x.backprop, x.keepsgrad, x.isleaf)
+    y = Variable{T}(ᵛ(x)', x.backprop)
     if y.backprop
         y.backward = function ∇adjoint()
             if need2computeδ!(x)
-                δ(x) .+= δ(y)'
+                x ← δ(y)'
             end
             ifNotKeepδThenFreeδ!(y)
         end

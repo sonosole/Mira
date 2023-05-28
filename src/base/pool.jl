@@ -4,7 +4,7 @@ function Base.maximum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T
         mask = ᵛ(x) .== ᵛ(y)
         y.backward = function ∇maximum()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* mask
+                x ← δ(y) .* mask .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -19,7 +19,7 @@ function Base.minimum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T
         mask = ᵛ(x) .== ᵛ(y)
         y.backward = function ∇minimum()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* mask
+                x ← δ(y) .* mask .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -33,7 +33,7 @@ function Base.sum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     if y.backprop
         y.backward = function ∇sum()
             if need2computeδ!(x)
-                δ(x) .+= δ(y)
+                x ← δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -49,7 +49,7 @@ function mean(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     if μ.backprop
         μ.backward = function ∇mean()
             if need2computeδ!(x)
-                δ(x) .+= δ(μ) .* n
+                x ← δ(μ) .* n .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(μ)
         end
@@ -66,7 +66,7 @@ function maxmin(x::Variable{T}; dims1::Int, dims2::Int) where T
         mask = ᵛ(x) .== ᵛ(y)
         y.backward = function ∇maxmin()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* mask
+                x ← δ(y) .* mask .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -103,7 +103,7 @@ function linearpool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=2) where {T,N
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇linearpool()
             if need2computeδ!(x)
-                δ(x) .+= (𝟚 .* ᵛ(x) .- ᵛ(y)) ./ Σxᵢ .* δ(y)
+                x ← (𝟚 .* ᵛ(x) .- ᵛ(y)) ./ Σxᵢ .* δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -137,7 +137,7 @@ function exppool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=2) where {T,N}
         𝟙 = eltype(x)(1.0f0)
         y.backward = function ∇exppool()
             if need2computeδ!(x)
-                δ(x) .+= eˣ ./ Σeˣⁱ .* (𝟙 .+ ᵛ(x) .- ᵛ(y)) .* δ(y)
+                x ← eˣ ./ Σeˣⁱ .* (𝟙 .+ ᵛ(x) .- ᵛ(y)) .* δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -169,11 +169,11 @@ function powerpool(x::Variable{T}, n::Real=3; dims::Union{Int,NTuple{N,Int}}=2) 
     Σxᵢⁿ   = sum(xᵢⁿ,         dims=dims)    # Σxᵢⁿ
     y = Variable{T}(Σxᵢⁿ⁺¹ ./ Σxᵢⁿ, x.backprop)
     if y.backprop
-        𝟙 = eltype(x)(1.0f0)
+        l = eltype(x)(1.0f0)
         xᵢⁿ⁻¹ = ᵛ(x) .^ (n-1)
         y.backward = function ∇powerpool()
             if need2computeδ!(x)
-                δ(x) .+= ((n+𝟙) .* xᵢⁿ .- n .* xᵢⁿ⁻¹ .* ᵛ(y)) ./ Σxᵢⁿ .* δ(y)
+                x ← ((n+l) .* xᵢⁿ .- n .* xᵢⁿ⁻¹ .* ᵛ(y)) ./ Σxᵢⁿ .* δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end

@@ -108,13 +108,13 @@ function forward(m::LogLinear, x::Variable{T}) where T
         y.backward = function ∇LogLinear()
             z = eltype(T)(1) ./ t
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* z .* abs(ᵛ(k))
+                x ← δ(y) .* z .* abs(ᵛ(k))
             end
             if need2computeδ!(k)
-                δ(k) .+= sum(δ(y) .* z .* ᵛ(x) .* sign.(ᵛ(k)), dims=m.views)
+                k ← sum(δ(y) .* z .* ᵛ(x) .* sign.(ᵛ(k)), dims=m.views) .+ zero(k)
             end
             if need2computeδ!(b)
-                δ(b) .+= sum(δ(y) .* z .* sign.(ᵛ(b)), dims=m.views)
+                b ← sum(δ(y) .* z .* sign.(ᵛ(b)), dims=m.views) .+ zero(b)
             end
             ifNotKeepδThenFreeδ!(y)
         end

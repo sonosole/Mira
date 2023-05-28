@@ -20,10 +20,10 @@ function jacobian(y::Variable{T}, x::Variable{T}) where T <: AbstractArray
     sorted = sort_by_dfs(y, x)
     for node in sorted
         node.keepsgrad = true
-        node.delta = zero(node.value)
+        node.delta = zero(node)
     end
     x.keepsgrad = true
-    x.delta = zero(x.value)
+    x.delta = zero(x)
 
     for i = 1:m
         # δy is one hot vector

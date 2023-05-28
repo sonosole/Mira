@@ -39,7 +39,7 @@ function SoftmaxCTCLikeLoss(x::Variable{T},
     if c.backprop
         c.backward = function ∇SoftmaxCTCLikeLoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(c) .* Δ
+                x ← δ(c) .* Δ
             end
             ifNotKeepδThenFreeδ!(c)
         end
@@ -101,7 +101,7 @@ function SoftmaxFocalCTCLikeLoss(x::Variable{T},
     if c.backprop
         c.backward = function ∇SoftmaxFocalCTCLikeLoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(c) .* ζ .* Δ
+                x ← δ(c) .* ζ .* Δ
             end
             ifNotKeepδThenFreeδ!(c)
         end
@@ -143,7 +143,7 @@ function SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; pathfn::Funct
         Δ = ᵛ(p) .* (r - y)
         p.backward = function ∇SoftmaxCTCLikeProbs()
             if need2computeδ!(x)
-                δ(x) .+= δ(p) .* Δ
+                x ← δ(p) .* Δ
             end
             ifNotKeepδThenFreeδ!(p)
         end
@@ -185,8 +185,8 @@ function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
         ṗp = @. γ * lsp^(f-l) * (f * p * lnp - lsp)
         C.backward = function ∇SoftmaxCTCLikeFocalCELoss()
             if need2computeδ!(x)
-                ṗp   .*= δ(C)
-                δ(x) .+= ṗp .- p .* sum(ṗp, dims=1)
+                ṗp .*= δ(C)
+                x ← ṗp .- p .* sum(ṗp, dims=1)
             end
             ifNotKeepδThenFreeδ!(C)
         end
@@ -238,7 +238,7 @@ function SoftmaxIterativeCTCLikeLoss(x::Variable{T},
     if y.backprop
         y.backward = function ∇SoftmaxIterativeCTCLikeLoss()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* Δ
+                x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
         end

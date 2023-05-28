@@ -70,13 +70,28 @@ const XVariables = Vector{XVariable}
 
 # pretty printing
 function Base.show(io::IO, ::MIME"text/plain", x::Variable)
-    if  x.isleaf println(cyan!("\n═══ Leaf Variable ═══")) end
-    if !x.isleaf println(cyan!("\n═══ None Leaf Variable ═══")) end
+    if isleaf(x)
+        prefix = " Leaf's"
+    else
+        prefix = " None Leaf's"
+    end
 
-    print(yellow!("\nvalue is "))
+    print(yellow!(prefix * " value is "))
     display(x.value)
-    print(green!("\ndelta is "))
-    display(x.delta)
+
+    if !isnothing(δ(x))
+        print(green!("\n" * prefix * " delta is "))
+        display(x.delta)
+    end
+end
+
+function infos(x::Variable)
+    print("(")
+    print("isleaf=$(x.isleaf|>colorbool), ")
+    print("keepsgrad=$(x.keepsgrad|>colorbool), ")
+    print("indegree=$(x.indegree), ")
+    print("nkids=$(x.children|>length)")
+    print(")")
 end
 
 
@@ -89,6 +104,7 @@ function clone(x::Nothing; type::Type=Array{Float32})
     return nothing
 end
 
+@inline Base.zero(x::Variable) = zero(x.value)
 
 function zerodelta(x::Variable{T}) where T
     if isnothing(x.delta)
@@ -96,13 +112,30 @@ function zerodelta(x::Variable{T}) where T
     end
 end
 
+@inline Base.Broadcast.broadcasted(::typeof(+), n::Nothing, x::AbstractArray) = x
+
+@inline Base.:(+)(n::Nothing, x::AbstractArray) = x
+
+@inline function (←)(x::Variable, δx::AbstractArray)
+    x.delta += δx
+end
+# @inline function (←)(x::Variable, δx::AbstractArray)
+#     !isa(x.delta, AbstractArray) ? (x.delta = δx) : (x.delta += δx)
+# end
+
+function filldelta(x::Variable{T}, g::Union{Real,T}) where T
+    if isnothing(x.delta)
+        x.delta  = T(undef, size(x))
+        x.delta .= g
+    end
+end
 
 function need2computeδ!(x::Variable)
     # 1. 不需要学习的叶子参数不需要初始化，其他情况都要。
     # 2. 当某叶子节点的 keepsgrad==false 时，则此叶子节
     #   点不参与反向传播的计算，也即达到了冻结参数的目的
     if !(x.isleaf && !x.keepsgrad)
-        zerodelta(x)
+        # zerodelta(x)
         return true
     else
         return false

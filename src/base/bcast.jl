@@ -54,11 +54,11 @@ function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2
             δz = copy(δ(z))
             if need2computeδ!(x)
                 δx = δz
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
-                δy = δz
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                δy = δ(z)
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -75,7 +75,7 @@ function broadcasted(::typeof(+), x::Variable{T}, y::TensorOrReal) where T
         z.backward = function ∇DotAdd()
             if need2computeδ!(x)
                 δx = copy(δ(z))
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δx, ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -90,8 +90,7 @@ function broadcasted(::typeof(+), x::TensorOrReal, y::Variable{T}) where T
     if z.backprop
         z.backward = function ∇DotAdd()
             if need2computeδ!(y)
-                δy = copy(δ(z))
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δ(z), ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -109,11 +108,11 @@ function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2
         z.backward = function ∇DotMinus()
             if need2computeδ!(x)
                 δx = copy(δ(z))
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
                 δy = - δ(z)
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -129,8 +128,7 @@ function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
     if z.backprop
         z.backward = function ∇DotMinus()
             if need2computeδ!(x)
-                δx = copy(δ(z))
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δ(z), ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -146,7 +144,7 @@ function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T}) where T
         z.backward = function ∇DotMinus()
             if need2computeδ!(y)
                 δy = - δ(z)
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -164,11 +162,11 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2
         z.backward = function ∇DotMul()
             if need2computeδ!(x)
                 δx = δ(z) .* ᵛ(y)
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
                 δy = δ(z) .* ᵛ(x)
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -185,7 +183,7 @@ function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
         z.backward = function ∇DotMul()
             if need2computeδ!(x)
                 δx = δ(z) .* y
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δx, ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -201,7 +199,7 @@ function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
         z.backward = function ∇DotMul()
             if need2computeδ!(y)
                 δy = δ(z) .* x
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -219,11 +217,11 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2
         z.backward = function ∇DotDiv()
             δx = δ(z) ./ ᵛ(y)
             if need2computeδ!(x)
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                x ← unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
                 δy = - δx .* ᵛ(z)
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -238,9 +236,9 @@ function broadcasted(::typeof(/), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
         z.backward = function ∇DotDiv()
-            δx = δ(z) ./ y
             if need2computeδ!(x)
-                δ(x) .+= unbcast(δx, ᵛ(x))
+                δx = δ(z) ./ y
+                x ← unbcast(δx, ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -256,7 +254,7 @@ function broadcasted(::typeof(/), x::TensorOrReal, y::Variable{T}) where T
         z.backward = function ∇DotDiv()
             if need2computeδ!(y)
                 δy = - δ(z) ./ ᵛ(y) .* ᵛ(z)
-                δ(y) .+= unbcast(δy, ᵛ(y))
+                y ← unbcast(δy, ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
         end

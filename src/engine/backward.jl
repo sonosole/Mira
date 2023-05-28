@@ -7,13 +7,8 @@ function backward(y::Variable{T},
                   keepgraph::Bool=false,
                   by::String="dfs") where T
 
-    if need2computeδ!(y)
-        if δy isa Real
-            δ(y) .= eltype(T)(δy)
-        else
-            δ(y) .= δy
-        end
-    end
+
+    filldelta(y, δy)
 
     # partial==true means y is one of the loss functions
     partial && resetindegree(y)

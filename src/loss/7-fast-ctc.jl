@@ -175,9 +175,9 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
         y.backward = function ∇FRNNSoftmaxFastCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= δ(y) .* Δ
+                    x ← δ(y) .* Δ
                 else
-                    δ(x) .+= δ(y) .* Δ .* weight
+                    x ← δ(y) .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -210,9 +210,9 @@ function FRNNFastCTCLoss(p::Variable{T},
         y.backward = function ∇FRNNFastCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .-= δ(y) .* r ./ ᵛ(p)
+                    p ← - δ(y) .* r ./ ᵛ(p)
                 else
-                    δ(p) .-= δ(y) .* r ./ ᵛ(p) .* weight
+                    p ← - δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -254,9 +254,9 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
         y.backward = function ∇FRNNSoftmaxFocalFastCTCLoss()
             if need2computeδ!(x)
                 if weight==1.0
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ
+                    x ← δ(y) .* 𝒌 .* Δ
                 else
-                    δ(x) .+= δ(y) .* 𝒌 .* Δ .* weight
+                    x ← δ(y) .* 𝒌 .* Δ .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -296,9 +296,9 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
         y.backward = function ∇FRNNFocalFastCTCLoss()
             if need2computeδ!(p)
                 if weight==1.0
-                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p)
+                    p ← δ(y) .* 𝒌 .* r ./ ᵛ(p)
                 else
-                    δ(p) .+= δ(y) .* 𝒌 .* r ./ ᵛ(p) .* weight
+                    p ← δ(y) .* 𝒌 .* r ./ ᵛ(p) .* weight
                 end
             end
             ifNotKeepδThenFreeδ!(y)
@@ -323,7 +323,7 @@ function FRNNFastCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) wh
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNFastCTCProbs()
             if need2computeδ!(p)
-                δ(p) .-= δ(𝒑) .* r ./ ᵛ(p)
+                p ← - δ(𝒑) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(𝒑)
         end
@@ -349,7 +349,7 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNSoftmaxFastCTCProbs()
             if need2computeδ!(x)
-                δ(x) .+= δ(𝒑) .* Δ
+                x ← δ(𝒑) .* Δ
             end
             ifNotKeepδThenFreeδ!(𝒑)
         end

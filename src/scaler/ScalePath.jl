@@ -61,8 +61,12 @@ function forward(m::ScalePath, x::Variable{T}) where T
 
     if y.backprop
         y.backward = function ∇ScalePath()
-            if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(w)  end
-            if need2computeδ!(w) δ(w) .+= sum(δ(y) .* ᵛ(x)) end
+            if need2computeδ!(x)
+                x ← δ(y) .* ᵛ(w)
+            end
+            if need2computeδ!(w)
+                w ← sum(δ(y) .* ᵛ(x)) .+ zero(w)
+            end
             ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)

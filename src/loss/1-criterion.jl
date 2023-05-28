@@ -8,7 +8,7 @@ function _sum(x::Variable{T}) where T
     if y.backprop
         y.backward = function _sumBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(y)
+                x ← δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -25,7 +25,7 @@ function _mean(x::Variable{T}) where T
     if μ.backprop
         μ.backward = function _meanBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(μ) .* n
+                x ← δ(μ) .* n .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(μ);
         end

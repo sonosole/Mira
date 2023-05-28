@@ -22,6 +22,7 @@ function checkgrad(block::B,
                    x::Variable;
                    eps::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.05,
+                   show::Bool=false,
                    onlyone::Bool=false) where B <: Block
     dw = eps
     istrue = true
@@ -31,7 +32,7 @@ function checkgrad(block::B,
         y₁ = forward(block, x)
         C₁ = Loss(y₁)
         backward(C₁)
-        dw₁ = δ(w)[1]
+        w̄₁ = δ(w)[1]
         zerograds!(params)
 
         # [2] with a small change
@@ -41,11 +42,11 @@ function checkgrad(block::B,
         y₂ = forward(block, x)
         C₂ = Loss(y₂)
         backward(C₂)
-        dw₂ = δ(w)[1]
+        w̄₂ = δ(w)[1]
         zerograds!(params)
 
         # [4] backward gradient vs numerical gradient
-        ∂L∂w = (dw₂ + dw₁) / 2
+        ∂L∂w = (w̄₂ + w̄₁) / 2
         dLdw = (cost(C₂) - cost(C₁)) / dw
 
         # [5] check if the auto-grad is true or not
@@ -53,6 +54,10 @@ function checkgrad(block::B,
         if !istrue
             println(yellow!("backward  gradient: $∂L∂w"))
             println(yellow!("numerical gradient: $dLdw"))
+        end
+        if show
+            println("backward  gradient: $∂L∂w")
+            println("numerical gradient: $dLdw")
         end
         onlyone ? break : continue
     end
@@ -71,6 +76,7 @@ can NOT used here.
 """
 function checkgrad(fn::Function,
                    x::Variable;
+                   show::Bool=false,
                    eps::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.05)
     dx = eps
@@ -79,7 +85,7 @@ function checkgrad(fn::Function,
     y₁ = fn(x)
     C₁ = Loss(y₁)
     backward(C₁)
-    dx₁ = δ(x)[1]
+    x̄₁ = δ(x)[1]
     zerograds!(x)
 
     # [2] with a small change
@@ -89,11 +95,12 @@ function checkgrad(fn::Function,
     y₂ = fn(x)
     C₂ = Loss(y₂)
     backward(C₂)
-    dx₂ = δ(x)[1]
+
+    x̄₂ = δ(x)[1]
     zerograds!(x)
 
     # [4] backward gradient vs numerical gradient
-    ∂L∂x = (dx₂ + dx₁) / 2
+    ∂L∂x = (x̄₂ + x̄₁) / 2
     dLdx = (cost(C₂) - cost(C₁)) / dx
 
     # [5] check if the auto-grad is true or not
@@ -101,6 +108,10 @@ function checkgrad(fn::Function,
     if !istrue
         println(yellow!("backward  gradient: $∂L∂x"))
         println(yellow!("numerical gradient: $dLdx"))
+    end
+    if show
+        println("backward  gradient: $∂L∂x")
+        println("numerical gradient: $dLdx")
     end
     return istrue
 end

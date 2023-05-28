@@ -76,9 +76,9 @@ function forward(m::AffinePath, x::Variable{T}) where T
 
     if y.backprop
         y.backward = function ∇ScalePath()
-            if need2computeδ!(x) δ(x) .+=     δ(y) .* ᵛ(w)  end
-            if need2computeδ!(w) δ(w) .+= sum(δ(y) .* ᵛ(x)) end
-            if need2computeδ!(b) δ(b) .+= sum(δ(y)        ) end
+            need2computeδ!(x) && (x ←     δ(y) .* ᵛ(w) )
+            need2computeδ!(w) && (w ← sum(δ(y) .* ᵛ(x)))
+            need2computeδ!(b) && (b ← sum(δ(y)        ))
             ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)

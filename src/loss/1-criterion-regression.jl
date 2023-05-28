@@ -24,7 +24,7 @@ function MAE(x::Variable{T}, label::Variable{T}) where T
     if backprop
         y.backward = function maeBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* sign.(ᵛ(y))
+                x ← δ(y) .* sign.(ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -46,7 +46,7 @@ function MAE(x::Variable{T}, label::AbstractArray) where T
     if y.backprop
         y.backward = function maeBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* sign.(ᵛ(y))
+                x ← δ(y) .* sign.(ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -82,7 +82,7 @@ function MSE(x::Variable{T}, label::Variable{T}) where T
     if backprop
         y.backward = function mseBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* 𝟚 .* (ᵛ(x) - ᵛ(label))
+                x ← δ(y) .* 𝟚 .* (ᵛ(x) - ᵛ(label))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -99,7 +99,7 @@ function MSE(x::Variable{T}, label::AbstractArray) where T
     if y.backprop
         y.backward = function mseBackward()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* 𝟚 .* (ᵛ(x) - label)
+                x ← δ(y) .* 𝟚 .* (ᵛ(x) - label)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -130,9 +130,9 @@ function Lp(x::Variable{T}, label::Variable{T}; p=3) where T
     if backprop
         y.backward = function LpBackward()
             if need2computeδ!(x)
-                i = (Δ .!= eltype(T)(0.0))
-                x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
-                # δ(x) .+= δ(y) .* ᵛ(y) ./ Δ .* p
+                # i = (Δ .!= eltype(T)(0.0))
+                # x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
+                x ← δ(y) .* ᵛ(y) ./ Δ .* p
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -149,8 +149,9 @@ function Lp(x::Variable{T}, label::AbstractArray; p=3) where T
     if y.backprop
         y.backward = function LpBackward()
             if need2computeδ!(x)
-                i = (Δ .!= eltype(T)(0))
-                x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
+                # i = (Δ .!= eltype(T)(0))
+                # x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
+                x ← δ(y) .* ᵛ(y) ./ Δ .* p
             end
             ifNotKeepδThenFreeδ!(y)
         end

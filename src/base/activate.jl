@@ -46,7 +46,7 @@ function min2max!(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
                 T = eltype(S)
                 L = T(lower)
                 U = T(upper)
-                δ(x) .+= δ(y) .* (L .< ᵛ(x) .< U)
+                x ← δ(y) .* (L .< ᵛ(x) .< U)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -70,7 +70,7 @@ function min2max(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
                 T = eltype(S)
                 L = T(lower)
                 U = T(upper)
-                δ(x) .+= δ(y) .* (L .< ᵛ(x) .< U)
+                x ← δ(y) .* (L .< ᵛ(x) .< U)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -98,7 +98,7 @@ function relu!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇relu()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (ᵛ(x) .> 0.0f0)
+                x ← δ(y) .* (ᵛ(x) .> 0.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -113,7 +113,7 @@ function relu(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇relu()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (ᵛ(x) .> 0.0f0)
+                x ← δ(y) .* (ᵛ(x) .> 0.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -143,7 +143,7 @@ function relu1!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇relu1()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
+                x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -158,7 +158,7 @@ function relu1(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇relu1()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
+                x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -188,7 +188,7 @@ function relu6!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇relu6()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
+                x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -203,7 +203,7 @@ function relu6(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇relu6()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
+                x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -236,7 +236,7 @@ function hardtanh!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇hardtanh()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
+                x ← δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -251,7 +251,7 @@ function hardtanh(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇hardtanh()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
+                x ← δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -285,7 +285,7 @@ function leakyrelu!(x::Variable{T}) where T
         mask2 = .!mask1
         y.backward = function ∇leakyrelu()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (mask1 .+ ZPONE .* mask2)
+                x ← δ(y) .* (mask1 .+ ZPONE .* mask2)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -304,7 +304,7 @@ function leakyrelu(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇leakyrelu()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (mask1 + ZPONE .* mask2)
+                x ← δ(y) .* (mask1 + ZPONE .* mask2)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -334,7 +334,7 @@ function sigmoid!(x::Variable{T}) where T
         l = eltype(x)(1.0f0)
         y.backward = function ∇sigmoid()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
+                x ← δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -350,7 +350,7 @@ function sigmoid(x::Variable{T}) where T
         l = eltype(x)(1.0f0)
         y.backward = function ∇sigmoid()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
+                x ← δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -399,7 +399,7 @@ function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
         y.backward = function ∇softmax()
             if need2computeδ!(x)
                 ẏy = δ(y) .* ᵛ(y)
-                δ(x) .+= ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)
+                x ← ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -430,7 +430,7 @@ function softplus!(x::Variable{T}) where T
         l = eltype(x)(1.0f0)
         y.backward = function ∇softplus()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (l .+ exp.( - ᵛ(x) ))
+                x ← δ(y) ./ (l .+ exp.( - ᵛ(x) ))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -446,7 +446,7 @@ function softplus(x::Variable{T}) where T
         l = eltype(x)(1.0f0)
         y.backward = function ∇softplus()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (l .+ exp.( - ᵛ(x) ))
+                x ← δ(y) ./ (l .+ exp.( - ᵛ(x) ))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -462,7 +462,7 @@ function exp!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇exp()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* ᵛ(y)
+                x ← δ(y) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -477,7 +477,7 @@ function Base.:exp(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇exp()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* ᵛ(y)
+                x ← δ(y) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -493,7 +493,7 @@ function log!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇log()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ ᵛ(x)
+                x ← δ(y) ./ ᵛ(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -508,7 +508,7 @@ function Base.:log(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇log()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ ᵛ(x)
+                x ← δ(y) ./ ᵛ(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -534,7 +534,7 @@ function abs!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇abs()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* sign.(ᵛ(x))
+                x ← δ(y) .* sign.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -549,7 +549,7 @@ function Base.:abs(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇abs()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* sign.(ᵛ(x))
+                x ← δ(y) .* sign.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -564,7 +564,7 @@ function Base.:reshape(x::Variable{T}, newsize) where T
     if y.backprop
         y.backward = function ∇reshape()
             if need2computeδ!(x)
-                δ(x) .+= reshape(δ(y), x.shape)
+                x ← reshape(δ(y), x.shape)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -591,7 +591,7 @@ function exp2!(x::Variable{T}) where T
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇exp2()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* log(𝟚) .* ᵛ(y)
+                x ← δ(y) .* log(𝟚) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -608,7 +608,7 @@ function Base.:exp2(x::Variable{T}) where T
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇exp2()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* log(𝟚) .* ᵛ(y)
+                x ← δ(y) .* log(𝟚) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -635,7 +635,7 @@ function exp10!(x::Variable{T}) where T
         lO = eltype(x)(10.0f0)
         y.backward = function ∇exp10()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* log(lO) .* ᵛ(y)
+                x ← δ(y) .* log(lO) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -652,7 +652,7 @@ function Base.:exp10(x::Variable{T}) where T
         lO = eltype(x)(10.0f0)
         y.backward = function ∇exp10()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* log(lO) .* ᵛ(y)
+                x ← δ(y) .* log(lO) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -678,7 +678,7 @@ function log2!(x::Variable{T}) where T
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇log2()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (log(𝟚) .* ᵛ(x))
+                x ← δ(y) ./ (log(𝟚) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -694,7 +694,7 @@ function Base.:log2(x::Variable{T}) where T
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇log2()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (log(𝟚) .* ᵛ(x))
+                x ← δ(y) ./ (log(𝟚) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -720,7 +720,7 @@ function log10!(x::Variable{T}) where T
         lO = eltype(x)(10.0f0)
         y.backward = function ∇log10()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (log(lO) .* ᵛ(x))
+                x ← δ(y) ./ (log(lO) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -736,7 +736,7 @@ function Base.:log10(x::Variable{T}) where T
         lO = eltype(x)(10.0f0)
         y.backward = function ∇log10()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (log(lO) .* ᵛ(x))
+                x ← δ(y) ./ (log(lO) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -752,7 +752,7 @@ function sec!(x::Variable{T}) where T
     if x.backprop
         y.backward = function ∇sec()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
+                x ← δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -768,7 +768,7 @@ function Base.:sec(x::Variable{T}) where T
     if x.backprop
         y.backward = function ∇sec()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
+                x ← δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -786,7 +786,7 @@ function sqrt!(x::Variable{T}) where T
         ϵ = S(1e-38)
         y.backward = function ∇sqrt()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (𝟚 .* (ᵛ(y) .+ ϵ))
+                x ← δ(y) ./ (𝟚 .* (ᵛ(y) .+ ϵ))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -804,7 +804,7 @@ function Base.:sqrt(x::Variable{T}) where T
         ϵ = S(1e-38)
         y.backward = function ∇sqrt()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) ./ (𝟚 .* (ᵛ(y) .+ ϵ))
+                x ← δ(y) ./ (𝟚 .* (ᵛ(y) .+ ϵ))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -824,7 +824,7 @@ function tan!(x::Variable{T}) where T
         𝟚 = S(2.0)
         y.backward = function ∇tan()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
+                x ← δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -842,7 +842,7 @@ function Base.:tan(x::Variable{T}) where T
         𝟚 = S(2.0)
         y.backward = function ∇tan()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
+                x ← δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -872,7 +872,7 @@ function tand!(x::Variable{T}) where T
         𝟚 = TOO(2.0)
         y.backward = function ∇tand()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
+                x ← δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -891,7 +891,7 @@ function Base.:tand(x::Variable{T}) where T
         𝟚 = TOO(2.0)
         y.backward = function ∇tand()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
+                x ← δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -910,7 +910,7 @@ function tanh!(x::Variable{T}) where T
         𝟚 = S(2.0f0)
         y.backward = function ∇tanh()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
+                x ← δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -928,7 +928,7 @@ function Base.:tanh(x::Variable{T}) where T
         𝟚 = S(2.0f0)
         y.backward = function ∇tanh()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
+                x ← δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -966,7 +966,7 @@ function sin!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇sin()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* cos.(ᵛ(x))
+                x ← δ(y) .* cos.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -981,7 +981,7 @@ function Base.:sin(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇sin()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* cos.(ᵛ(x))
+                x ← δ(y) .* cos.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1008,7 +1008,7 @@ function sinc!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇sinc()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* cosc.(ᵛ(x))
+                x ← δ(y) .* cosc.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1024,7 +1024,7 @@ function Base.:sinc(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇sinc()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* cosc.(ᵛ(x))
+                x ← δ(y) .* cosc.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1051,7 +1051,7 @@ function sind!(x::Variable{T}) where T
         DPI = eltype(x)(pi/180)
         y.backward = function ∇sind()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* DPI .* cosd.(ᵛ(x))
+                x ← δ(y) .* DPI .* cosd.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1067,7 +1067,7 @@ function Base.:sind(x::Variable{T}) where T
         DPI = eltype(x)(pi/180) # 1 rad⁻¹
         y.backward = function ∇sind()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* DPI .* cosd.(ᵛ(x))
+                x ← δ(y) .* DPI .* cosd.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1094,7 +1094,7 @@ function sinpi!(x::Variable{T}) where T
         𝝅 = eltype(x)(pi)
         y.backward = function ∇sinpi()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* 𝝅 .* cospi.(ᵛ(x))
+                x ← δ(y) .* 𝝅 .* cospi.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1110,7 +1110,7 @@ function Base.:sinpi(x::Variable{T}) where T
         𝝅 = eltype(x)(pi)
         y.backward = function ∇sinpi()
             if need2computeδ!(x)
-                δ(x) .+= δ(y) .* 𝝅 .* cospi.(ᵛ(x))
+                x ← δ(y) .* 𝝅 .* cospi.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1147,7 +1147,7 @@ function cos!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇cos()
             if need2computeδ!(x)
-                δ(x) .+= - δ(y) .* sin.(ᵛ(x))
+                x ← - δ(y) .* sin.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1162,7 +1162,7 @@ function Base.:cos(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇cos()
             if need2computeδ!(x)
-                δ(x) .+= - δ(y) .* sin.(ᵛ(x))
+                x ← - δ(y) .* sin.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1178,7 +1178,7 @@ function inv!(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇inv()
             if need2computeδ!(x)
-                δ(x) .+= - δ(y) .* ᵛ(y) .* ᵛ(y);
+                x ← - δ(y) .* ᵛ(y) .* ᵛ(y);
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1193,7 +1193,7 @@ function Base.:inv(x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇inv()
             if need2computeδ!(x)
-                δ(x) .+= - δ(y) .* ᵛ(y) .* ᵛ(y)
+                x ← - δ(y) .* ᵛ(y) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1225,7 +1225,7 @@ function polymax(x::Variable{T}, n::Int; dims::Union{Int,NTuple{N,Int}}=1) where
         y.backward = function ∇softmax()
             if need2computeδ!(x)
                 ẏy = δ(y) .* ᵛ(y)
-                δ(x) .+= (ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)) .* k ./ ᵛ(x)
+                x ← (ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)) .* k ./ ᵛ(x)
             end
             ifNotKeepδThenFreeδ!(y)
         end

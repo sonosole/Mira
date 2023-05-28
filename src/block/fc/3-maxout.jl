@@ -92,7 +92,7 @@ function forward(model::Maxout, x::Variable{T}) where T
     if y.backprop
         y.backward = function ∇maxout()
             if need2computeδ!(x)
-                δ(x) .+= reshape(mask .* reshape(δ(y), h,1,c), h*k,c)
+                x ← reshape(mask .* reshape(δ(y), h,1,c), h*k,c)
             end
             ifNotKeepδThenFreeδ!(y);
         end

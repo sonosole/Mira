@@ -33,7 +33,7 @@ function CrossEntropy(p::Variable{T}, label::Variable{T}) where T
     if backprop
         y.backward = function ∇CrossEntropy()
             if need2computeδ!(p)
-                δ(p) .-= δ(y) .* 𝝆 ./ 𝒑
+                p ← - δ(y) .* 𝝆 ./ 𝒑
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -57,7 +57,7 @@ function CrossEntropy(p::Variable{T}, label::AbstractArray) where T
     if y.backprop
         y.backward = function ∇CrossEntropy()
             if need2computeδ!(p)
-                δ(p) .-= δ(y) .* 𝝆 ./ 𝒑
+                p ← - δ(y) .* 𝝆 ./ 𝒑
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -102,7 +102,7 @@ function BinaryCrossEntropy(p::Variable{T}, label::Variable{T}) where T
             if need2computeδ!(p)
                 δ₁ = @. (l - 𝝆) / (l - p⁻)
                 δ₂ = @.      𝝆  /      p⁺
-                δ(p) .+= δ(y) .* (δ₁ - δ₂)
+                p ← δ(y) .* (δ₁ - δ₂)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -134,7 +134,7 @@ function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
             if need2computeδ!(p)
                 δ₁ = @. (l - 𝝆) / (l - p⁻)
                 δ₂ = @.      𝝆  /      p⁺
-                δ(p) .+= δ(y) .* (δ₁ - δ₂)
+                p ← δ(y) .* (δ₁ - δ₂)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -200,7 +200,7 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha
             if need2computeδ!(p)
                 δ₁ = @. w₁ * (l - p⁻)^(γ - l) * (l / p⁺ - γ * log(p⁺) - l)
                 δ₂ = @. w₂ * p⁺ ^ γ * (l / (p⁻ - l) + γ * log(l - p⁻) / p⁺)
-                δ(p) .+= δ(y) .* (δ₁ + δ₂)
+                p ← δ(y) .* (δ₁ + δ₂)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -237,7 +237,7 @@ function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where 
                 n  = γ - l
                 δp = δ(p)
                 δy = δ(y)
-                @. δp += δy * 𝝆 * (l - p⁻)^n * (γ * log(p⁺) + l - l / p⁺)
+                p  ← @. δy * 𝝆 * (l - p⁻)^n * (γ * log(p⁺) + l - l / p⁺)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -297,7 +297,7 @@ function NLogCrossEntropy(p::Variable{T}, label::AbstractArray) where T
         𝟐 = S(2f0)
         y.backward = function ∇NLogCrossEntropy()
             if need2computeδ!(p)
-                δ(p) .+= δ(y) .* 𝟐 .* 𝜸 .* 𝒍𝒏𝒑 ./ 𝒑
+                p ← δ(y) .* 𝟐 .* 𝜸 .* 𝒍𝒏𝒑 ./ 𝒑
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -337,7 +337,7 @@ function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f
             if need2computeδ!(p)
                 δy = δ(y)
                 δp = δ(p)
-                @. δp .+= δy * 𝜸 * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - Q) / (𝒑 * Qⁿ⁺¹)
+                p  ← @. δy * 𝜸 * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - Q) / (𝒑 * Qⁿ⁺¹)
             end
             ifNotKeepδThenFreeδ!(y)
         end
