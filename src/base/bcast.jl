@@ -43,17 +43,20 @@ end
 import Base.Broadcast.broadcasted
 const TensorOrReal = Union{AbstractArray, Real}
 
+@inline function samesize(x::Union{Variable,AbstractArray}, y::Union{Variable,AbstractArray})
+    return x.shape == y.shape
+end
+
 # z = x .+ y
 function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    samesize(x, y) && return (x + y)
+
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function ∇DotAdd()
-            # 如果 x y 形状不一致，要防止第一次使用z后其被unbcast中的reshape修改，所以要先复制
-            # 但是，在第二次使用 z 时，z 后续不再被使用，因此不用担心其是否要被修改
-            δz = copy(δ(z))
             if need2computeδ!(x)
-                δx = δz
+                δx = δ(z)
                 x ← unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
@@ -70,12 +73,13 @@ end
 
 
 function broadcasted(::typeof(+), x::Variable{T}, y::TensorOrReal) where T
+    samesize(x, y) && return (x + y)
+
     z = Variable{T}(ᵛ(x) .+ y, x.backprop)
     if z.backprop
         z.backward = function ∇DotAdd()
             if need2computeδ!(x)
-                δx = copy(δ(z))
-                x ← unbcast(δx, ᵛ(x))
+                x ← unbcast(δ(z), ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
         end
@@ -86,6 +90,8 @@ end
 
 
 function broadcasted(::typeof(+), x::TensorOrReal, y::Variable{T}) where T
+    samesize(x, y) && return (x + y)
+
     z = Variable{T}(x .+ ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotAdd()
@@ -102,12 +108,14 @@ end
 
 # z = x .- y
 function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    samesize(x, y) && return (x - y)
+
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .- ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function ∇DotMinus()
             if need2computeδ!(x)
-                δx = copy(δ(z))
+                δx = δ(z)
                 x ← unbcast(δx, ᵛ(x))
             end
             if need2computeδ!(y)
@@ -124,6 +132,8 @@ end
 
 
 function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
+    samesize(x, y) && return (x - y)
+
     z = Variable{T}(ᵛ(x) .- y, x.backprop)
     if z.backprop
         z.backward = function ∇DotMinus()
@@ -139,6 +149,8 @@ end
 
 
 function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T}) where T
+    samesize(x, y) && return (x - y)
+
     z = Variable{T}(x .- ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotMinus()
@@ -156,6 +168,8 @@ end
 
 # z = x .* y
 function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    samesize(x, y) && return dotMul(x, y)
+
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), x.backprop || y.backprop)
     if z.backprop
@@ -178,6 +192,8 @@ end
 
 
 function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
+    samesize(x, y) && return dotMul(x, y)
+
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if z.backprop
         z.backward = function ∇DotMul()
@@ -194,6 +210,8 @@ end
 
 
 function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
+    samesize(x, y) && return dotMul(x, y)
+
     z = Variable{T}(x .* ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotMul()
@@ -211,6 +229,8 @@ end
 
 # z = x ./ y
 function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    samesize(x, y) && return dotdiv(x, y)
+
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) ./ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
@@ -233,6 +253,8 @@ end
 
 
 function broadcasted(::typeof(/), x::Variable{T}, y::TensorOrReal) where T
+    samesize(x, y) && return dotdiv(x, y)
+
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
         z.backward = function ∇DotDiv()
@@ -249,6 +271,8 @@ end
 
 
 function broadcasted(::typeof(/), x::TensorOrReal, y::Variable{T}) where T
+    samesize(x, y) && return dotdiv(x, y)
+
     z = Variable{T}(x ./ ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotDiv()

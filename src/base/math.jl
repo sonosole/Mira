@@ -1,7 +1,13 @@
-export dotAdd
 export dotMul
+export dotdiv
 export matAddVec
 export matMulVec
+export assert_same_size
+
+@inline function assert_same_size(x::Union{Variable,AbstractArray}, y::Union{Variable,AbstractArray})
+    @assert (x.shape == y.shape) "2 inputs shall be the same size"
+end
+
 
 
 function Base.:+(x::Variable{T}, constant::Real) where T
@@ -22,7 +28,7 @@ end
 
 
 function Base.:+(constant::Real, var::Variable{T}) where T
-    return var + constant;
+    return var + constant
 end
 
 
@@ -116,27 +122,56 @@ end
 
 
 function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    # a matrix add a matrix element by element: z = x + y
-   T = vartype(T1, T2)
-   @assert (x.shape == y.shape) "2 inputs shall be the same size"
-   backprop = (x.backprop || y.backprop)
-   z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
-   if backprop
-       z.backward = function ∇add2var()
-           need2computeδ!(x) && (x ← δ(z))
-           need2computeδ!(y) && (y ← δ(z))
-           ifNotKeepδThenFreeδ!(z)
-       end
-       addchild(z, x)
-       addchild(z, y)
-   end
-   return z
+    assert_same_size(x, y)
+    backprop = (x.backprop || y.backprop)
+    T = vartype(T1, T2)
+    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
+    if backprop
+        z.backward = function ∇add2var()
+            need2computeδ!(x) && (x ← δ(z))
+            need2computeδ!(y) && (y ← δ(z))
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+        addchild(z, y)
+    end
+    return z
+end
+
+
+function Base.:+(x::Variable{T}, y::AbstractArray) where T
+    assert_same_size(x, y)
+    z = Variable{T}(ᵛ(x) + y, x.backprop)
+    if z.backprop
+        z.backward = function ∇minus2var()
+            if need2computeδ!(x)
+                x ← δ(z)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+function Base.:+(x::AbstractArray, y::Variable{T}) where T
+    assert_same_size(x, y)
+    z = Variable{T}(x + ᵛ(y), y.backprop)
+    if z.backprop
+        z.backward = function ∇minus2var()
+            if need2computeδ!(y)
+                y ← δ(z)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, y)
+    end
+    return z
 end
 
 
 function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    # a matrix minus a matrix element by element : z = x - y
-    @assert (x.shape == y.shape) "2 inputs shall be the same size"
+    assert_same_size(x, y)
     backprop = (x.backprop || y.backprop)
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
@@ -153,23 +188,31 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
 end
 
 
-"""
-    dotAdd(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
-a tensor add a tensor element by element
-"""
-function dotAdd(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    # a tensor add a tensor element by element: z = x .+ y
-    @assert (x.shape == y.shape) "2 inputs shall be the same size"
-    backprop = (x.backprop || y.backprop)
-    T = vartype(T1, T2)
-    z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
-    if backprop
-        z.backward = function ∇dotAdd()
-            need2computeδ!(x) && (x ← δ(z))
-            need2computeδ!(y) && (y ← δ(z))
+function Base.:-(x::Variable{T}, y::AbstractArray) where T
+    assert_same_size(x, y)
+    z = Variable{T}(ᵛ(x) - y, x.backprop)
+    if z.backprop
+        z.backward = function ∇minus2var()
+            if need2computeδ!(x)
+                x ← δ(z)
+            end
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
+    end
+    return z
+end
+
+function Base.:-(x::AbstractArray, y::Variable{T}) where T
+    assert_same_size(x, y)
+    z = Variable{T}(x - ᵛ(y), y.backprop)
+    if z.backprop
+        z.backward = function ∇minus2var()
+            if need2computeδ!(y)
+                y ← - δ(z)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
         addchild(z, y)
     end
     return z
@@ -181,8 +224,7 @@ end
 a tensor multiplies a tensor element by element
 """
 function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    # a tensor multiplies a tensor element by element: z = x .* y
-    @assert (x.shape == y.shape) "2 inputs shall be the same size"
+    assert_same_size(x, y)
     backprop = (x.backprop || y.backprop)
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
@@ -204,8 +246,7 @@ end
 a tensor multiplies a tensor element by element
 """
 function dotMul(x::Variable{T}, y::AbstractArray) where T
-    # a tensor multiplies a tensor element by element: z = x .* y
-    @assert (x.shape == size(y)) "2 inputs shall be the same size"
+    assert_same_size(x, y)
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if backprop
         z.backward = function ∇dotMul()
@@ -225,8 +266,7 @@ end
 a tensor multiplies a tensor element by element
 """
 function dotMul(x::AbstractArray, y::Variable{T}) where T
-    # a tensor multiplies a tensor element by element: z = x .* y
-    @assert (size(x) == y.shape) "2 inputs shall be the same size"
+    assert_same_size(x, y)
     z = Variable{T}(x .* ᵛ(y), x.backprop)
     if backprop
         z.backward = function ∇dotMul()
@@ -240,6 +280,58 @@ function dotMul(x::AbstractArray, y::Variable{T}) where T
     return z
 end
 
+
+function dotdiv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+    assert_same_size(x, y)
+    T = vartype(T1, T2)
+    z = Variable{T}(ᵛ(x) ./ ᵛ(y), x.backprop || y.backprop)
+    if z.backprop
+        z.backward = function ∇dotdiv()
+            δx = δ(z) ./ ᵛ(y)
+            if need2computeδ!(x)
+                x ← δx
+            end
+            if need2computeδ!(y)
+                y ← - δx .* ᵛ(z)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+        addchild(z, y)
+    end
+    return z
+end
+
+
+function dotdiv(x::Variable{T}, y::AbstractArray) where T
+    assert_same_size(x, y)
+    z = Variable{T}(ᵛ(x) ./ y, x.backprop)
+    if z.backprop
+        z.backward = function ∇dotdiv()
+            if need2computeδ!(x)
+                x ← δ(z) ./ y
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, x)
+    end
+    return z
+end
+
+function dotdiv(x::AbstractArray, y::Variable{T}) where T
+    assert_same_size(x, y)
+    z = Variable{T}(x ./ ᵛ(y), x.backprop || y.backprop)
+    if z.backprop
+        z.backward = function ∇dotdiv()
+            if need2computeδ!(y)
+                y ← - δ(z) ./ ᵛ(y) .* ᵛ(z)
+            end
+            ifNotKeepδThenFreeδ!(z)
+        end
+        addchild(z, y)
+    end
+    return z
+end
 
 function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
     # matrix W multiplies matrix X
