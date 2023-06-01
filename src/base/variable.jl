@@ -14,11 +14,12 @@ export setmarked
 export unsetmarked
 export VecVariable
 export VecXVariable
+export infos
 
 export Variable, Variables
 export XVariable, XVariables
 export VarOrNil
-
+export passgrad, ←
 
 """
     mutable struct Variable{T} where T <: AbstractArray
@@ -72,17 +73,23 @@ const XVariables = Vector{XVariable}
 function Base.show(io::IO, ::MIME"text/plain", x::Variable)
     if isleaf(x)
         prefix = " Leaf's"
+        colorf = green!
     else
         prefix = " None Leaf's"
+        colorf = yellow!
     end
 
-    print(yellow!(prefix * " value is "))
+    print(colorf(prefix * " value is "))
     display(x.value)
 
     if !isnothing(δ(x))
-        print(green!("\n" * prefix * " delta is "))
+        print(colorf(prefix * " delta is "))
         display(x.delta)
     end
+end
+
+function colorbool(isture::Bool)
+    isture ? green!("true") : yellow!("false")
 end
 
 function infos(x::Variable)
@@ -108,7 +115,7 @@ end
 
 function zerodelta(x::Variable{T}) where T
     if isnothing(x.delta)
-        x.delta = Zeros(T, x.shape);
+        x.delta = Zeros(T, x.shape)
     end
 end
 
@@ -119,27 +126,23 @@ end
 @inline function (←)(x::Variable, δx::AbstractArray)
     x.delta += δx
 end
-# @inline function (←)(x::Variable, δx::AbstractArray)
-#     !isa(x.delta, AbstractArray) ? (x.delta = δx) : (x.delta += δx)
-# end
+@inline function passgrad(x::Variable, δx::AbstractArray)
+    !isa(x.delta, AbstractArray) ? (x.delta = δx) : (x.delta += δx)
+end
 
 function filldelta(x::Variable{T}, g::Union{Real,T}) where T
     if isnothing(x.delta)
-        x.delta  = T(undef, size(x))
-        x.delta .= g
+        x.delta = T(undef, size(x))
     end
+    x.delta .= g
+    return nothing
 end
 
 function need2computeδ!(x::Variable)
     # 1. 不需要学习的叶子参数不需要初始化，其他情况都要。
     # 2. 当某叶子节点的 keepsgrad==false 时，则此叶子节
     #   点不参与反向传播的计算，也即达到了冻结参数的目的
-    if !(x.isleaf && !x.keepsgrad)
-        # zerodelta(x)
-        return true
-    else
-        return false
-    end
+    !(x.isleaf && !x.keepsgrad) ? true : false
 end
 
 
@@ -173,7 +176,8 @@ function Base.getindex(x::Variable{T}, k...) where T
     if y.backprop
         y.backward = function ∇getindex()
             if need2computeδ!(x)
-                x.delta[k...] .+= y.delta
+                zerodelta(x)
+                x.delta[k...] += y.delta
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -189,7 +193,8 @@ function Base.getindex(x::Variable{T}, k::Int) where T
     if y.backprop
         y.backward = function ∇getindex()
             if need2computeδ!(x)
-                x.delta[k:k] .+= y.delta
+                zerodelta(x)
+                x.delta[k:k] += y.delta
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -212,12 +217,18 @@ end
 # pretty printing
 function Base.show(io::IO, ::MIME"text/plain", xv::XVariable)
     c, x = xv
-    if  x.isleaf println(cyan!("\n═══ Leaf Variable ($c) ═══")) end
-    if !x.isleaf println(cyan!("\n═══ None Leaf Variable ═══")) end
 
-    print(yellow!("\nvalue is "))
+    if isleaf(x)
+        prefix = "($c) Leaf's"
+        colorf = green!
+    else
+        prefix = "($c) None Leaf's"
+        colorf = yellow!
+    end
+
+    print(colorf(prefix * " value is "))
     display(x.value)
-    print(green!("\ndelta is "))
+    print(colorf(prefix * " delta is "))
     display(x.delta)
 end
 
