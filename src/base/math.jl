@@ -448,3 +448,18 @@ function Base.adjoint(x::Variable{T}) where T
     end
     return y
 end
+
+
+function Base.transpose(x::Variable{T}) where T
+    y = Variable{T}(transpose(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇transpose()
+            if need2computeδ!(x)
+                x ← transpose(ᵟ(y))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end

@@ -28,9 +28,11 @@ end
     ( (4, 6, 2), (2:3, 2:4, 1:2) )
 """
 function size_and_range(x::AbstractArray, padinfo::Vector{Pair{Int,Tuple{Int, Int}}})
-    D     = ndims(x)
-    xsize = size(x)
+    P = length(padinfo)
+    D = ndims(x)
+    @assert P ≤ D "too much padding dims"
 
+    xsize = size(x)
     start = Vector{Int}(undef, D)
     final = Vector{Int}(undef, D)
     ysize = Vector{Int}(undef, D)

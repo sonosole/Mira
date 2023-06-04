@@ -7,7 +7,7 @@ axes need to be reduced, `z` and `x` comes from `z = broadcast(::typeof(+-*/...)
     axes2reduce(rand(3,4,5),rand(1,4,1))  -> (1,3)
 """
 function axes2reduce(z, x)
-    a = Vec{Int}(undef, 0)
+    a = VecInt(undef, 0)
     for i = 1:ndims(z)
         if size(x, i) == 1
             push!(a, i)
