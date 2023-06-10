@@ -37,3 +37,14 @@ end
     T = T1 <: T2 ? T2 : T1
     return T
 end
+
+
+@inline function assertdim(x::AbstractArray, d::Int)
+    D = ndims(x)
+    @assert D==d "expected input-dim is $d but got $D"
+end
+
+@inline function assertdim(x::Variable, d::Int)
+    D = ndims(x)
+    @assert D==d "expected input-dim is $d but got $D"
+end

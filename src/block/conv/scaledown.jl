@@ -5,16 +5,6 @@ export scaledown2d
 export scaledown3d
 
 
-@inline function assertdim(x::AbstractArray, d::Int)
-    D = ndims(x)
-    @assert D==d "expected input-dim is $d but got $D"
-end
-
-@inline function assertdim(x::Variable, d::Int)
-    D = ndims(x)
-    @assert D==d "expected input-dim is $d but got $D"
-end
-
 @inline function assertlength(d::Vector{Int}, i::Int)
     N = length(d)
     @assert N==i "expected scale-down-dim is $i but got $N"
