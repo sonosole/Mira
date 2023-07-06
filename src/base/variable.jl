@@ -123,18 +123,36 @@ end
 
 @inline Base.:(+)(n::Nothing, x::AbstractArray) = x
 
+"""
+    x::Variable ← δx::AbstractArray
+
+equals to `isnothing(x.delta) ? (x.delta = δx) : (x.delta += δx)`
+"""
 @inline function (←)(x::Variable, δx::AbstractArray)
     x.delta += δx
 end
 @inline function passgrad(x::Variable, δx::AbstractArray)
-    !isa(x.delta, AbstractArray) ? (x.delta = δx) : (x.delta += δx)
+    x.delta += δx
+end
+
+"""
+    x::Variable ← δx::Real
+
+set all elements of `x.delta` be `δx`
+"""
+@inline function (←)(x::Variable, δx::Real)
+    if isnothing(x.delta)
+        x.delta = Zeros(T, x.shape)
+    end
+    x.delta .+= eltype(x)(g)
+    return nothing
 end
 
 function filldelta(x::Variable{T}, g::Union{Real,T}) where T
     if isnothing(x.delta)
         x.delta = T(undef, size(x))
     end
-    x.delta .= g
+    x.delta .= eltype(x)(g)
     return nothing
 end
 
@@ -172,7 +190,7 @@ Base.setindex!(x::Variable, v::AbstractArray, k...) = (x.value[k...]  = v)
 
 function Base.getindex(x::Variable{T}, k...) where T
     !x.backprop && return x.value[k...]
-    y = Variable{T}(x.value[k...], x.backprop, x.keepsgrad, x.isleaf)
+    y = Variable{T}(x.value[k...], x.backprop)
     if y.backprop
         y.backward = function ∇getindex()
             if need2computeδ!(x)
@@ -189,12 +207,29 @@ end
 
 function Base.getindex(x::Variable{T}, k::Int) where T
     !x.backprop && return x.value[k:k]
-    y = Variable{T}(x.value[k:k], x.backprop, x.keepsgrad, x.isleaf)
+    y = Variable{T}(x.value[k:k], x.backprop)
     if y.backprop
         y.backward = function ∇getindex()
             if need2computeδ!(x)
                 zerodelta(x)
                 x.delta[k:k] += y.delta
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function Base.getindex(x::Variable{T}, k::CartesianIndices) where T
+    !x.backprop && return x.value[k]
+    y = Variable{T}(x.value[k], x.backprop)
+    if y.backprop
+        y.backward = function ∇getindex()
+            if need2computeδ!(x)
+                zerodelta(x)
+                x.delta[k] += y.delta
             end
             ifNotKeepδThenFreeδ!(y)
         end
