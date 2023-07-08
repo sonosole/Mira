@@ -1,5 +1,5 @@
+include("./ten2mat.jl")
 include("./im2col.jl")
-include("./tensor2matrix.jl")
 
 include("./pad-const.jl")
 include("./pad-repeat.jl")
