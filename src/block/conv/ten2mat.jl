@@ -123,7 +123,7 @@ function ten2mat(x        :: Array{T},
 
     rows, cols, batchsize, YXIndices = ten2matFwdInfo(x, padding, kernel, dilation, stride)
 
-    x = padconst(x, ntuple(i -> (1 < i < D+2) ? padding[i-1] : (0,0), D+2), padval)
+    x = padconst(x, extendpad(padding), padval)
     y = similar(x, rows, cols)
 
     Threads.@threads for (o, i) in YXIndices
@@ -206,7 +206,7 @@ function ten2mat(x        :: Variable{Array{T}},
 
     rows, cols, batchsize, YXIndices = ten2matFwdInfo(ᵛ(x), padding, kernel, dilation, stride)
 
-    px = padconst(x, ntuple(i -> (1 < i < D+2) ? padding[i-1] : (0,0), D+2), padval)
+    px = padconst(x, extendpad(padding), padval)
     vy = similar(ᵛ(x), rows, cols)
 
     Threads.@threads for (o, i) in YXIndices

@@ -1,3 +1,5 @@
+include("./ConvKits.jl")
+
 include("./ten2mat.jl")
 include("./im2col.jl")
 

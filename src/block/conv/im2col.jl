@@ -166,7 +166,7 @@ function im2col(x        :: Array{T},
 
     rows, cols, YXIndices = im2colFwdInfo(x, padding, kernel, dilation, stride)
 
-    x = padconst(x, ntuple(i -> (1 < i < D+2) ? padding[i-1] : (0,0), D+2), padval)
+    x = padconst(x, extendpad(padding), padval)
     y = similar(x, rows, cols)
 
     Threads.@threads for (o, i) in YXIndices
@@ -232,7 +232,7 @@ end
 
 
 function im2col(x        :: Variable{Array{T}},
-                padding  :: NTuple{D,NTuple{2,Int}},
+                padding  :: NTuple{D,Dims{2}},
                 kernel   :: NTuple{D,Int},
                 dilation :: NTuple{D,Int},
                 stride   :: NTuple{D,Int},
@@ -240,7 +240,7 @@ function im2col(x        :: Variable{Array{T}},
 
     rows, cols, YXIndices = im2colFwdInfo(ᵛ(x), padding, kernel, dilation, stride)
 
-    px = padconst(x, ntuple(i -> (1 < i < D+2) ? padding[i-1] : (0,0), D+2), padval)
+    px = padconst(x, extendpad(padding), padval)
     vy = similar(ᵛ(x), rows, cols)
 
     Threads.@threads for (o, i) in YXIndices

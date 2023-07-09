@@ -1,25 +1,7 @@
 export Conv1d
 export Conv1dField
 
-const IntOrStr = Union{Int, String}
 
-function selectpadfn(padmode::String)
-    if padmode == "zeros"
-        return padzeros
-    elseif padmode == "constant"
-        return padconst
-    elseif padmode == "repeat"
-        return padrepeat
-    elseif padmode == "reflect"
-        return padreflect
-    elseif padmode == "symmetric"
-        return padsymmetric
-    elseif padmode == "circular"
-        return padcircular
-    else
-        error("padmode should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\",\"circular\"")
-    end
-end
 
 """
     mutable struct Conv1d <: Block
@@ -30,54 +12,62 @@ mutable struct Conv1d <: Block
     w :: VarOrNil
     b :: VarOrNil
     f :: FunOrNil
-    kernel   :: Int
-    dilation :: Int
-    stride   :: Int
-    padding  :: Int
+    kernel   :: Dims{1}
+    dilation :: Dims{1}
+    stride   :: Dims{1}
+    padding  :: Pads{1}
     padmode  :: Function
-    function Conv1d(ichannels::Int,
-                    ochannels::Int,
-                    fn::FunOrNil=relu;
+    padval   :: Float32
+    function Conv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                     kernel   :: Int = 3,
                     dilation :: Int = 1,
                     stride   :: Int = 1,
-                    padding  :: IntOrStr = 0,
-                    padmode  :: String   = "repeat"
-                    padval   :: Real     = 0.0,
-                    type::Type=Array{Float32})
+                    padval   :: Real = 0f0,
+                    padmode  :: String = "repeat"
+                    padding  :: Dims2OrStr = "valid",
+                    type     :: Type = Array{Float32})
 
-        if isa(padding, String)
-            if padding ∉ ("same", "valid")
-                error("padmode should be \"zeros\" or \"const\", but got $padding")
-            end
-            if isequal(padding, "same") && stride≠1
-                error("when padding==\"same\", stride should be 1, but got $stride")
-            end
+        if padding isa String
+            padding = inferpadding(padding, stride, dialation)
+        else
+            padding  = (padding,  )
         end
 
-        dtype = eltype(type)
-        filterSize = ichannels * kernel
-        A = dtype(sqrt(2 / filterSize))
-        w = A * randn(dtype, ochannels, filterSize)
-        b = A * randn(dtype, ochannels,          1)
+        kernel   = (kernel,   )
+        dilation = (dilation, )
+        stride   = (stride,   )
+        dtype    = eltype(type)
+
+        patchlen = prod(kernel) * ichannels
+        Amplifer = dtype(sqrt(2 / patchlen))
+        w = Amplifer * randn(dtype, ochannels, patchlen)
+        b = Amplifer * randn(dtype, ochannels,        1)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true), fn,
             kernel,
             dilation,
             stride,
             padding,
-            selectpad(padmode))
+            selectpad(padmode), padval)
     end
-    function Conv1d(fn::FunOrNil; kernel::Int=3, stride::Int=1)
-        new(nothing, nothing, fn, kernel, stride)
+    function Conv1d()
+        new(nothing, nothing, nothing, 3, 1, 1, ((0,0),), padzeros, 0f0)
     end
 end
 
 
 function clone(this::Conv1d; type::Type=Array{Float32})
-    cloned = Conv1d(this.f, kernel=this.k, stride=this.s)
+    cloned   = Conv1d()
     cloned.w = clone(this.w, type=type)
     cloned.b = clone(this.b, type=type)
+    cloned.f = this.f
+
+    cloned.kernel   = this.kernel
+    cloned.dilation = this.dilation
+    cloned.stride   = this.stride
+    cloned.padding  = this.padding
+    cloned.padmode  = this.padmode
+    cloned.padval   = this.padval
     return cloned
 end
 
@@ -86,7 +76,12 @@ end
 function Base.show(io::IO, m::Conv1d)
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    print(io, "Conv1d($(Int(SIZE[2]/m.k)), $(SIZE[1]), $(m.f), kernel=$(m.k), stride=$(m.s); type=$TYPE)")
+    print(io, "Conv1d($(Int(SIZE[2]/m.k)), $(SIZE[1]), $(m.f),
+    kernel=$(m.k),
+    dilation=$(m.dilation),
+    stride=$(m.s),
+    padding=$(m.padding),
+    padmode=$(m.padmode); type=$TYPE)")
 end
 
 
@@ -155,25 +150,6 @@ function bytesof(model::Conv1d, unit::String="MB")
 end
 
 
-"""
-    Conv1dField(StrideKernelPair::Vector{NTuple{2,Int}})
-# Example
-    julia> Conv1dField([(3,2),(3,1),(4,2)]
-    (1:13, 5:17)
-"""
-function Conv1dField(StrideKernelPair::Vector{NTuple{2,Int}})
-    # 输入是从底层到顶层的(kernel,stride)列表
-    # 计算感受野时从顶层往底层计算,为了流式计算时候缓存空间的设计
-    # 本函数返回：顶层第一个时间步感受到的底层时间步范围
-    #            顶层第二个时间步感受到的底层时间步范围
-    t1 = 1
-    t2 = 2
-    for (kernel,stride) in StrideKernelPair[end:-1:1]
-        t1 = (t1-1) * stride + kernel
-        t2 = (t2-1) * stride + kernel
-    end
-    return (1:t1,t2-t1+1:t2)
-end
 
 
 function Conv1dField(chain)
@@ -193,25 +169,22 @@ end
 
 
 
-function forward(block::Conv1d, x::Variable{T}) where T
-    w = block.w
-    b = block.b
-    f = block.f
+function forward(C::Conv1d, x::Variable)
+    w = C.w
+    b = C.b
 
-    x = im2col(x, block.k, block.s)
-    x = matAddVec(w * x, b)
-    x = col2im(x, batchsize)
-    return f(x)
+    y = im2col(x, C.padding, C.kernel, C.dilation, C.stride, C.padval)
+    z = matAddVec(w * y, b)
+    z = col2im(z, spatialdims(z,))
+    return C.f(z)
 end
 
 
-function predict(block::Conv1d, x::AbstractArray)
-    f = block.f
-    w = value(block.w)
-    b = value(block.b)
+function predict(C::Conv1d, x::AbstractArray)
+    w = value(C.w)
+    b = value(C.b)
 
-    x = im2col(x, block.k, block.s)
-    x = w * x .+ b
-    x = col2im(x, batchsize)
-    return f(x)
+    y = im2col(x, C.padding, C.kernel, C.dilation, C.stride, C.padval)
+    z = col2im(w * y .+ b, zsize)
+    return C.f(z)
 end

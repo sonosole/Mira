@@ -121,7 +121,7 @@ The argment `pads` is like ((1,2),(4,3)), which means:
      0  8  10  12  0  0
      0  0   0   0  0  0
 """
-function padconst(x::AbstractArray, pads::NTuple{D,Dims2}, val::Real=0) where D
+function padconst(x::AbstractArray, pads::Pads{D}, val::Real=0) where D
     paddings(pads) == 0 && return x
     ysize, xranges = size_and_range(x, pads)
     y = fill!(similar(x, ysize), val)
@@ -193,7 +193,7 @@ function padconst(x::AbstractArray, pads::Vector{Pair{Int,Dims2}}, val::Real=0)
 end
 
 
-function padconst(x::Variable{T}, pads::NTuple{D,Dims2}, val::Real=0) where {T,D}
+function padconst(x::Variable{T}, pads::Pads{D}, val::Real=0) where {T,D}
     paddings(pads) == 0 && return x
     ysize, xranges = size_and_range(x.value, pads)
     t = fill!(similar(x.value, ysize), val)
