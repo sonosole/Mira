@@ -3,8 +3,8 @@ const IntStepRanges{D} = NTuple{D, StepRange{Int64, Int64}} where D
 const IntUnitRange     = UnitRange{Int64}
 
 struct Ten2matFwdIter{D}
-    stride     :: NTuple{D, Int}    # stride of filter kernels
-    zsize      :: NTuple{D, Int}    # shape of the output feature in n-dim conv, exclude batch and channel dims
+    stride     :: NTuple{D, Int64}  # stride of filter kernels
+    zsize      :: NTuple{D, Int64}  # shape of the output feature in n-dim conv, exclude batch and channel dims
     istart     :: IntStepRanges{D}  # first patch's range at each dims
     ibatchsize :: UnitRange{Int64}  # all samples indices in a batch, i.e. 1:batchsize
     ichannel   :: UnitRange{Int64}  # input channel indices, i.e. 1:channel
@@ -92,7 +92,7 @@ end
 
 
 function ten2matFwdInfo(x        :: AbstractArray,
-                        padding  :: NTuple{D,Dims{2}},
+                        padding  :: Pads{D},
                         kernel   :: Dims{D},
                         dilation :: Dims{D},
                         stride   :: Dims{D}) where D
@@ -115,15 +115,21 @@ end
 
 
 function ten2mat(x        :: Array{T},
-                 padding  :: NTuple{D,NTuple{2,Int}},
-                 kernel   :: NTuple{D,Int},
-                 dilation :: NTuple{D,Int},
-                 stride   :: NTuple{D,Int},
+                 padding  :: Pads{D},
+                 kernel   :: Dims{D},
+                 dilation :: Dims{D},
+                 stride   :: Dims{D},
+                 padmode  :: Function = padconst,
                  padval   :: Real = 0) where {T,D}
 
     rows, cols, batchsize, YXIndices = ten2matFwdInfo(x, padding, kernel, dilation, stride)
 
-    x = padconst(x, extendpad(padding), padval)
+    if padmode == padconst
+        x = padmode(x, extendpad(padding), padval)
+    else
+        x = padmode(x, extendpad(padding))
+    end
+
     y = similar(x, rows, cols)
 
     Threads.@threads for (o, i) in YXIndices
@@ -142,7 +148,7 @@ mutable struct Ten2matBwdIter{D}
     bools :: NTuple{D, Bool}                # parallelizable dimension is true
     shape :: Vector{Int}                    # all unparallelizable dims forms a new idx matrix
     total :: Int                            # total elements of aforementioned idx matrix
-    function Ten2matBwdIter(zsize::NTuple{D, Int64}, bools::NTuple{D, Bool}) where D
+    function Ten2matBwdIter(zsize::Dims{D}, bools::NTuple{D, Bool}) where D
         count = 0
         total = 1
         shape = Vector{Int}(undef, D - sum(bools))
@@ -198,15 +204,21 @@ end
 
 
 function ten2mat(x        :: Variable{Array{T}},
-                 padding  :: NTuple{D,NTuple{2,Int}},
-                 kernel   :: NTuple{D,Int},
-                 dilation :: NTuple{D,Int},
-                 stride   :: NTuple{D,Int},
+                 padding  :: Pads{D},
+                 kernel   :: Dims{D},
+                 dilation :: Dims{D},
+                 stride   :: Dims{D},
+                 padmode  :: Function = padconst,
                  padval   :: Real = 0) where {T,D}
 
     rows, cols, batchsize, YXIndices = ten2matFwdInfo(ᵛ(x), padding, kernel, dilation, stride)
 
-    px = padconst(x, extendpad(padding), padval)
+    if padmode == padconst
+        px = padmode(x, extendpad(padding), padval)
+    else
+        px = padmode(x, extendpad(padding))
+    end
+
     vy = similar(ᵛ(x), rows, cols)
 
     Threads.@threads for (o, i) in YXIndices

@@ -1,41 +1,35 @@
-export Conv1d
+export Conv4d
 
 
 """
-    mutable struct Conv1d <: Block
+    mutable struct Conv4d <: Block
 
-Applies a 1-D convolution over an 3-D input tensor of shape (ichannels, steps, batchsize)\n
+Applies a 4-D convolution over an 6-D input tensor of shape (ichannels, w1, w2, w3, w4, batchsize)\n
 """
-mutable struct Conv1d <: Block
+mutable struct Conv4d <: Block
     w :: VarOrNil
     b :: VarOrNil
     f :: FunOrNil
-    kernel   :: Dims{1}
-    dilation :: Dims{1}
-    stride   :: Dims{1}
-    padding  :: Pads{1}
+    kernel   :: Dims{4}
+    dilation :: Dims{4}
+    stride   :: Dims{4}
+    padding  :: Pads{4}
     padmode  :: Function
     padval   :: Float32
-    function Conv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                    kernel   :: Int = 3,
-                    dilation :: Int = 1,
-                    stride   :: Int = 1,
+    function Conv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+                    kernel   :: Dims{4} = (3,3,3,3),
+                    dilation :: Dims{4} = (1,1,1,1),
+                    stride   :: Dims{4} = (1,1,1,1),
                     padval   :: Real = 0f0,
-                    padmode  :: String = "repeat",
-                    padding  :: Dims2OrStr = "valid",
+                    padmode  :: String  = "zeros",
+                    padding  :: Pads4OrStr = "valid",
                     type     :: Type = Array{Float32})
 
         if padding isa String
             padding = inferpadding(padding, kernel, stride, dilation)
-        else
-            padding  = (padding,  )
         end
 
-        kernel   = (kernel,   )
-        dilation = (dilation, )
-        stride   = (stride,   )
         dtype    = eltype(type)
-
         patchlen = prod(kernel) * ichannels
         Amplifer = dtype(sqrt(2 / patchlen))
         w = Amplifer * randn(dtype, ochannels, patchlen)
@@ -48,14 +42,14 @@ mutable struct Conv1d <: Block
             padding,
             selectpad(padmode), padval)
     end
-    function Conv1d()
-        new(nothing, nothing, nothing, 3, 1, 1, ((0,0),), padzeros, 0f0)
+    function Conv4d()
+        new(nothing, nothing, nothing, (3,3,3,3), (1,1,1,1), (1,1,1,1), ((0,0),(0,0),(0,0),(0,0)), padzeros, 0f0)
     end
 end
 
 
-function clone(this::Conv1d; type::Type=Array{Float32})
-    cloned   = Conv1d()
+function clone(this::Conv4d; type::Type=Array{Float32})
+    cloned   = Conv4d()
     cloned.w = clone(this.w, type=type)
     cloned.b = clone(this.b, type=type)
     cloned.f = this.f
@@ -71,29 +65,29 @@ end
 
 
 # pretty show
-function Base.show(io::IO, m::Conv1d)
+function Base.show(io::IO, m::Conv4d)
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    P = ifelse(paddings(m.padding)==0, "", " padding=$(first(m.padding)),")
-    D = ifelse(first(m.dilation)==1,   "", " dilation=$(first(m.dilation)),")
-    S = ifelse(first(m.stride)==1,     "", " stride=$(first(m.stride)),")
-    print(io, "Conv1d($(Int(SIZE[2]/prod(m.kernel))) => $(SIZE[1]), $(m.f), kernel=$(first(m.kernel)),$D$S$P type=$TYPE)")
+    P = ifelse(paddings(m.padding)==0, "", " padding=$(m.padding),")
+    D = ifelse(prod(m.dilation)==1,   "", " dilation=$(m.dilation),")
+    S = ifelse(prod(m.stride)==1,     "", " stride=$(m.stride),")
+    print(io, "Conv4d($(Int(SIZE[2]/prod(m.kernel))) => $(SIZE[1]), $(m.f), kernel=$(m.kernel),$D$S$P type=$TYPE)")
 end
 
 
 """
-    unbiasedof(m::Conv1d)
+    unbiasedof(m::Conv4d)
 
-unbiased weights of Conv1d block
+unbiased weights of Conv4d block
 """
-function unbiasedof(m::Conv1d)
+function unbiasedof(m::Conv4d)
     weights = Vector(undef, 1)
     weights[1] = m.w.value
     return weights
 end
 
 
-function weightsof(m::Conv1d)
+function weightsof(m::Conv4d)
     weights = Vector(undef, 2)
     weights[1] = m.w.value
     weights[2] = m.b.value
@@ -101,7 +95,7 @@ function weightsof(m::Conv1d)
 end
 
 
-function gradsof(m::Conv1d)
+function gradsof(m::Conv4d)
     grads = Vector(undef, 2)
     grads[1] = m.w.delta
     grads[2] = m.b.delta
@@ -109,14 +103,14 @@ function gradsof(m::Conv1d)
 end
 
 
-function zerograds!(m::Conv1d)
+function zerograds!(m::Conv4d)
     for v in gradsof(m)
         v .= 0.0
     end
 end
 
 
-function paramsof(m::Conv1d)
+function paramsof(m::Conv4d)
     params = Vector{Variable}(undef,2)
     params[1] = m.w
     params[2] = m.b
@@ -124,7 +118,7 @@ function paramsof(m::Conv1d)
 end
 
 
-function xparamsof(m::Conv1d)
+function xparamsof(m::Conv4d)
     xparams = Vector{XVariable}(undef,2)
     xparams[1] = ('w', m.w)
     xparams[2] = ('b', m.b)
@@ -132,22 +126,22 @@ function xparamsof(m::Conv1d)
 end
 
 
-function nparamsof(m::Conv1d)
+function nparamsof(m::Conv4d)
     lw = length(m.w)
     lb = length(m.b)
     return (lw + lb)
 end
 
-elsizeof(c::Conv1d) = elsizeof(c.w)
+elsizeof(c::Conv4d) = elsizeof(c.w)
 
-function bytesof(model::Conv1d, unit::String="MB")
+function bytesof(model::Conv4d, unit::String="MB")
     n = nparamsof(model) * elsizeof(model.w)
     return blocksize(n, uppercase(unit))
 end
 
 
 
-function forward(C::Conv1d, x::Variable, backend::Function=ten2mat)
+function forward(C::Conv4d, x::Variable, backend::Function=ten2mat)
     w = C.w
     b = C.b
     S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
@@ -157,7 +151,7 @@ function forward(C::Conv1d, x::Variable, backend::Function=ten2mat)
 end
 
 
-function predict(C::Conv1d, x::AbstractArray, backend::Function=ten2mat)
+function predict(C::Conv4d, x::AbstractArray, backend::Function=ten2mat)
     w = value(C.w)
     b = value(C.b)
     S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)

@@ -6,9 +6,9 @@ const Pads4OrStr = Union{Pads{4}, String} # for conv4d
 const Pads5OrStr = Union{Pads{5}, String} # for conv5d
 
 
-function selectpadfn(padmode::String)
+function selectpad(padmode::String)
     if padmode == "zeros"
-        return padzeros
+        return padconst
     elseif padmode == "constant"
         return padconst
     elseif padmode == "repeat"
@@ -77,21 +77,73 @@ function inferpadding(padding::String, kernel::Dims{D}, stride::Dims{D}, dilatio
 end
 
 
-# padding -> (channelspadding, padding, batchsizepadding)
+# spatialpadding -> (channelspadding, spatialpadding, batchsizepadding)
+"""
+    extendpad(padding::Pads{D}) where D
+Extend spatial-padding by `C`hannels-padding and `B`atchsize-padding
+# Example
+            Hight Paddings      Width Paddings
+                         ↓      ↓
+    julia> extendpad( ((1,2), (2,3)) )
+    ((0, 0), (1, 2), (2, 3), (0, 0))
+       ↑       ↑      ↑        ↑
+       C       H      W        B
+"""
 @inline function extendpad(padding::Pads{D}) where D
     return ntuple(i -> (1 < i < D+2) ? padding[i-1] : (0,0), D+2)
 end
 
 
-function spatialdims(z::AbstractArray, x::AbstractArray, k::Dims{D}, d::Dims{D}, s::Dims{D}) where D
-    w = size(x)
-    return ntuple(D+2) do j
-        if j == 1
-            return size(z, 1)
+function fullsize(w        :: AbstractArray, # weights of conv layer
+                  x        :: AbstractArray, # input before padding
+                  padding  :: Pads{D},
+                  kernel   :: Dims{D},
+                  dilation :: Dims{D},
+                  stride   :: Dims{D}) where D
+
+    sizeofx = size(x)
+    xsize   = ntuple(i -> sizeofx[i+1] + sum(padding[i]), D)    # equivalent spatial width after padding
+    ekernel = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) # equivalent kernel size when dialating
+
+    N = 2 + D
+    zchannels = size(w, 1)
+    batchsize = sizeofx[N]
+
+    return ntuple(N) do j
+        if isequal(j, 1)
+            return zchannels
         end
-        if j > 1
+        if 1 < j < N
             i = j - 1
-            return (w[j] - d[i] * (k[i] - 1) - 1) ÷ s[i] + 1
+            return (xsize[i] - ekernel[i]) ÷ stride[i] + 1
         end
+        return batchsize
+    end
+end
+
+function fullsize(w        :: Variable, # weights of conv layer
+                  x        :: Variable, # input before padding
+                  padding  :: Pads{D},
+                  kernel   :: Dims{D},
+                  dilation :: Dims{D},
+                  stride   :: Dims{D}) where D
+
+    sizeofx = size(x)
+    xsize   = ntuple(i -> sizeofx[i+1] + sum(padding[i]), D)    # equivalent spatial width after padding
+    ekernel = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) # equivalent kernel size when dialating
+
+    N = 2 + D
+    zchannels = size(w, 1)
+    batchsize = sizeofx[N]
+
+    return ntuple(N) do j
+        if isequal(j, 1)
+            return zchannels
+        end
+        if 1 < j < N
+            i = j - 1
+            return (xsize[i] - ekernel[i]) ÷ stride[i] + 1
+        end
+        return batchsize
     end
 end

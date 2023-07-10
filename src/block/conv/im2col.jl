@@ -22,12 +22,12 @@ Return the row, col and batch index of the n-th element of a array having shape 
 end
 
 """
-    patchcoords(n::Int, dims::NTuple{D,Int}) where D
+    patchcoords(n::Int, dims::Dims{D}) where D
 
 Return the `n`-th element's coords in array `x` having shape of (W1,W2,W3,...,WD, Batchsize).
 `dims` = (W1,W2,W3,...,WD).
 """
-@inline function patchcoords(n::Int, dims::NTuple{D,Int}) where D
+@inline function patchcoords(n::Int, dims::Dims{D}) where D
     coords = Vector{Int}(undef, D+1)
     i = 1   # iter index for `Idxs`
     j = n   # inital total elements
@@ -61,17 +61,17 @@ end
 
 
 struct Im2colFwdIter{D}
-    ekernel   :: NTuple{D,Int}   # equivalent kernel sizes for D dims
-    dilation  :: NTuple{D,Int}   # dilation of filter kernels
-    stride    :: NTuple{D,Int}   # stride of filter kernels
-    zsize     :: NTuple{D,Int}   # shape of the output feature in ConvND, batch and channel dims excluded
-    rows      :: Int             # rows of the output in im2col algorithm
-    cols      :: Int             # cols of the output in im2col algorithm
-    channels  :: Int             # number of input channels
-    function Im2colFwdIter(ekernel  :: NTuple{D,Int},
-                           dilation :: NTuple{D,Int},
-                           stride   :: NTuple{D,Int},
-                           zsize    :: NTuple{D,Int},
+    ekernel   :: Dims{D}   # equivalent kernel sizes for D dims
+    dilation  :: Dims{D}   # dilation of filter kernels
+    stride    :: Dims{D}   # stride of filter kernels
+    zsize     :: Dims{D}   # shape of the output feature in ConvND, batch and channel dims excluded
+    rows      :: Int       # rows of the output in im2col algorithm
+    cols      :: Int       # cols of the output in im2col algorithm
+    channels  :: Int       # number of input channels
+    function Im2colFwdIter(ekernel  :: Dims{D},
+                           dilation :: Dims{D},
+                           stride   :: Dims{D},
+                           zsize    :: Dims{D},
                            rows     :: Int,
                            cols     :: Int,
                            channels :: Int) where D
@@ -135,10 +135,10 @@ end
 
 
 function im2colFwdInfo(x        :: AbstractArray,
-                       padding  :: NTuple{D,NTuple{2,Int}},
-                       kernel   :: NTuple{D,Int},
-                       dilation :: NTuple{D,Int},
-                       stride   :: NTuple{D,Int}) where D
+                       padding  :: Pads{D},
+                       kernel   :: Dims{D},
+                       dilation :: Dims{D},
+                       stride   :: Dims{D}) where D
 
     assertdim(x, D+2)
     sizeofx = size(x)
@@ -158,15 +158,21 @@ end
 
 
 function im2col(x        :: Array{T},
-                padding  :: NTuple{D,NTuple{2,Int}},
-                kernel   :: NTuple{D,Int},
-                dilation :: NTuple{D,Int},
-                stride   :: NTuple{D,Int},
+                padding  :: Pads{D},
+                kernel   :: Dims{D},
+                dilation :: Dims{D},
+                stride   :: Dims{D},
+                padmode  :: Function = padconst,
                 padval   :: Real = 0) where {T,D}
 
     rows, cols, YXIndices = im2colFwdInfo(x, padding, kernel, dilation, stride)
 
-    x = padconst(x, extendpad(padding), padval)
+    if padmode == padconst
+        x = padmode(x, extendpad(padding), padval)
+    else
+        x = padmode(x, extendpad(padding))
+    end
+
     y = similar(x, rows, cols)
 
     Threads.@threads for (o, i) in YXIndices
@@ -185,7 +191,7 @@ mutable struct Im2colBwdIter{N}
     boolsb :: NTuple{N, Bool}                # parallelizable dimension is true
     shape  :: Vector{Int}                    # all unparallelizable dims forms a new idx matrix
     total  :: Int                            # total elements of aforementioned idx matrix
-    function Im2colBwdIter(zsize::NTuple{D, Int64}, bools::NTuple{D, Bool}, batchsize::Int) where D
+    function Im2colBwdIter(zsize::Dims{D}, bools::NTuple{D, Bool}, batchsize::Int) where D
         count = 0
         total = 1
         shape = Vector{Int}(undef, D - sum(bools))
@@ -232,15 +238,21 @@ end
 
 
 function im2col(x        :: Variable{Array{T}},
-                padding  :: NTuple{D,Dims{2}},
-                kernel   :: NTuple{D,Int},
-                dilation :: NTuple{D,Int},
-                stride   :: NTuple{D,Int},
+                padding  :: Pads{D},
+                kernel   :: Dims{D},
+                dilation :: Dims{D},
+                stride   :: Dims{D},
+                padmode  :: Function = padconst,
                 padval   :: Real = 0) where {T,D}
 
     rows, cols, YXIndices = im2colFwdInfo(ᵛ(x), padding, kernel, dilation, stride)
 
-    px = padconst(x, extendpad(padding), padval)
+    if padmode == padconst
+        px = padmode(x, extendpad(padding), padval)
+    else
+        px = padmode(x, extendpad(padding))
+    end
+
     vy = similar(ᵛ(x), rows, cols)
 
     Threads.@threads for (o, i) in YXIndices
