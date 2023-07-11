@@ -18,8 +18,7 @@ end
 
 if all gradients were true, then it returns true.
 """
-function checkgrad(block::B,
-                   x::Variable;
+function checkgrad(block::B, x::Variable, i::Int=1;
                    eps::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.05,
                    show::Bool=false,
@@ -32,7 +31,7 @@ function checkgrad(block::B,
         y₁ = forward(block, x)
         C₁ = Loss(y₁)
         backward(C₁)
-        w̄₁ = δ(w)[1]
+        w̄₁ = δ(w)[i]
         zerograds!(params)
 
         # [2] with a small change
@@ -42,7 +41,7 @@ function checkgrad(block::B,
         y₂ = forward(block, x)
         C₂ = Loss(y₂)
         backward(C₂)
-        w̄₂ = δ(w)[1]
+        w̄₂ = δ(w)[i]
         zerograds!(params)
 
         # [4] backward gradient vs numerical gradient
@@ -57,7 +56,7 @@ function checkgrad(block::B,
         end
         if show
             println("backward  gradient: $∂L∂w")
-            println("numerical gradient: $dLdw")
+            println("numerical gradient: $dLdw\n")
         end
         onlyone ? break : continue
     end
@@ -74,8 +73,7 @@ checkgrad(fn::Function,
 if gradients were true, then it returns true. Attention, functions with ! ending
 can NOT used here.
 """
-function checkgrad(fn::Function,
-                   x::Variable;
+function checkgrad(fn::Function, x::Variable, i::Int=1;
                    show::Bool=false,
                    eps::AbstractFloat=1e-7,
                    tol::AbstractFloat=0.05)
@@ -85,7 +83,7 @@ function checkgrad(fn::Function,
     y₁ = fn(x)
     C₁ = Loss(y₁)
     backward(C₁)
-    x̄₁ = δ(x)[1]
+    x̄₁ = δ(x)[i]
     zerograds!(x)
 
     # [2] with a small change
@@ -96,7 +94,7 @@ function checkgrad(fn::Function,
     C₂ = Loss(y₂)
     backward(C₂)
 
-    x̄₂ = δ(x)[1]
+    x̄₂ = δ(x)[i]
     zerograds!(x)
 
     # [4] backward gradient vs numerical gradient
@@ -111,7 +109,7 @@ function checkgrad(fn::Function,
     end
     if show
         println("backward  gradient: $∂L∂x")
-        println("numerical gradient: $dLdx")
+        println("numerical gradient: $dLdx\n")
     end
     return istrue
 end
