@@ -15,9 +15,10 @@ include("./Conv3d.jl")
 include("./Conv4d.jl")
 include("./Conv5d.jl")
 
+include("./Conv11.jl")
+
 include("./scaledown.jl")
 include("./1-conv1d.jl")
-include("./Conv1x1.jl")
 include("./1-depthconv1d.jl")
 
 include("./convfield.jl")

@@ -19,7 +19,7 @@ end
 if all gradients were true, then it returns true.
 """
 function checkgrad(block::B, x::Variable, i::Int=1;
-                   eps::AbstractFloat=1e-7,
+                   eps::AbstractFloat=1e-6,
                    tol::AbstractFloat=0.05,
                    show::Bool=false,
                    onlyone::Bool=false) where B <: Block
@@ -35,7 +35,7 @@ function checkgrad(block::B, x::Variable, i::Int=1;
         zerograds!(params)
 
         # [2] with a small change
-        ᵛ(w)[1] += dw
+        ᵛ(w)[i] += dw
 
         # [3] forward 2nd time
         y₂ = forward(block, x)
@@ -75,7 +75,7 @@ can NOT used here.
 """
 function checkgrad(fn::Function, x::Variable, i::Int=1;
                    show::Bool=false,
-                   eps::AbstractFloat=1e-7,
+                   eps::AbstractFloat=1e-6,
                    tol::AbstractFloat=0.05)
     dx = eps
     x.keepsgrad = true
@@ -87,7 +87,7 @@ function checkgrad(fn::Function, x::Variable, i::Int=1;
     zerograds!(x)
 
     # [2] with a small change
-    ᵛ(x)[1] += dx
+    ᵛ(x)[i] += dx
 
     # [3] forward 2nd time
     y₂ = fn(x)
@@ -105,7 +105,7 @@ function checkgrad(fn::Function, x::Variable, i::Int=1;
     istrue = iseq(∂L∂x, dLdx, tol=tol)
     if !istrue
         println(yellow!("backward  gradient: $∂L∂x"))
-        println(yellow!("numerical gradient: $dLdx"))
+        println(yellow!("numerical gradient: $dLdx\n"))
     end
     if show
         println("backward  gradient: $∂L∂x")
