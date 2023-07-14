@@ -4,7 +4,7 @@ export padconst
 const Dims2 = Tuple{Int, Int}
 
 
-@inline function paddings(pads::NTuple{D,Dims2}) where D
+@inline function paddings(pads::Pads{D}) where D
     return sum( sum.(pads) )
 end
 
@@ -22,14 +22,14 @@ end
 
 
 """
-    size_and_range(x::AbstractArray, pads::NTuple{D,Dims2}) where D
+    size_and_range(x::AbstractArray, pads::Pads{D}) where D
 
 # Example
     julia> x = reshape(collect(1:12), (2,3,2));
     julia> size_and_range( x, ( (1,1), (1,2) ) )
     ((4, 6, 2), CartesianIndices((2:3, 2:4, 1:2)))
 """
-function size_and_range(x::AbstractArray, pads::NTuple{D,Dims2}) where D
+function size_and_range(x::AbstractArray, pads::Pads{D}) where D
     sizex = size(x)
     N = length(sizex)
     @assert D ≤ N "too much padding dims"
@@ -98,7 +98,7 @@ end
 
 
 """
-    padconst(x::AbstractArray, pads::NTuple{D,Dims2}, val::Real=0) where D
+    padconst(x::AbstractArray, pads::Pads{D}, val::Real=0) where D
 
 The argment `pads` is like ((1,2),(4,3)), which means:
 + for the `1-st` dim
