@@ -2,9 +2,17 @@ export Conv2d
 
 
 """
-    mutable struct Conv2d <: Block
-
 Applies a 2-D convolution over an 4-D input tensor of shape (ichannels, hight, width, batchsize)\n
+
+# Constructor
+    Conv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+           kernel   :: Dims{2} = (3,3),
+           dilation :: Dims{2} = (1,1),
+           stride   :: Dims{2} = (1,1),
+           padval   :: Real = 0f0,
+           padmode  :: String  = "zeros",
+           padding  :: Pads2OrStr = "valid",
+           type     :: Type = Array{Float32})
 """
 mutable struct Conv2d <: Block
     w :: VarOrNil

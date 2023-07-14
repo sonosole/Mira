@@ -2,9 +2,17 @@ export Conv1d
 
 
 """
-    mutable struct Conv1d <: Block
-
 Applies a 1-D convolution over an 3-D input tensor of shape (ichannels, steps, batchsize)\n
+
+# Constructor
+    Conv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+           kernel   :: Int = 3,
+           dilation :: Int = 1,
+           stride   :: Int = 1,
+           padval   :: Real = 0f0,
+           padmode  :: String = "repeat",
+           padding  :: Dims2OrStr = "valid",
+           type     :: Type = Array{Float32})
 """
 mutable struct Conv1d <: Block
     w :: VarOrNil

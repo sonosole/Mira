@@ -2,9 +2,17 @@ export Conv5d
 
 
 """
-    mutable struct Conv5d <: Block
-
 Applies a 5-D convolution over an 7-D input tensor of shape (ichannels, w1, w2, w3, w4, w5, batchsize)\n
+
+# Constructor
+    Conv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+           kernel   :: Dims{5} = (3,3,3,3,3),
+           dilation :: Dims{5} = (1,1,1,1,1),
+           stride   :: Dims{5} = (1,1,1,1,1),
+           padval   :: Real = 0f0,
+           padmode  :: String  = "zeros",
+           padding  :: Pads5OrStr = "valid",
+           type     :: Type = Array{Float32})
 """
 mutable struct Conv5d <: Block
     w :: VarOrNil

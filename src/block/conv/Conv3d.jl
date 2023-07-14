@@ -2,9 +2,16 @@ export Conv3d
 
 
 """
-    mutable struct Conv3d <: Block
-
 Applies a 3-D convolution over an 5-D input tensor of shape (ichannels, hight, width, steps, batchsize)\n
+# Constructor
+    Conv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+           kernel   :: Dims{3} = (3,3,3),
+           dilation :: Dims{3} = (1,1,1),
+           stride   :: Dims{3} = (1,1,1),
+           padval   :: Real = 0f0,
+           padmode  :: String  = "zeros",
+           padding  :: Pads3OrStr = "valid",
+           type     :: Type = Array{Float32})
 """
 mutable struct Conv3d <: Block
     w :: VarOrNil

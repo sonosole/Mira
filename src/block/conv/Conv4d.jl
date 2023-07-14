@@ -2,9 +2,17 @@ export Conv4d
 
 
 """
-    mutable struct Conv4d <: Block
-
 Applies a 4-D convolution over an 6-D input tensor of shape (ichannels, w1, w2, w3, w4, batchsize)\n
+
+# Constructor
+    Conv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+           kernel   :: Dims{4} = (3,3,3,3),
+           dilation :: Dims{4} = (1,1,1,1),
+           stride   :: Dims{4} = (1,1,1,1),
+           padval   :: Real = 0f0,
+           padmode  :: String  = "zeros",
+           padding  :: Pads4OrStr = "valid",
+           type     :: Type = Array{Float32})
 """
 mutable struct Conv4d <: Block
     w :: VarOrNil
