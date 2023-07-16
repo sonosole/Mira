@@ -56,7 +56,10 @@ mutable struct Conv1d <: Block
             padding, selectpad(padmode), padval)
     end
     function Conv1d()
-        new(nothing, nothing, nothing, 3, 1, 1, ((0,0),), padzeros, 0f0)
+        kernel   = singletuple(3)
+        dilation = singletuple(1)
+        stride   = singletuple(1)
+        new(nothing, nothing, nothing, kernel, dilation, stride, ((0,0),), padconst, 0f0)
     end
 end
 
