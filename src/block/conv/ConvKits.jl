@@ -1,10 +1,15 @@
 const Pads{D}    = NTuple{D, NTuple{2,Int}} where D
+const PadsDOrStr = Union{Pads{D}, String}   where D # for convNd
 const Dims2OrStr = Union{Dims{2}, String} # for conv1d
 const Pads2OrStr = Union{Pads{2}, String} # for conv2d
 const Pads3OrStr = Union{Pads{3}, String} # for conv3d
 const Pads4OrStr = Union{Pads{4}, String} # for conv4d
 const Pads5OrStr = Union{Pads{5}, String} # for conv5d
 
+
+@inline function singletuple(i::Int)
+    return (i,)
+end
 
 function selectpad(padmode::String)
     if padmode == "zeros"

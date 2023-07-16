@@ -36,12 +36,12 @@ mutable struct Conv1d <: Block
         if padding isa String
             padding = inferpadding(padding, kernel, stride, dilation)
         else
-            padding  = (padding,  )
+            padding = singletuple(padding)
         end
 
-        kernel   = (kernel,   )
-        dilation = (dilation, )
-        stride   = (stride,   )
+        kernel   = singletuple(kernel)
+        dilation = singletuple(dilation)
+        stride   = singletuple(stride)
         dtype    = eltype(type)
 
         patchlen = prod(kernel) * ichannels
@@ -53,8 +53,7 @@ mutable struct Conv1d <: Block
             kernel,
             dilation,
             stride,
-            padding,
-            selectpad(padmode), padval)
+            padding, selectpad(padmode), padval)
     end
     function Conv1d()
         new(nothing, nothing, nothing, 3, 1, 1, ((0,0),), padzeros, 0f0)
@@ -80,48 +79,16 @@ end
 
 # pretty show
 function Base.show(io::IO, m::Conv1d)
-    SIZE = size(m.w)
-    TYPE = typeof(m.w.value)
     P = ifelse(paddings(m.padding)==0, "", " padding=$(first(m.padding)),")
     D = ifelse(first(m.dilation)==1,   "", " dilation=$(first(m.dilation)),")
     S = ifelse(first(m.stride)==1,     "", " stride=$(first(m.stride)),")
-    print(io, "Conv1d($(Int(SIZE[2]/prod(m.kernel))) => $(SIZE[1]), $(m.f), kernel=$(first(m.kernel)),$D$S$P type=$TYPE)")
+    SIZE = size(m.w)
+    TYPE = typeof(m.w.value)
+    och  = SIZE[2] ÷ prod(m.kernel)
+    ich  = SIZE[1]
+    print(io, "Conv1d($och => $ich, $(m.f), kernel=$(first(m.kernel)),$D$S$P type=$TYPE)")
 end
 
-
-"""
-    unbiasedof(m::Conv1d)
-
-unbiased weights of Conv1d block
-"""
-function unbiasedof(m::Conv1d)
-    weights = Vector(undef, 1)
-    weights[1] = m.w.value
-    return weights
-end
-
-
-function weightsof(m::Conv1d)
-    weights = Vector(undef, 2)
-    weights[1] = m.w.value
-    weights[2] = m.b.value
-    return weights
-end
-
-
-function gradsof(m::Conv1d)
-    grads = Vector(undef, 2)
-    grads[1] = m.w.delta
-    grads[2] = m.b.delta
-    return grads
-end
-
-
-function zerograds!(m::Conv1d)
-    for v in gradsof(m)
-        v .= 0.0
-    end
-end
 
 
 function paramsof(m::Conv1d)

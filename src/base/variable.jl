@@ -262,11 +262,12 @@ function Base.show(io::IO, ::MIME"text/plain", xv::XVariable)
         prefix = "($c) None Leaf's"
         colorf = yellow!
     end
-
     print(colorf(prefix * " value is "))
     display(x.value)
-    print(colorf(prefix * " delta is "))
-    display(x.delta)
+    if !isnothing(δ(x))
+        print(colorf(prefix * " delta is "))
+        display(x.delta)
+    end
 end
 
 

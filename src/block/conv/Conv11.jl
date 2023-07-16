@@ -13,7 +13,7 @@ mutable struct Conv1x1 <: Block
     f::FunOrNil
     function Conv1x1(ichannels::Int, ochannels::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
-        A = T( sqrt(2 / isize) )
+        A = T( sqrt(2 / ichannels) )
         w = randn(T, ochannels, ichannels) .* A
         b = randn(T, ochannels,         1) .* A
         new(Variable{type}(w,true,true,true),

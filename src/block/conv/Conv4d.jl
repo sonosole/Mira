@@ -47,8 +47,7 @@ mutable struct Conv4d <: Block
             kernel,
             dilation,
             stride,
-            padding,
-            selectpad(padmode), padval)
+            padding, selectpad(padmode), padval)
     end
     function Conv4d()
         new(nothing, nothing, nothing, (3,3,3,3), (1,1,1,1), (1,1,1,1), ((0,0),(0,0),(0,0),(0,0)), padzeros, 0f0)
@@ -74,12 +73,14 @@ end
 
 # pretty show
 function Base.show(io::IO, m::Conv4d)
-    SIZE = size(m.w)
-    TYPE = typeof(m.w.value)
     P = ifelse(paddings(m.padding)==0, "", " padding=$(m.padding),")
     D = ifelse(prod(m.dilation)==1,   "", " dilation=$(m.dilation),")
     S = ifelse(prod(m.stride)==1,     "", " stride=$(m.stride),")
-    print(io, "Conv4d($(Int(SIZE[2]/prod(m.kernel))) => $(SIZE[1]), $(m.f), kernel=$(m.kernel),$D$S$P type=$TYPE)")
+    SIZE = size(m.w)
+    TYPE = typeof(m.w.value)
+    och  = SIZE[2] ÷ prod(m.kernel)
+    ich  = SIZE[1]
+    print(io, "Conv4d($(och) => $(ich), $(m.f), kernel=$(m.kernel),$D$S$P type=$TYPE)")
 end
 
 
