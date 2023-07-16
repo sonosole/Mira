@@ -472,7 +472,7 @@ function exp!(x::Variable{T}) where T
 end
 
 
-function Base.:exp(x::Variable{T}) where T
+function Base.exp(x::Variable{T}) where T
     y = Variable{T}(exp(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇exp()
@@ -503,7 +503,7 @@ function log!(x::Variable{T}) where T
 end
 
 
-function Base.:log(x::Variable{T}) where T
+function Base.log(x::Variable{T}) where T
     y = Variable{T}(log(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇log()
@@ -524,7 +524,7 @@ function abs!(x::AbstractArray)
 end
 
 
-function Base.:abs(x::AbstractArray)
+function Base.abs(x::AbstractArray)
     return abs.(x)
 end
 
@@ -544,7 +544,7 @@ function abs!(x::Variable{T}) where T
 end
 
 
-function Base.:abs(x::Variable{T}) where T
+function Base.abs(x::Variable{T}) where T
     y = Variable{T}(abs(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇abs()
@@ -559,27 +559,12 @@ function Base.:abs(x::Variable{T}) where T
 end
 
 
-function Base.:reshape(x::Variable{T}, newsize) where T
-    y = Variable{T}( reshape(ᵛ(x), newsize), x.backprop )
-    if y.backprop
-        y.backward = function ∇reshape()
-            if need2computeδ!(x)
-                x ← reshape(δ(y), x.shape)
-            end
-            ifNotKeepδThenFreeδ!(y)
-        end
-        addchild(y, x)
-    end
-    return y
-end
-
-
 function exp2!(x::AbstractArray)
     @. x = exp2(x)
 end
 
 
-function Base.:exp2(x::AbstractArray)
+function Base.exp2(x::AbstractArray)
     return exp2.(x)
 end
 
@@ -601,7 +586,7 @@ function exp2!(x::Variable{T}) where T
 end
 
 
-function Base.:exp2(x::Variable{T}) where T
+function Base.exp2(x::Variable{T}) where T
     # EXP2 represents y = 2^x
     y = Variable{T}(exp2(ᵛ(x)), x.backprop)
     if x.backprop
@@ -623,7 +608,7 @@ function exp10!(x::AbstractArray)
 end
 
 
-function Base.:exp10(x::AbstractArray)
+function Base.exp10(x::AbstractArray)
     return exp10.(x)
 end
 
@@ -645,7 +630,7 @@ function exp10!(x::Variable{T}) where T
 end
 
 
-function Base.:exp10(x::Variable{T}) where T
+function Base.exp10(x::Variable{T}) where T
     # EXP10 represents y = 10^x
     y = Variable{T}(exp10(ᵛ(x)), x.backprop)
     if x.backprop
@@ -667,7 +652,7 @@ function log2!(x::AbstractArray)
 end
 
 
-function Base.:log2(x::AbstractArray)
+function Base.log2(x::AbstractArray)
     return log2.(x)
 end
 
@@ -688,7 +673,7 @@ function log2!(x::Variable{T}) where T
 end
 
 
-function Base.:log2(x::Variable{T}) where T
+function Base.log2(x::Variable{T}) where T
     y = Variable{T}(log2(ᵛ(x)), x.backprop)
     if x.backprop
         𝟚 = eltype(x)(2.0f0)
@@ -709,7 +694,7 @@ function log10!(x::AbstractArray)
 end
 
 
-function Base.:log10(x::AbstractArray)
+function Base.log10(x::AbstractArray)
     return log10.(x)
 end
 
@@ -730,7 +715,7 @@ function log10!(x::Variable{T}) where T
 end
 
 
-function Base.:log10(x::Variable{T}) where T
+function Base.log10(x::Variable{T}) where T
     y = Variable{T}(log10(ᵛ(x)), x.backprop)
     if x.backprop
         lO = eltype(x)(10.0f0)
@@ -762,7 +747,7 @@ function sec!(x::Variable{T}) where T
 end
 
 
-function Base.:sec(x::Variable{T}) where T
+function Base.sec(x::Variable{T}) where T
     # SEC represents y = sec(x)
     y = Variable{T}(sec(ᵛ(x)), x.backprop)
     if x.backprop
@@ -796,7 +781,7 @@ function sqrt!(x::Variable{T}) where T
 end
 
 
-function Base.:sqrt(x::Variable{T}) where T
+function Base.sqrt(x::Variable{T}) where T
     y = Variable{T}(sqrt(ᵛ(x)), x.backprop)
     if y.backprop
         S = eltype(x)
@@ -834,7 +819,7 @@ function tan!(x::Variable{T}) where T
 end
 
 
-function Base.:tan(x::Variable{T}) where T
+function Base.tan(x::Variable{T}) where T
     y = Variable{T}(tan(ᵛ(x)), x.backprop)
     if y.backprop
         S = eltype(x)
@@ -858,7 +843,7 @@ function tand!(x::AbstractArray)
 end
 
 
-function Base.:tand(x::AbstractArray)
+function Base.tand(x::AbstractArray)
     return tand.(x)
 end
 
@@ -882,7 +867,7 @@ function tand!(x::Variable{T}) where T
 end
 
 
-function Base.:tand(x::Variable{T}) where T
+function Base.tand(x::Variable{T}) where T
     y = Variable{T}(tand(ᵛ(x)), x.backprop)
     if y.backprop
         TOO = eltype(x)
@@ -920,7 +905,7 @@ function tanh!(x::Variable{T}) where T
 end
 
 
-function Base.:tanh(x::Variable{T}) where T
+function Base.tanh(x::Variable{T}) where T
     y = Variable{T}(tanh(ᵛ(x)), x.backprop)
     if y.backprop
         S = eltype(x)
@@ -976,7 +961,7 @@ function sin!(x::Variable{T}) where T
 end
 
 
-function Base.:sin(x::Variable{T}) where T
+function Base.sin(x::Variable{T}) where T
     y = Variable{T}(sin(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇sin()
@@ -997,7 +982,7 @@ function sinc!(x::AbstractArray)
 end
 
 
-function Base.:sinc(x::AbstractArray)
+function Base.sinc(x::AbstractArray)
     return sinc.(x)
 end
 
@@ -1018,7 +1003,7 @@ function sinc!(x::Variable{T}) where T
 end
 
 
-function Base.:sinc(x::Variable{T}) where T
+function Base.sinc(x::Variable{T}) where T
     # sinc represents y = sin(pi*x)/(pi*x)
     y = Variable{T}(sinc(ᵛ(x)), x.backprop)
     if y.backprop
@@ -1040,7 +1025,7 @@ function sind!(x::AbstractArray)
 end
 
 
-function Base.:sind(x::AbstractArray)
+function Base.sind(x::AbstractArray)
     return sind.(x)
 end
 
@@ -1061,7 +1046,7 @@ function sind!(x::Variable{T}) where T
 end
 
 
-function Base.:sind(x::Variable{T}) where T
+function Base.sind(x::Variable{T}) where T
     y = Variable{T}(sind(ᵛ(x)), x.backprop)
     if y.backprop
         DPI = eltype(x)(pi/180) # 1 rad⁻¹
@@ -1083,7 +1068,7 @@ function sinpi!(x::AbstractArray)
 end
 
 
-function Base.:sinpi(x::AbstractArray)
+function Base.sinpi(x::AbstractArray)
     return sinpi.(x)
 end
 
@@ -1104,7 +1089,7 @@ function sinpi!(x::Variable{T}) where T
 end
 
 
-function Base.:sinpi(x::Variable{T}) where T
+function Base.sinpi(x::Variable{T}) where T
     y = Variable{T}(sinpi(ᵛ(x)), x.backprop)
     if y.backprop
         𝝅 = eltype(x)(pi)
@@ -1157,7 +1142,7 @@ function cos!(x::Variable{T}) where T
 end
 
 
-function Base.:cos(x::Variable{T}) where T
+function Base.cos(x::Variable{T}) where T
     y = Variable{T}(cos(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇cos()
@@ -1188,7 +1173,7 @@ function inv!(x::Variable{T}) where T
 end
 
 
-function Base.:inv(x::Variable{T}) where T
+function Base.inv(x::Variable{T}) where T
     y = Variable{T}(inv(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇inv()

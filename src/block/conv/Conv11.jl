@@ -37,7 +37,7 @@ end
 function Base.show(io::IO, m::Conv1x1)
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    print(io, "Conv1x1($(SIZE[2]), $(SIZE[1]), $(m.f); type=$TYPE)")
+    print(io, "Conv1x1($(SIZE[2]) => $(SIZE[1]), $(m.f); type=$TYPE)")
 end
 
 

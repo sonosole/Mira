@@ -152,7 +152,11 @@ function filldelta(x::Variable{T}, g::Union{Real,T}) where T
     if isnothing(x.delta)
         x.delta = T(undef, size(x))
     end
-    x.delta .= eltype(x)(g)
+    if g isa Real
+        x.delta .= eltype(x)(g)
+    else
+        x.delta .= g
+    end
     return nothing
 end
 
