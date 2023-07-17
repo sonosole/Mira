@@ -84,7 +84,7 @@ function Base.show(io::IO, c::Conv{N}) where N
     TYPE = typeof(c.w.value)
     och  = SIZE[2] ÷ prod(c.kernel)
     ich  = SIZE[1]
-    print(io, "Conv$(N)d($(och) => $(ich), $(m.f), kernel=$(c.kernel),$D$S$P type=$TYPE)")
+    print(io, "Conv$(N)d($(och) => $(ich), $(c.f), kernel=$(c.kernel),$D$S$P type=$TYPE)")
 end
 
 

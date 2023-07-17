@@ -140,7 +140,7 @@ end
 
 set all elements of `x.delta` be `δx`
 """
-@inline function (←)(x::Variable, δx::Real)
+@inline function (←)(x::Variable{T}, g::Real) where T
     if isnothing(x.delta)
         x.delta = Zeros(T, x.shape)
     end

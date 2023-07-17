@@ -22,10 +22,10 @@ mutable struct MixPrecision{Opt}
         num = length(opt.xparams)
         W₃₂ = VecXVariable(num)
         for i = 1:num
-            c , θ = xparams[i]
+            c , θ = opt.xparams[i]
             W₃₂[i] = (c, clone(θ, dtype=dtype))
         end
-        new{opt}(opt, W₃₂)
+        new{Opt}(opt, W₃₂)
     end
 end
 
@@ -51,10 +51,5 @@ end
 
 
 function zerograds!(mixpre::MixPrecision)
-    Threads.@threads for xvar in mixpre.optimizer.xparams
-        c , x = xvar
-        if !isnothing(δ(x))
-            δ(x) .= 0.0
-        end
-    end
+    zerograds!(mixpre.optimizer)
 end

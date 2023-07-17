@@ -65,6 +65,7 @@ end
 @inline groups(G::GroupConv{D}) where D = G.groups
 @inline Base.first(G::GroupConv{D}) where D  = G.blocks[1]
 @inline Base.getindex(G::GroupConv{D}, i::Int) where D = G.blocks[i]
+
 @inline Base.lastindex(G::GroupConv{D}) where D = G.groups
 @inline Base.firstindex(G::GroupConv{D}) where D = 1
 
@@ -78,7 +79,7 @@ end
 function clone(this::GroupConv{D}; type::Type=Array{Float32}) where D
     cloned = GroupConv{D}(groups(this))
     for i in 1:groups(this)
-        cloned[i] = clone(this[i], type=type)
+        cloned.blocks[i] = clone(this.blocks[i], type=type)
     end
     return cloned
 end
