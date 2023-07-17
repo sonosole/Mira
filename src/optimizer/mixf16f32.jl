@@ -18,7 +18,7 @@ W₁₆ = tofloat32(W₃₂)
 mutable struct MixPrecision{Opt}
     optimizer :: Opt
     backup :: XVariables
-    function MixPrecision(opt::Opt; type=Array{Float32}) where Opt <: Optimizer
+    function MixPrecision(opt::Opt; type::Type=Array{Float32}) where Opt <: Optimizer
         num = length(opt.xparams)
         W₃₂ = VecXVariable(num)
         for i = 1:num
@@ -30,7 +30,7 @@ mutable struct MixPrecision{Opt}
 end
 
 
-function update!(mixpre::MixPrecision,
+function update!(mixpre::MixPrecision;
                  clipfn::Function=LPInfNormClip,
                  clipvalue::Real=10.0,
                  applyL1::Function=decay_by_L₁,
@@ -45,7 +45,7 @@ function update!(mixpre::MixPrecision,
     θ₁₆ = mixpre.optimizer.xparams
     θ₃₂ = mixpre.backup
     for ( (c₁₆, W₁₆), (c₃₂, W₃₂) ) in zip(θ₁₆, θ₃₂)
-        W₁₆ .= W₃₂
+        ᵛ(W₁₆) .= ᵛ(W₃₂)
     end
 end
 
