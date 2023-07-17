@@ -15,6 +15,7 @@ export unsetmarked
 export VecVariable
 export VecXVariable
 export infos
+export totype
 
 export Variable, Variables
 export XVariable, XVariables
@@ -40,7 +41,7 @@ mutable struct Variable{T}
     ismarked  :: Bool                # whether marked during backprop
     indegree  :: Int                 # in backward view, the indegree of a node
     backward  :: FunOrNil            # backward function
-    children  :: Vector{Variable{T}} # children Variables
+    children  :: Vector{Variable}    # children Variables
     function Variable{T}(x, backprop  :: Bool=true,
                             keepsgrad :: Bool=false,
                             isleaf    :: Bool=false) where T <: AbstractArray
@@ -49,7 +50,7 @@ mutable struct Variable{T}
         ismarked = false
         indegree = 0
         backward = nothing
-        children = Vector{Variable{T}}()
+        children = Vector{Variable}()
         new{T}(x, delta, shape, isleaf, backprop, keepsgrad, ismarked, indegree, backward, children)
     end
 end
@@ -349,6 +350,20 @@ end
 @inline function assertdim(x::Variable, d::Int)
     D = ndims(x)
     @assert D==d "expected input-dim is $d but got $D"
+end
+
+function totype(x::Variable{T}, type::Type) where T
+    y = Variable{type}(type(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇convertprecision()
+            if need2computeδ!(x)
+                x ← T(δ(y))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
 end
 
 # having the below defines, the activation function

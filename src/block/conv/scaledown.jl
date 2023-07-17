@@ -11,7 +11,7 @@ export scaledown3d
 end
 
 
-function drange(x::AbstractArray, d::NTuple{D, Int}) where D
+function drange(x::AbstractArray, d::Dims{D}) where D
     N = ndims(x)
     @assert D ≤ N "too much scale-down dims"
     S = size(x)
@@ -28,7 +28,7 @@ end
 
 
 """
-    scaledown(x::AbstractArray, d::NTuple)
+    scaledown(x::AbstractArray, d::Dims{D}) where D
 # Example
     julia> x = reshape(collect(1:15),3,5)
     3×5 Matrix{Int64}:
@@ -41,7 +41,7 @@ end
      1  10
      3  12
 """
-function scaledown(x::AbstractArray, d::NTuple{D, Int}) where D
+function scaledown(x::AbstractArray, d::Dims{D}) where D
     prod(d) == 1 && return x
     return x[drange(x, d)...]
 end
@@ -52,7 +52,7 @@ function scaledown(x::AbstractArray, d::Vector{Int})
 end
 
 """
-    scaledown(x::Variable, d::NTuple)
+    scaledown(x::Variable, d::Dims{D}) where D
 # Example
     julia> x = Variable(reshape(collect(1:15),3,5), keepsgrad=true)
      Leaf's value is 3×5 Matrix{Float32}:
@@ -76,7 +76,7 @@ end
      0.0  0.0  0.0  0.0  0.0
      1.0  0.0  0.0  1.0  0.0
 """
-function scaledown(x::Variable, d::NTuple{D, Int}) where D
+function scaledown(x::Variable, d::Dims{D}) where D
     prod(d) == 1 && return x
     return x[drange(ᵛ(x), d)...]
 end
@@ -123,7 +123,7 @@ end
     scaledown2d(x::AbstractArray, d::NTuple{2,Int})
 Applied to batched multi-channel `2-D` data of shape (Channels, `Hight`, `Width`, Batchsize)
 """
-function scaledown2d(x::AbstractArray, d::NTuple{2,Int})
+function scaledown2d(x::AbstractArray, d::Dims{2})
     assertdim(x, 4)
     prod(d)==1 && return x
     dilation = (1, d[1], d[2], 1)
@@ -169,7 +169,7 @@ end
     scaledown3d(x::AbstractArray, d::NTuple{3,Int})
 Applied to batched multi-channel `3-D` data of shape (Channels, `Hight`, `Width`, `Depth`, Batchsize)
 """
-function scaledown3d(x::AbstractArray, d::NTuple{3,Int})
+function scaledown3d(x::AbstractArray, d::Dims{3})
     assertdim(x, 5)
     prod(d)==1 && return x
     dilation = (1, d[1], d[2], d[3], 1)
@@ -227,7 +227,7 @@ end
     scaledown2d(x::Variable, d::NTuple{2,Int})
 Applied to batched multi-channel `2-D` Variable of shape (Channels, `Hight`, `Width`, Batchsize)
 """
-function scaledown2d(x::Variable, d::NTuple{2,Int})
+function scaledown2d(x::Variable, d::Dims{2})
     assertdim(x, 4)
     prod(d)==1 && return x
     dilation = (1, d[1], d[2], 1)
@@ -273,7 +273,7 @@ end
     scaledown3d(x::Variable, d::NTuple{3,Int})
 Applied to batched multi-channel `3-D` Variable of shape (Channels, `Hight`, `Width`, `Depth`, Batchsize)
 """
-function scaledown3d(x::Variable, d::NTuple{3,Int})
+function scaledown3d(x::Variable, d::Dims{3})
     assertdim(x, 5)
     prod(d)==1 && return x
     dilation = (1, d[1], d[2], d[3], 1)

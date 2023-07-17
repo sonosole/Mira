@@ -18,12 +18,12 @@ W₁₆ = tofloat32(W₃₂)
 mutable struct MixPrecision{Opt}
     optimizer :: Opt
     backup :: XVariables
-    function MixPrecision(opt::Opt; dtype=Array{Float32}) where Opt <: Optimizer
+    function MixPrecision(opt::Opt; type=Array{Float32}) where Opt <: Optimizer
         num = length(opt.xparams)
         W₃₂ = VecXVariable(num)
         for i = 1:num
             c , θ = opt.xparams[i]
-            W₃₂[i] = (c, clone(θ, dtype=dtype))
+            W₃₂[i] = (c, clone(θ, type = type))
         end
         new{Opt}(opt, W₃₂)
     end
