@@ -19,6 +19,9 @@ Applies a D-dims group convolution over an (D+2)-dims input tensor of shape (ich
                  padmode  :: String = "repeat",
                  padding  :: Dims2OrStr = "valid",
                  type     :: Type = Array{Float32}) where D
+
++ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
++ `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
 """
 mutable struct GroupConv{D} <: Block
     blocks :: Vector{Conv{D}}
@@ -172,7 +175,7 @@ end
 
 
 """
-Applies a `1`-D convolution over an `3`-D input tensor of shape (ichannels, `steps`, batchsize)\n
+Applies a `1`-D group convolution over an `3`-D input tensor of shape (ichannels, `steps`, batchsize)\n
 
 # Constructor
     GroupConv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
@@ -184,6 +187,9 @@ Applies a `1`-D convolution over an `3`-D input tensor of shape (ichannels, `ste
                 padmode  :: String = "repeat",
                 padding  :: Dims2OrStr = "valid",
                 type     :: Type = Array{Float32})
+
++ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
++ `padding` can be \"valid\", \"same\", or type `Dims{2}`
 """
 function GroupConv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                      groups   :: Int = 2,
@@ -218,7 +224,7 @@ end
 
 
 """
-Applies a `2`-D convolution over an `4`-D input tensor of shape (ichannels, `hight`, `width`, batchsize)\n
+Applies a `2`-D group convolution over an `4`-D input tensor of shape (ichannels, `hight`, `width`, batchsize)\n
 
 # Constructor
     GroupConv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
@@ -230,6 +236,9 @@ Applies a `2`-D convolution over an `4`-D input tensor of shape (ichannels, `hig
                 padmode  :: String = "repeat",
                 padding  :: Pads2OrStr = "valid",
                 type     :: Type = Array{Float32})
+
++ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
++ `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
 """
 function GroupConv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
@@ -255,7 +264,7 @@ end
 
 
 """
-Applies a `3`-D convolution over an `5`-D input tensor of shape (ichannels, `hight`, `width`, `steps`, batchsize)\n
+Applies a `3`-D group convolution over an `5`-D input tensor of shape (ichannels, `hight`, `width`, `steps`, batchsize)\n
 
 # Constructor
     GroupConv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
@@ -267,6 +276,9 @@ Applies a `3`-D convolution over an `5`-D input tensor of shape (ichannels, `hig
                 padmode  :: String = "repeat",
                 padding  :: Pads3OrStr = "valid",
                 type     :: Type = Array{Float32})
+
++ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
++ `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
 """
 function GroupConv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int     = 2,
@@ -292,7 +304,7 @@ end
 
 
 """
-Applies a `4`-D convolution over an `6`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`, batchsize)\n
+Applies a `4`-D group convolution over an `6`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`, batchsize)\n
 
 # Constructor
     GroupConv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
@@ -304,6 +316,9 @@ Applies a `4`-D convolution over an `6`-D input tensor of shape (ichannels, `w1`
                 padmode  :: String = "repeat",
                 padding  :: Pads4OrStr = "valid",
                 type     :: Type = Array{Float32})
+
++ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
++ `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
 """
 function GroupConv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
@@ -328,7 +343,7 @@ end
 
 
 """
-Applies a `5`-D convolution over an `7`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`,`w5`, batchsize)\n
+Applies a `5`-D group convolution over an `7`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`,`w5`, batchsize)\n
 
 # Constructor
     GroupConv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
@@ -340,6 +355,9 @@ Applies a `5`-D convolution over an `7`-D input tensor of shape (ichannels, `w1`
                 padmode  :: String = "repeat",
                 padding  :: Pads5OrStr = "valid",
                 type     :: Type = Array{Float32})
+
++ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
++ `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
 """
 function GroupConv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,

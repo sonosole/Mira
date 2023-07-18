@@ -10,12 +10,6 @@ include("./pad-symmetric.jl")
 include("./pad-reflect.jl")
 
 include("./Conv.jl")
-include("./Conv1d.jl")
-include("./Conv2d.jl")
-include("./Conv3d.jl")
-include("./Conv4d.jl")
-include("./Conv5d.jl")
-
 include("./ConvGroup.jl")
 
 include("./Conv11.jl")
