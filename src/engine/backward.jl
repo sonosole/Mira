@@ -1,5 +1,5 @@
 export backward
-
+export backprop
 
 function backward(y::Variable{T},
                   δy::Union{Real,T}=1.0f0;
@@ -23,7 +23,7 @@ function backward(y::Variable{T},
     if !keepgraph
         for v in sorted
             v.backward()
-            v = nothing
+            free(v)
         end
     else
         for v in sorted
@@ -33,9 +33,16 @@ function backward(y::Variable{T},
 end
 
 
-export backprop
+
 function backprop(sorted::Vector{Variable})
     for node in sorted
         node.backward()
     end
+end
+
+function free(x::Variable{<:AbstractArray})
+    x.value    = nothing
+    x.backward = nothing
+    x.children = nothing
+    x          = nothing
 end

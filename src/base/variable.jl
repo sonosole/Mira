@@ -32,25 +32,25 @@ export passgrad, ←
                          isleaf    :: Bool=false) # whether leaf node
 """
 mutable struct Variable{T}
-    value     :: T                   # value in forward
-    delta     :: Union{Nothing,T}    # gradients collected in backprop
+    value     :: Union{Nil,T}        # value in forward
+    delta     :: Union{Nil,T}        # gradients collected in backprop
     shape     :: Tuple               # shape of `value`
     isleaf    :: Bool                # whether leaf node
     backprop  :: Bool                # whether needs backprop when forward
     keepsgrad :: Bool                # whether keeps grad after backprop
     ismarked  :: Bool                # whether marked during backprop
     indegree  :: Int                 # in backward view, the indegree of a node
-    backward  :: FunOrNil            # backward function
-    children  :: Vector{Variable}    # children Variables
-    function Variable{T}(x, backprop  :: Bool=true,
-                            keepsgrad :: Bool=false,
-                            isleaf    :: Bool=false) where T <: AbstractArray
+    backward  :: Union{Nil,Function} # backward function
+    children  :: Union{Nil,Vector{Variable}}
+    function Variable{T}(x, backprop  :: Bool = true,
+                            keepsgrad :: Bool = false,
+                            isleaf    :: Bool = false) where T <: AbstractArray
         delta    = nothing
         shape    = size(x)
         ismarked = false
         indegree = 0
         backward = nothing
-        children = Vector{Variable}()
+        children = ifelse(!isleaf, Vector{Variable}(), nothing)
         new{T}(x, delta, shape, isleaf, backprop, keepsgrad, ismarked, indegree, backward, children)
     end
 end
@@ -292,6 +292,7 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline keepsgrad(x::Variable) = x.keepsgrad
 @inline needsgrad(x::Variable) = x.keepsgrad = true
 
+@inline Base.length(::Nil)   = 0
 @inline haskid(x::Variable)  = length(x.children) > 0 ? true : false
 @inline kidsof(x::Variable)  =        x.children
 @inline nkidsof(x::Variable) = length(x.children)

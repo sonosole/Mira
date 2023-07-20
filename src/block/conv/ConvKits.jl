@@ -10,6 +10,9 @@ const Pads5OrStr = Union{Pads{5}, String} # for conv5d
 @inline function singletuple(i::Int)
     return (i,)
 end
+@inline function singletuple(ij::Dims{2})
+    return (ij,)
+end
 
 function selectpad(padmode::String)
     if padmode == "zeros"

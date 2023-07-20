@@ -30,7 +30,7 @@ function checkgrad(block::B, x::Variable, i::Int=1;
         # [1] forward 1st time
         y₁ = forward(block, x)
         C₁ = Loss(y₁)
-        backward(C₁)
+        backward(C₁, keepgraph=true)
         w̄₁ = δ(w)[i]
         zerograds!(params)
 
@@ -40,7 +40,7 @@ function checkgrad(block::B, x::Variable, i::Int=1;
         # [3] forward 2nd time
         y₂ = forward(block, x)
         C₂ = Loss(y₂)
-        backward(C₂)
+        backward(C₂, keepgraph=true)
         w̄₂ = δ(w)[i]
         zerograds!(params)
 
@@ -82,7 +82,7 @@ function checkgrad(fn::Function, x::Variable, i::Int=1;
     # [1] forward 1st time
     y₁ = fn(x)
     C₁ = Loss(y₁)
-    backward(C₁)
+    backward(C₁, keepgraph=true)
     x̄₁ = δ(x)[i]
     zerograds!(x)
 
@@ -92,7 +92,7 @@ function checkgrad(fn::Function, x::Variable, i::Int=1;
     # [3] forward 2nd time
     y₂ = fn(x)
     C₂ = Loss(y₂)
-    backward(C₂)
+    backward(C₂, keepgraph=true)
 
     x̄₂ = δ(x)[i]
     zerograds!(x)

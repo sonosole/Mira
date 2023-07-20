@@ -1,14 +1,33 @@
+export storage
+
+const KiB = 1024
+const MiB = 1048576
+const GiB = 1073741824
+const TiB = 1099511627776
+const PiB = 1125899906842624
+const EiB = 1152921504606846976
+const ZiB = 1180591620717411303424
+const YiB = 1208925819614629174706176
+const BiB = 1237940039285380274899124224
+
+
+function storage(x, u::String="MB")
+    bytes = length(x) * sizeof(eltype(x))
+    return blocksize(bytes, uppercase(u))
+end
+
+
 function blocksize(n::Real, u::String)
-    if u == "B"  return n / 1 end
-    if u == "KB" return n / 1024 end
-    if u == "MB" return n / 1048576 end
-    if u == "GB" return n / 1073741824 end
-    if u == "TB" return n / 1099511627776 end
-    if u == "PB" return n / 1125899906842624 end
-    if u == "EB" return n / 1152921504606846976 end
-    if u == "ZB" return n / 1180591620717411303424 end
-    if u == "YB" return n / 1208925819614629174706176 end
-    if u == "BB" return n / 1237940039285380274899124224 end
+    if u == "B"  return n / 1   end
+    if u == "KB" return n / KiB end
+    if u == "MB" return n / MiB end
+    if u == "GB" return n / GiB end
+    if u == "TB" return n / TiB end
+    if u == "PB" return n / PiB end
+    if u == "EB" return n / EiB end
+    if u == "ZB" return n / ZiB end
+    if u == "YB" return n / YiB end
+    if u == "BB" return n / BiB end
     @error "MUST BE one of B KB MB GB TB PB EB ZB YB BB"
 end
 
@@ -43,21 +62,24 @@ mainly serves for batchnorm like operations. `ndims` is the dims of input Tensor
 `shape` = size( reductionFunction(x, dims=`views`) )
 
 # Example
-    julia> Delta.ShapeAndViews(4, (1,4), (5,3))
+    julia> ShapeAndViews(4, (1,4), (5,3))
     ((5, 1, 1, 3), (2, 3))
+      ↑        ↑    ↑  ↑
+      1        4    dims' mark to reduce
+       keptdims
 """
 function ShapeAndViews(ndims::Int,                    # ndims of input Tensor
                        keptdims::Union{Tuple,Int},    # must be unique and sorted and positive
                        keptsize::Union{Tuple,Int})    # must be positive
 
     @assert typeof(keptsize)==typeof(keptdims) "keptsize & keptdims shall be the same type"
-    @assert ndims >= maximum(keptdims) "ndims >= maximum(keptdims) shall be met"
+    @assert ndims ≥ maximum(keptdims) "ndims >= maximum(keptdims) shall be met"
     @assert ndims > length(keptdims) "this is no elements for statistical analysis"
     @assert ndims > 0 "ndims > 0, but got ndims=$ndims"
 
     if typeof(keptdims) <: Int
         if keptdims == 0
-            if keptsize!=1
+            if keptsize ≠ 1
                 @warn "keptsize should be 1 here, but got $keptsize"
             end
             shape = ntuple(i -> i==keptdims ? keptsize : 1, ndims);
