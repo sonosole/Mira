@@ -185,7 +185,7 @@ Applies a `1`-D group convolution over an `3`-D input tensor of shape (ichannels
                 stride   :: Int = 1,
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
-                padding  :: Dims2OrStr = "valid",
+                padding  :: Pads1OrStr = "valid",
                 type     :: Type = Array{Float32})
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
@@ -198,12 +198,10 @@ function GroupConv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                      stride   :: Int = 1,
                      padval   :: Real = 0f0,
                      padmode  :: String = "repeat",
-                     padding  :: Dims2OrStr = "valid",
+                     padding  :: Pads1OrStr = "valid",
                      type     :: Type = Array{Float32})
 
-    if padding isa String
-        padding = inferpadding(padding, kernel, stride, dilation)
-    else
+    if !isa(padding, String)
         padding = singletuple(padding)
     end
 

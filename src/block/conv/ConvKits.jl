@@ -1,11 +1,10 @@
-const Pads{D}    = NTuple{D, NTuple{2,Int}} where D
-const PadsDOrStr = Union{Pads{D}, String}   where D # for convNd
-const Dims2OrStr = Union{Dims{2}, String} # for conv1d
-const Pads2OrStr = Union{Pads{2}, String} # for conv2d
-const Pads3OrStr = Union{Pads{3}, String} # for conv3d
-const Pads4OrStr = Union{Pads{4}, String} # for conv4d
-const Pads5OrStr = Union{Pads{5}, String} # for conv5d
-
+const Pads{D}    = NTuple{D, Dims{2}}                                where D
+const PadsDOrStr = Union{Int, NTuple{D, Union{Dims{2},Int}}, String} where D
+const Pads1OrStr = Union{Int,                 Dims{2},       String} # for conv1d
+const Pads2OrStr = Union{Int, NTuple{2, Union{Dims{2},Int}}, String} # for conv2d
+const Pads3OrStr = Union{Int, NTuple{3, Union{Dims{2},Int}}, String} # for conv3d
+const Pads4OrStr = Union{Int, NTuple{4, Union{Dims{2},Int}}, String} # for conv4d
+const Pads5OrStr = Union{Int, NTuple{5, Union{Dims{2},Int}}, String} # for conv5d
 
 @inline function singletuple(i::Int)
     return (i,)
@@ -39,14 +38,9 @@ function inferpadding(padding::String, kernel::Int, stride::Int, dilation::Int)
     if padding ∉ ("same", "valid")
         error("padmode should be \"zeros\" or \"const\", but got $padding")
     end
-    if isequal(padding, "same") && stride≠1
-        error("when padding==\"same\", stride should be 1, but only got stride=$stride")
-    end
-    if isequal(padding, "same") && dilation≠1
-        error("when padding==\"same\", dilation should be 1, but only got dilation=$dilation")
-    end
-
     if isequal(padding, "same")
+        (stride   ≠ 1) && error("when padding==\"same\", stride should be 1, but only got stride=$stride")
+        (dilation ≠ 1) && error("when padding==\"same\", dilation should be 1, but only got dilation=$dilation")
         leftpad  = div(kernel-1, 2, RoundUp)
         rightpad = div(kernel-1, 2, RoundDown)
     end
@@ -64,14 +58,9 @@ function inferpadding(padding::String, kernel::Dims{D}, stride::Dims{D}, dilatio
     if padding ∉ ("same", "valid")
         error("padmode should be \"zeros\" or \"const\", but got $padding")
     end
-    if isequal(padding, "same") && prod(stride)≠1
-        error("when padding==\"same\", stride should be 1, but only got stride=$stride")
-    end
-    if isequal(padding, "same") && prod(dilation)≠1
-        error("when padding==\"same\", dilation should be 1, but only got dilation=$dilation")
-    end
-
     if isequal(padding, "same")
+        (prod(stride)   ≠ 1) && error("when padding==\"same\", stride should be 1, but only got stride=$stride")
+        (prod(dilation) ≠ 1) && error("when padding==\"same\", dilation should be 1, but only got dilation=$dilation")
         npads = ntuple(D) do i
             leftpad  = div(kernel[i]-1, 2, RoundUp)
             rightpad = div(kernel[i]-1, 2, RoundDown)

@@ -41,7 +41,18 @@ mutable struct Conv{D} <: Block
                      type     :: Type = Array{Float32}) where D
 
         if padding isa String
-            padding = inferpadding(padding, kernel, stride, dilation)
+            npads = inferpadding(padding, kernel, stride, dilation)
+        elseif padding isa Int
+            npads = ntuple(i -> (padding, padding), D)
+        else
+            npads = ntuple(D) do i
+                if padding[i] isa Int
+                    return (padding[i], padding[i])
+                end
+                if padding[i] isa Dims{2}
+                    return padding[i]
+                end
+            end
         end
 
         dtype    = eltype(type)
@@ -54,7 +65,7 @@ mutable struct Conv{D} <: Block
         new{D}(Variable{type}(w,true,true,true),
                Variable{type}(b,true,true,true), fn,
                kernel, dilation, stride,
-               padding, selectpad(padmode), padval)
+               npads, selectpad(padmode), padval)
     end
     function Conv{D}() where D
         O = (0, 0)
@@ -181,12 +192,10 @@ function Conv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 stride   :: Int = 1,
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
-                padding  :: Dims2OrStr = "valid",
+                padding  :: Pads1OrStr = "valid",
                 type     :: Type = Array{Float32})
 
-    if padding isa String
-        padding = inferpadding(padding, kernel, stride, dilation)
-    else
+    if !isa(padding, String)
         padding = singletuple(padding)
     end
 
