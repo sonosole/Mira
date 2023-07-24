@@ -353,7 +353,7 @@ end
     @assert D==d "expected input-dim is $d but got $D"
 end
 
-function totype(x::Variable{T}, type::Type) where T
+function totype(type::Type, x::Variable{T}) where T
     y = Variable{type}(type(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇convertprecision()
