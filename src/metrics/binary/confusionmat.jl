@@ -99,7 +99,7 @@ end
 """
     precision(x::ConfusionMat; type::String="+") -> TP / (TP + FP)
 """
-function precision(x::ConfusionMat; type::String="+")
+function Base.precision(x::ConfusionMat; type::String="+")
     if type == "+"
         return x.TP / (x.TP + x.FP)
     end

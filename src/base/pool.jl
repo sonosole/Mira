@@ -1,4 +1,6 @@
-function Base.maximum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
+const IntOrDims{N} = Union{Int, Dims{N}} where N
+
+function Base.maximum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(maximum(ᵛ(x), dims=dims), x.backprop)
     if y.backprop
         mask = ᵛ(x) .== ᵛ(y)
@@ -13,7 +15,7 @@ function Base.maximum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T
     return y
 end
 
-function Base.minimum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
+function Base.minimum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(minimum(ᵛ(x), dims=dims), x.backprop)
     if y.backprop
         mask = ᵛ(x) .== ᵛ(y)
@@ -28,7 +30,7 @@ function Base.minimum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T
     return y
 end
 
-function Base.sum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
+function Base.sum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(sum(ᵛ(x), dims=dims), x.backprop)
     if y.backprop
         y.backward = function ∇sum()
@@ -43,7 +45,7 @@ function Base.sum(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
 end
 
 
-function mean(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
+function mean(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     n = eltype(x)(1) / prod(size(x, i) for i in dims)
     μ = Variable{T}(sum(ᵛ(x), dims=dims) .* n, x.backprop)
     if μ.backprop
@@ -95,7 +97,7 @@ end
 
 y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
 """
-function linearpool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=2) where {T,N}
+function linearpool(x::Variable{T}; dims::IntOrDims{N}=2) where {T,N}
     Σxᵢ² = sum(ᵛ(x) .* ᵛ(x), dims=dims)     # Σ xᵢ·xᵢ
     Σxᵢ  = sum(ᵛ(x),         dims=dims)     # Σ xᵢ
     y    = Variable{T}(Σxᵢ² ./ Σxᵢ, x.backprop)
@@ -118,7 +120,7 @@ end
 
     y[k] = (Σᵢ x[k,i] * x[k,i]) / Σᵢ x[k,i], i is the indices of other dims
 """
-function linearpool(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}=2) where N
+function linearpool(x::AbstractArray; dims::IntOrDims{N}=2) where N
     return sum(x .* x, dims=dims) ./ sum(x, dims=dims)
 end
 
@@ -128,7 +130,7 @@ end
 
     y[k] = (Σᵢ exp(x[k,i]) * x[k,i]) / Σᵢ exp(x[k,i]), i is the indices of other dims
 """
-function exppool(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=2) where {T,N}
+function exppool(x::Variable{T}; dims::IntOrDims{N}=2) where {T,N}
     eˣ  = exp.(ᵛ(x))
     Σeˣⁱxᵢ = sum(eˣ .* ᵛ(x), dims=dims)   # Σ exp(xᵢ)·xᵢ
     Σeˣⁱ = sum(eˣ, dims=dims)             # Σ exp(xᵢ)
@@ -152,7 +154,7 @@ end
 
     y[k] = (Σᵢ exp(x[k,i]) * x[k,i]) / Σᵢ exp(x[k,i]), i is the indices of other dims
 """
-function exppool(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}=2) where N
+function exppool(x::AbstractArray; dims::IntOrDims{N}=2) where N
     e = exp.(x)
     return sum(e .* x, dims=dims) ./ sum(e, dims=dims)
 end
@@ -163,7 +165,7 @@ end
 
     y =  (Σxᵢⁿ · xᵢ) / Σxᵢⁿ, i is the indices for aggregate
 """
-function powerpool(x::Variable{T}, n::Real=3; dims::Union{Int,NTuple{N,Int}}=2) where {T,N}
+function powerpool(x::Variable{T}, n::Real=3; dims::IntOrDims{N}=2) where {T,N}
     xᵢⁿ    = ᵛ(x) .^ n
     Σxᵢⁿ⁺¹ = sum(xᵢⁿ .* ᵛ(x), dims=dims)    # Σxᵢⁿ · xᵢ
     Σxᵢⁿ   = sum(xᵢⁿ,         dims=dims)    # Σxᵢⁿ
@@ -188,7 +190,7 @@ end
 
     y =  (Σxᵢⁿ · xᵢ) / Σxᵢⁿ, i is the indices for aggregate
 """
-function powerpool(x::AbstractArray, n::Real=3; dims::Union{Int,NTuple{N,Int}}=2) where N
+function powerpool(x::AbstractArray, n::Real=3; dims::IntOrDims{N}=2) where N
     xᵢⁿ    = x .^ n
     Σxᵢⁿ⁺¹ = sum(xᵢⁿ .* ᵛ(x), dims=dims)    # Σxᵢⁿ · xᵢ
     Σxᵢⁿ   = sum(xᵢⁿ,         dims=dims)    # Σxᵢⁿ

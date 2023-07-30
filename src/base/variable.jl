@@ -298,9 +298,9 @@ elsizeof(x::Variable) = sizeof(eltype(x))
 @inline nkidsof(x::Variable) = length(x.children)
 
 
-@inline ismarked(x::Variable)    = x.ismarked
-@inline setmarked(x::Variable)   = x.ismarked = true
-@inline unsetmarked(x::Variable) = x.ismarked = false
+@inline Base.ismarked(x::Variable) = x.ismarked
+@inline setmarked(x::Variable)     = x.ismarked = true
+@inline unsetmarked(x::Variable)   = x.ismarked = false
 
 @inline isroot(x::Variable) = x.indegree == 0
 @inline notempty(x::Variables) = length(x) ≠ 0

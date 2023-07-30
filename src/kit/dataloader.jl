@@ -107,16 +107,13 @@ end
 
 # pretty printing
 function Base.show(io::IO, d::DataLoader{T}) where T
-    println("DataLoader{$T}")
-    println("————————————————————————")
-    println("     data →  $T")
-    println("batchsize →  $(d.batchsize)")
-    println("batchnums →  $(d.batchnums)")
-    println(" droplast →  $(d.droplast)")
-    println("  shuffle →  $(d.shuffle)")
-    println("     imax →  $(d.imax)")
-    println("      len →  $(d.len)")
-    println("  indices →  $(d.indices[1]):$(d.indices[2]-d.indices[1]):$(d.indices[end])")
-    println("  collate →  $(d.collate)")
-    print("————————————————————————")
+    println("────────────────────────")
+    println(" DataLoader{$T}")
+    println("────────────────────────")
+    println(" batchsize → $(d.batchsize)")
+    println(" batchnums → $(d.batchnums)")
+    println("  droplast → $(d.droplast)")
+    println("   shuffle → $(d.shuffle)")
+    println("   collate → $(d.collate)")
+    print("────────────────────────")
 end
