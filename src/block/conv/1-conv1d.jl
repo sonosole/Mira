@@ -123,7 +123,7 @@ end
 """
     PlainConv1dReceptiveField(StrideKernelPair::Vector{NTuple{2,Int}})
 # Example
-    julia> PlainConv1dReceptiveField([(3,2),(3,1),(4,2)]
+    julia> PlainConv1dReceptiveField([(3,2),(3,1),(4,2)])
     (1:13, 5:17)
 """
 function PlainConv1dReceptiveField(StrideKernelPair::Vector{NTuple{2,Int}})
