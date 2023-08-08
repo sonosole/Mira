@@ -22,14 +22,15 @@ function checkgrad(block::B, x::Variable, i::Int=1;
                    eps::AbstractFloat=1e-6,
                    tol::AbstractFloat=0.05,
                    show::Bool=false,
-                   onlyone::Bool=false) where B <: Block
+                   onlyone::Bool=false,
+                   digits::Int=8) where B <: Block
     dw = eps
     istrue = true
     params = paramsof(block)
     for w in params
         # [1] forward 1st time
         y₁ = forward(block, x)
-        C₁ = Loss(y₁)
+        C₁ = MSELoss(y₁, zeros(eltype(y₁),size(y₁)))
         backward(C₁, keepgraph=true)
         w̄₁ = δ(w)[i]
         zerograds!(params)
@@ -39,7 +40,7 @@ function checkgrad(block::B, x::Variable, i::Int=1;
 
         # [3] forward 2nd time
         y₂ = forward(block, x)
-        C₂ = Loss(y₂)
+        C₂ = MSELoss(y₂, zeros(eltype(y₂),size(y₂)))
         backward(C₂, keepgraph=true)
         w̄₂ = δ(w)[i]
         zerograds!(params)
@@ -51,10 +52,14 @@ function checkgrad(block::B, x::Variable, i::Int=1;
         # [5] check if the auto-grad is true or not
         istrue = iseq(∂L∂w, dLdw, tol=tol) && istrue
         if !istrue
+            ∂L∂w = trunc(∂L∂w; digits)
+            dLdw = trunc(dLdw; digits)
             println(yellow!("backward  gradient: $∂L∂w"))
             println(yellow!("numerical gradient: $dLdw"))
         end
         if show
+            ∂L∂w = trunc(∂L∂w; digits)
+            dLdw = trunc(dLdw; digits)
             println("backward  gradient: $∂L∂w")
             println("numerical gradient: $dLdw\n")
         end
@@ -76,12 +81,13 @@ can NOT used here.
 function checkgrad(fn::Function, x::Variable, i::Int=1;
                    show::Bool=false,
                    eps::AbstractFloat=1e-6,
-                   tol::AbstractFloat=0.05)
+                   tol::AbstractFloat=0.05,
+                   digits::Int=8)
     dx = eps
     x.keepsgrad = true
     # [1] forward 1st time
     y₁ = fn(x)
-    C₁ = Loss(y₁)
+    C₁ = MSELoss(y₁, zeros(eltype(y₁),size(y₁)))
     backward(C₁, keepgraph=true)
     x̄₁ = δ(x)[i]
     zerograds!(x)
@@ -91,9 +97,8 @@ function checkgrad(fn::Function, x::Variable, i::Int=1;
 
     # [3] forward 2nd time
     y₂ = fn(x)
-    C₂ = Loss(y₂)
+    C₂ = MSELoss(y₂, zeros(eltype(y₂),size(y₂)))
     backward(C₂, keepgraph=true)
-
     x̄₂ = δ(x)[i]
     zerograds!(x)
 
@@ -104,10 +109,14 @@ function checkgrad(fn::Function, x::Variable, i::Int=1;
     # [5] check if the auto-grad is true or not
     istrue = iseq(∂L∂x, dLdx, tol=tol)
     if !istrue
+        ∂L∂x = trunc(∂L∂x; digits)
+        dLdx = trunc(dLdx; digits)
         println(yellow!("backward  gradient: $∂L∂x"))
         println(yellow!("numerical gradient: $dLdx\n"))
     end
     if show
+        ∂L∂x = trunc(∂L∂x; digits)
+        dLdx = trunc(dLdx; digits)
         println("backward  gradient: $∂L∂x")
         println("numerical gradient: $dLdx\n")
     end
