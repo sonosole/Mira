@@ -8,6 +8,8 @@ include("./MeanNorm.jl")
 export ZNorm
 export BatchNorm0d, BatchNorm1d
 include("./ZNorm.jl")
+include("./meanvar.jl")
+include("./mean.jl")
 
 export wnorm
 include("./weight-normer.jl")

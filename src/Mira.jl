@@ -2,8 +2,8 @@ module Mira
 Base.__precompile__(true)
 
 
-using Statistics: mean, std
-import Statistics.mean
+using Statistics: mean, std, var
+import Statistics: mean, std, var
 using LinearAlgebra: svd
 
 export predict
