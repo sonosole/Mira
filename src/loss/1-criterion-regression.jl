@@ -77,12 +77,12 @@ mean sqrt error (MSE) between each element in the input `x` and target `label`. 
 function MSE(x::Variable{T}, label::Variable{T}) where T
     @assert (x.shape == label.shape)
     backprop = (x.backprop || label.backprop)
-    𝟚 = eltype(x)(2.0)
-    y = Variable{T}((ᵛ(x) - ᵛ(label)).^𝟚, backprop)
+    𝟐 = eltype(x)(2)
+    y = Variable{T}((ᵛ(x) - ᵛ(label)) .^ 𝟐, backprop)
     if backprop
         y.backward = function mseBackward()
             if need2computeδ!(x)
-                x ← δ(y) .* 𝟚 .* (ᵛ(x) - ᵛ(label))
+                x ← δ(y) .* 𝟐 .* (ᵛ(x) - ᵛ(label))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -94,12 +94,12 @@ end
 
 function MSE(x::Variable{T}, label::AbstractArray) where T
     @assert x.shape == size(label)
-    𝟚 = eltype(x)(2.0)
-    y = Variable{T}((ᵛ(x) - label).^𝟚, x.backprop)
+    𝟐 = eltype(x)(2.0)
+    y = Variable{T}((ᵛ(x) - label) .^ 𝟐, x.backprop)
     if y.backprop
         y.backward = function mseBackward()
             if need2computeδ!(x)
-                x ← δ(y) .* 𝟚 .* (ᵛ(x) - label)
+                x ← δ(y) .* 𝟐 .* (ᵛ(x) - label)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -111,8 +111,8 @@ end
 
 function MSE(x::AbstractArray, label::AbstractArray)
     @assert size(x) == size(label)
-    𝟚 = eltype(x)(2.0)
-    return (x - label) .^ 𝟚
+    𝟐 = eltype(x)(2.0)
+    return (x - label) .^ 𝟐
 end
 
 
