@@ -5,7 +5,7 @@ export matMulVec
 export assert_same_size
 
 @inline function assert_same_size(x::Union{Variable,AbstractArray}, y::Union{Variable,AbstractArray})
-    @assert (x.shape == y.shape) "2 inputs shall be the same size"
+    @assert size(x) == size(y) "2 inputs shall be the same size"
 end
 
 
@@ -432,4 +432,33 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
         addchild(Z, V)
     end
     return Z
+end
+
+
+export GradScalar
+mutable struct GradScalar
+    v::Real
+    function GradScalar(v::Real)
+        new(v)
+    end
+end
+
+function Base.:*(x::Variable{T}, constant::GradScalar) where T
+    C = eltype(ᵛ(x))(constant.v)
+    y = Variable{T}(ᵛ(x), x.backprop)
+    if y.backprop
+        y.backward = function ∇matMulScalar()
+            if need2computeδ!(x)
+                x ← δ(y) .* C
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function Base.:*(constant::GradScalar, var::Variable{T}) where T
+    return var * constant
 end
