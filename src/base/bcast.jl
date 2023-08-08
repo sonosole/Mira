@@ -43,8 +43,8 @@ end
 import Base.Broadcast.broadcasted
 const TensorOrReal = Union{AbstractArray, Real}
 
-@inline function samesize(x::Union{Variable,AbstractArray}, y::Union{Variable,AbstractArray})
-    return x.shape == y.shape
+@inline function samesize(x::Union{Variable,AbstractArray,Real}, y::Union{Variable,AbstractArray,Real})
+    size(x) == size(y)
 end
 
 # z = x .+ y
