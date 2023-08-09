@@ -1,15 +1,14 @@
-abstract type Normalizer end
+abstract type Normalizer <: Block end
 
 export Normalizer
 
 export MeanNorm
 include("./MeanNorm.jl")
 
-export ZNorm
-export BatchNorm0d, BatchNorm1d
-include("./ZNorm.jl")
-include("./meanvar.jl")
+
 include("./mean.jl")
+include("./znorm.jl")
+include("./batchnorm.jl")
 
 export wnorm
 include("./weight-normer.jl")

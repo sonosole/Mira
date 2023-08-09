@@ -1,118 +1,59 @@
-"""
-# Summary
-    mutable struct ZNorm <: Normalizer
-# Fields
-    γ        :: VarOrNil                        # scaling params
-    β        :: VarOrNil                        # shifting params
-    μ        :: Union{AbstractArray,Nothing}    # running average
-    σ        :: Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
-    views    :: NTuple                          # views to collect elements for mean and var
-    eps      :: AbstractFloat                   # prevent dividing by zero, 1e-10 for default
-    momentum :: AbstractFloat                   # smoothing const, or called historical inertia coefficient
-
-Applies mean and scaling normalization over a N-dimensional input, like BatchNorm LayerNorm and InstanceNorm.
+export znorm
 
 """
-mutable struct ZNorm <: Normalizer
-    γ :: VarOrNil                        # scaling params
-    β :: VarOrNil                        # shifting params
-    μ :: Union{AbstractArray,Nothing}    # running average
-    σ :: Union{AbstractArray,Nothing}    # running variance otherwise standard deviation
-    views    :: NTuple                   # views to collect elements for mean and var
-    eps      :: AbstractFloat            # prevent dividing by zero, 1e-10 for default
-    momentum :: AbstractFloat            # inertia coefficient
-    function ZNorm(;ndims::Int,          # how many dimentions the input data has
-                   keptdims::Union{Tuple,Int},     # must be unique and sorted and positive
-                   keptsize::Union{Tuple,Int},     # must be positive
-                   eps::AbstractFloat=1e-10,       # stability const
-                   momentum::AbstractFloat=0.9,    # smoothing const or historical inertia
-                   type::Type=Array{Float32})
+    znorm(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) where {T,N}
+Return `(x .- μ) ./ σ` of which:
+    μ = mean(x;dims),
+    σ =  std(x;dims)
+# Gradient Dependencies
+          ┌───────────5──────────┐
+          │                      ▼
+      ┌───┴───┐      ┌───┐     ┌────┐      ┌───────┐        ┌───┐
+      │ ──x── ├──4──►│ μ │     │ σ² ├──3──►│ ──y── ├──•••──►│ l │
+      └───┬───┘      └─┬─┘     └────┘      └───────┘        └───┘
+          │            │                    ▲     ▲
+          │            └───────────2────────┘     │
+          └────────────────────────1──────────────┘
+# Gradient Calculations
+    x̄ᵢ     = xᵢ - μ
+    x̌ᵢ     = x̄ᵢ * σ¯¹
+    yᵢ     = x̌ᵢ
 
-        shape, views = ShapeAndViews(ndims, keptdims, keptsize);
-        γ = Variable{type}( Ones(type, shape), true, true, true);
-        β = Variable{type}(Zeros(type, shape), true, true, true);
-        μ = Zeros(type, shape);
-        σ =  Ones(type, shape);
-        new(γ, β, μ, σ, views, eps, momentum)
-    end
-    function ZNorm(views, eps, momentum)
-        new(nothing, nothing, nothing, nothing, views, eps, momentum)
-    end
-end
+    ∂yᵢ∂xᵢ =  1/σ               # 1
+    ∂yᵢ∂μ  = -1/σ               # 2
+    ∂yᵢ∂σ² = -1/2 * σ¯³ * x̄ᵢ    # 3
+    ∂μ∂xᵢ  = 1/m                # 4
+    ∂σ²∂xᵢ = 2/m * x̄ᵢ           # 5
+    ∂l∂σ²  = ∑(∂l∂yᵢ * ∂yᵢ∂σ²)
+    ∂l∂μ   = ∑(∂l∂yᵢ * ∂yᵢ∂μ)
 
+    ∂l∂xᵢ = ∂l∂yᵢ * ∂yᵢ∂xᵢ  +  ∂l∂μ * ∂μ∂xᵢ              +  ∂l∂σ² * ∂σ²∂xᵢ
+          = ∂l∂yᵢ * ∂yᵢ∂xᵢ  +  ∑(∂l∂yᵢ * ∂yᵢ∂μ) * ∂μ∂xᵢ  +  ∑(∂l∂yᵢ * ∂yᵢ∂σ²) * ∂σ²∂xᵢ
+          = ∂l∂yᵢ * σ¯¹     -  ∑(∂l∂yᵢ * σ¯¹) * (1/m)    +  ∑(∂l∂yᵢ * (-1/2 * σ¯³) * x̄ᵢ) * (2/m) * x̄ᵢ
+          = (∂l∂yᵢ          -  ∑(∂l∂yᵢ) * (1/m)          +  ∑(∂l∂yᵢ * (-1/2 * σ¯²) * x̄ᵢ) * (2/m) * x̄ᵢ) * σ¯¹
+          = (m * ∂l∂yᵢ      -  ∑(∂l∂yᵢ)                  -  ∑(∂l∂yᵢ * x̄ᵢ * σ¯¹) * x̄ᵢ * σ¯¹) * (σ¯¹ * m¯¹)
+          = (m * ∂l∂yᵢ      -  ∑(∂l∂yᵢ)                  -  ∑(∂l∂yᵢ * yᵢ)       * yᵢ)       * (σ¯¹ * m¯¹)
+"""
+function znorm(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) where {T,N}
+    D = eltype(x)
+    l = D(1)
+    ϵ = D(eps)
+    m = D(prod(size(x, i) for i in dims))
 
-function clone(this::ZNorm; type::Type=Array{Float32})
-    cloned = ZNorm(this.views, this.eps, this.momentum)
-    cloned.γ = clone(this.γ, type=type)
-    cloned.β = clone(this.β, type=type)
-    cloned.μ = type(this.μ)
-    cloned.σ = type(this.σ)
-    return cloned
-end
-
-function Base.show(io::IO, m::ZNorm)
-    SIZE = size(m.β.value)
-    TYPE = typeof(m.β.value)
-    print(io, "ZNorm(statistic vars' size=$SIZE; type=$TYPE)")
-end
-
-
-function paramsof(m::ZNorm)
-    params = Vector{Variable}(undef,2)
-    params[1] = m.γ
-    params[2] = m.β
-    return params
-end
-
-function xparamsof(m::ZNorm)
-    xparams = Vector{XVariable}(undef,2)
-    xparams[1] = ('w', m.γ)
-    xparams[2] = ('b', m.β)
-    return xparams
-end
-
-function nparamsof(model::ZNorm)
-    return 4*length(model.β)
-end
-
-elsizeof(z::ZNorm) = elsizeof(z.γ)
-
-function bytesof(model::ZNorm, unit::String="MB")
-    n = nparamsof(model) * elsizeof(model)
-    return blocksize(n, uppercase(unit))
-end
-
-function forward(b::ZNorm, x::Variable{T}) where T
-    γ = b.γ
-    β = b.β
-    ϵ = b.eps
-    ρ = b.momentum
-    v = b.views
-    μ = mean(ᵛ(x), dims=v)
-    σ =  std(ᵛ(x), dims=v, mean=μ, corrected=false)
-    𝐗 = (ᵛ(x) .- μ) ./ (σ .+ ϵ)
-    y = Variable{T}(𝐗 .* ᵛ(γ) .+ ᵛ(β), x.backprop)
+    μ   = mean(ᵛ(x); dims)
+    σ²  =  var(ᵛ(x); dims, corrected=false) .+ ϵ
+    σ¯¹ = l ./ sqrt.(σ²)
+    m¯¹ = l  / m
+    x̌   = (ᵛ(x) .- μ) .* σ¯¹
+    y   = Variable{T}(x̌, x.backprop)
 
     if y.backprop
-        Σ = σ .* σ
-        @. b.μ = ρ * b.μ + (1 - ρ) * μ    # running mean
-        @. b.σ = ρ * b.σ + (1 - ρ) * Σ    # running var
-        y.backward = function ∇ZNorm()
+        ∑(a::AbstractArray) = sum(a; dims=dims)
+        y.backward = function ∇znorm()
             if need2computeδ!(x)
-                n     = length(σ)/length(x)
-                σ¯¹   = 1 ./ (σ .+ ϵ)
-                σ¯³   = (σ¯¹).^3
-                Δ     = ᵛ(x) .- μ
-                ∂𝐋∂𝐗  = δ(y) .* ᵛ(γ)
-                Δ∂𝐋∂𝐗 = Δ .* ∂𝐋∂𝐗
-                SumΔ∂𝐋∂𝐗  = sum(Δ∂𝐋∂𝐗, dims=v)
-
-                x ← σ¯¹ .* ∂𝐋∂𝐗
-                x ← - σ¯³ .* n   .* SumΔ∂𝐋∂𝐗 .* Δ
-                x ← σ¯³ .* n^2 .* SumΔ∂𝐋∂𝐗 .* sum(Δ, dims=v) .- σ¯¹ .* n .* sum(∂𝐋∂𝐗, dims=v)
+                ∂l∂y = δ(y)
+                x ← (σ¯¹ .* m¯¹) .* (m .* ∂l∂y .- ∑(∂l∂y) .- x̌ .* ∑(∂l∂y .* x̌))
             end
-            if need2computeδ!(γ) δ(γ) .+= sum(δ(y) .* 𝐗, dims=v) end
-            if need2computeδ!(β) δ(β) .+= sum(δ(y),      dims=v) end
             ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
@@ -121,37 +62,47 @@ function forward(b::ZNorm, x::Variable{T}) where T
 end
 
 
-function predict(b::ZNorm, x::AbstractArray)
-    ϵ = b.eps
-    γ = ᵛ(b.γ)
-    β = ᵛ(b.β)
-    μ = b.μ
-    σ = b.σ
-    return @. (x - μ) / sqrt(σ + ϵ) * γ + β
+function znorm_mean_var(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) where {T,N}
+    D = eltype(x)
+    l = D(1)
+    ϵ = D(eps)
+    m = D(prod(size(x, i) for i in dims))
+
+    μ   = mean(ᵛ(x); dims)
+    σ²  =  var(ᵛ(x); dims, corrected=false) .+ ϵ
+    σ¯¹ = l ./ sqrt.(σ²)
+    m¯¹ = l  / m
+    x̌   = (ᵛ(x) .- μ) .* σ¯¹
+    y   = Variable{T}(x̌, x.backprop)
+
+    if y.backprop
+        ∑(a::AbstractArray) = sum(a; dims=dims)
+        y.backward = function ∇znorm()
+            if need2computeδ!(x)
+                ∂l∂y = δ(y)
+                x ← (σ¯¹ .* m¯¹) .* (m .* ∂l∂y .- ∑(∂l∂y) .- x̌ .* ∑(∂l∂y .* x̌))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y, μ, σ²
 end
 
 
-function BatchNorm0d(nchannels::Int;
-                     eps::AbstractFloat=1e-10,
-                     momentum::AbstractFloat=0.9,
-                     type::Type=Array{Float32})
-    return ZNorm(eps=eps,
-                 ndims=2,
-                 keptdims=1,
-                 keptsize=nchannels,
-                 momentum=momentum,
-                 type=type)
+function znorm(x::AbstractArray; dims::IntOrDims{N}=1, eps::Real=1e-38) where N
+    l  = eltype(x)(1)
+    ϵ  = eltype(x)(eps)
+    μ  = mean(x; dims)
+    σ² =  var(x; dims, mean=μ, corrected=false) .+ ϵ
+    return @. (x - μ) * (l / sqrt(σ))
 end
 
 
-function BatchNorm1d(nchannels::Int;
-                     eps::AbstractFloat=1e-10,
-                     momentum::AbstractFloat=0.9,
-                     type::Type=Array{Float32})
-    return ZNorm(eps=eps,
-                 ndims=3,
-                 keptdims=1,
-                 keptsize=nchannels,
-                 momentum=momentum,
-                 type=type)
+function znorm_mean_var(x::AbstractArray; dims::IntOrDims{N}=1, eps::Real=1e-38) where N
+    l  = eltype(x)(1)
+    ϵ  = eltype(x)(eps)
+    μ  = mean(x; dims)
+    σ² =  var(x; dims, mean=μ, corrected=false) .+ ϵ
+    return @. (x - μ) * (l / sqrt(σ²)), μ, σ
 end

@@ -100,7 +100,7 @@ function var(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
 end
 
 function std(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
-    return var(x, dims=dims)
+    return sqrt(var(x, dims=dims))
 end
 
 function maxmin(x::Variable{T}; dims1::IntOrDims{N1}, dims2::IntOrDims{N2}) where {T,N1,N2}
