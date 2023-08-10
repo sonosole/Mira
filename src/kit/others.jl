@@ -54,18 +54,20 @@ end
 """
     ShapeAndViews(ndims::Int,
                   keptdims::Union{Tuple,Int},
-                  keptsize::Union{Tuple,Int}) -> (shape, views)
+                  keptsize::Union{Tuple,Int}) -> (shape::NTuple, views::NTuple)
 
 mainly serves for batchnorm like operations. `ndims` is the dims of input Tensor x.
 `keptdims` is the dims that will be kept after reduction like mean(x,dims=`views`) and
 `keptsize` is the number of elements on the `keptdims`. i.e. ⤦\n
 `shape` = size( reductionFunction(x, dims=`views`) )
-
+NOTE: If no dims to kept, then `keptdims` shall be 0
 # Example
     julia> ShapeAndViews(4, (1,4), (5,3))
-    ((5, 1, 1, 3), (2, 3))
-      ↑        ↑    ↑  ↑
-      1        4    dims' mark to reduce
+       keptsize
+      ↓        ↓
+     (5, 1, 1, 3), (2, 3)
+      1  2  3  4    ↑  ↑
+      ↑        ↑    dims to reduce
        keptdims
 """
 function ShapeAndViews(ndims::Int,                    # ndims of input Tensor
@@ -73,16 +75,16 @@ function ShapeAndViews(ndims::Int,                    # ndims of input Tensor
                        keptsize::Union{Tuple,Int})    # must be positive
 
     @assert typeof(keptsize)==typeof(keptdims) "keptsize & keptdims shall be the same type"
-    @assert ndims ≥ maximum(keptdims) "ndims >= maximum(keptdims) shall be met"
-    @assert ndims > length(keptdims) "this is no elements for statistical analysis"
+    @assert ndims ≥ maximum(keptdims) "ndims ≥ maximum(keptdims) shall be met"
+    @assert ndims > length(keptdims) "there is no elements for statistical analysis"
     @assert ndims > 0 "ndims > 0, but got ndims=$ndims"
 
-    if typeof(keptdims) <: Int
+    if keptdims isa Int
         if keptdims == 0
             if keptsize ≠ 1
                 @warn "keptsize should be 1 here, but got $keptsize"
             end
-            shape = ntuple(i -> i==keptdims ? keptsize : 1, ndims);
+            shape = ntuple(i -> 1, ndims);
             views = ntuple(i -> i, ndims);
         else
             shape = ntuple(i -> i==keptdims ? keptsize : 1, ndims);
@@ -94,6 +96,15 @@ function ShapeAndViews(ndims::Int,                    # ndims of input Tensor
         views = deleteat!(ntuple(i -> i, ndims), keptdims)
     end
     return shape, views
+end
+
+
+@inline function dimsfilter(sz::Dims{N}, dims::IntOrDims{D}) where {N,D}
+    shape = ones(Int, N)
+    for (i, d) in enumerate(dims)
+        shape[d] = sz[d]
+    end
+    return ntuple(i -> shape[i],N)
 end
 
 
