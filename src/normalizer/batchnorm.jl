@@ -43,28 +43,32 @@ end
 
 
 
-function forward(b::BatchNorm, x::Variable{T}) where T
+function forward(b::BatchNorm, x::Variable)
+    T = eltype(x)
+    l = T(1)
+    ρ = T(b.inertia)
+
     γ = b.γ
     β = b.β
-    ρ = b.inertia
 
     x̌, μ, σ² = znorm_mean_var(x, dims=b.views, eps=b.eps)
     y = x̌ .* γ .+ β
 
-    @. b.μ  = ρ * b.μ  + (1 - ρ) * μ    # running mean
-    @. b.σ² = ρ * b.σ² + (1 - ρ) * σ²   # running var
+    @. b.μ  = ρ * b.μ  + (l - ρ) * μ    # running mean
+    @. b.σ² = ρ * b.σ² + (l - ρ) * σ²   # running var
     return y
 end
 
 
 function predict(b::BatchNorm, x::AbstractArray)
+    l  = eltype(x)(1)
     γ  = ᵛ(b.γ)
     β  = ᵛ(b.β)
     μ  = b.μ
     σ² = b.σ²
 
-    x̌ = @. (x .- μ) ./ sqrt.(σ²)
-    y = @. x̌ .* γ .+ β
+    x̌ = @. (x - μ) * (l / sqrt(σ²))
+    y = @. x̌ * γ + β
     return y
 end
 
