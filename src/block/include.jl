@@ -35,3 +35,11 @@ include("./pfun/include.jl")
 function forward(f::Function, x::Variable, args...; kwargs...)
     return f(x, args...; kwargs...)
 end
+
+
+function predict(f::Function, x::AbstractArray, args...; kwargs...)
+    return f(x, args...; kwargs...)
+end
+
+# forward(f::Function, x::Variable)      = f(x)
+# predict(f::Function, x::AbstractArray) = f(x)

@@ -181,9 +181,6 @@ function staticsof(vs::Vector{Variable})
 end
 
 
-forward(f::Function, x::Variable)      = f(x)
-predict(f::Function, x::AbstractArray) = f(x)
-
 function clone(f::Function; type::Type=Array{Float32})
     return f
 end
