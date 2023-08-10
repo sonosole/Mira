@@ -95,7 +95,7 @@ function znorm(x::AbstractArray; dims::IntOrDims{N}=1, eps::Real=1e-38) where N
     ϵ  = eltype(x)(eps)
     μ  = mean(x; dims)
     σ² =  var(x; dims, mean=μ, corrected=false) .+ ϵ
-    return @. (x - μ) * (l / sqrt(σ))
+    return @. (x - μ) * (l / sqrt(σ²))
 end
 
 
@@ -104,5 +104,5 @@ function znorm_mean_var(x::AbstractArray; dims::IntOrDims{N}=1, eps::Real=1e-38)
     ϵ  = eltype(x)(eps)
     μ  = mean(x; dims)
     σ² =  var(x; dims, mean=μ, corrected=false) .+ ϵ
-    return @. (x - μ) * (l / sqrt(σ²)), μ, σ
+    return @. (x - μ) * (l / sqrt(σ²)), μ, σ²
 end
