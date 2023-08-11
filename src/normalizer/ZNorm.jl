@@ -2,9 +2,14 @@ export znorm
 
 """
     znorm(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) where {T,N}
-Return `(x .- μ) ./ σ` of which:
-    μ = mean(x;dims),
-    σ =  std(x;dims)
+Return `(x .- μ) ./ σ`,of which
+        μ = mean(x;dims),
+        σ =  std(x;dims)
+
+the kwarg `dims` can be an `Int` or `Dims{D}`, where `D` is the number of spatial dims,
+so znorm can be used in many situations i.e. BatchNorm, LayerNorm, InstanceNorm and
+GroupNorm etc.
+
 # Gradient Dependencies
           ┌───────────5──────────┐
           │                      ▼

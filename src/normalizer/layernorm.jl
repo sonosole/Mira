@@ -1,7 +1,36 @@
 export LayerNorm
 
 """
-Applies mean and variance normalization over a N-dimensional input
+# Explanation
+Applies mean and variance normalization over a N-dimensional input `x`. μ and σ
+are collected from each sample, e.g. one single word in NLP (NOT sequtial of words)
+one single picture in CV. Suppose `x` has shape (C, `W1,W2,...,Wd`, B), and reshape
+`x` to shape (C, `T`, B).
+## Sequential samples
+Usually `x` is composed of batched sequential samples (maybe different sequence lengths
+but padded to the same length, e.g. speech features or words embeddings). then
++ μ[t,b] = mean(x[1:C, t, b]), t ∈ 1,2,...,T and b ∈ 1,2,...,B
++ σ[t,b] =  std(x[1:C, t, b]), t ∈ 1,2,...,T and b ∈ 1,2,...,B
+## None-Sequential samples
+If `x` is batched samples without sequential concepts, then
++ μ[b] = mean(x[1:C, 1:T, 1:B]), c ∈ 1,2,...,C
++ σ[b] =  std(x[1:C, 1:T, 1:B]), c ∈ 1,2,...,C
+for example an single picture sample has RGB channles
+    ┌┬┬┬┬┬┬┬┐R Channel
+    ├┼┼┼┼┼┼┼┤
+    H┼┼┼┼┼┼┼┤    ────────────────────────┐
+    ├┼┼┼┼┼┼┼┤                            │
+    └┴┴┴W┴┴┴┘                            │
+    ┌┬┬┬┬┬┬┬┐G Channel                   │
+    ├┼┼┼┼┼┼┼┤                            ▼
+    H┼┼┼┼┼┼┼┤    ───────────────────────►▓ μ or σ (shape of 1×1)
+    ├┼┼┼┼┼┼┼┤                            ▲
+    └┴┴┴W┴┴┴┘                            │
+    ┌┬┬┬┬┬┬┬┐B Channel                   │
+    ├┼┼┼┼┼┼┼┤                            │
+    H┼┼┼┼┼┼┼┤   ─────────────────────────┘
+    ├┼┼┼┼┼┼┼┤
+    └┴┴┴W┴┴┴┘
 # Constructor
     LayerNorm(;ndims :: Int,
                dims  :: IntOrDims{D},
