@@ -9,28 +9,30 @@ one single picture in CV. Suppose `x` has shape (C, `W1,W2,...,Wd`, B), and resh
 ## Sequential samples
 Usually `x` is composed of batched sequential samples (maybe different sequence lengths
 but padded to the same length, e.g. speech features or words embeddings). then
-+ μ[t,b] = mean(x[1:C, t, b]), t ∈ 1,2,...,T and b ∈ 1,2,...,B
-+ σ[t,b] =  std(x[1:C, t, b]), t ∈ 1,2,...,T and b ∈ 1,2,...,B
+    + μ[t,b] = mean(x[1:C, t, b]), t ∈ 1,2,...,T and b ∈ 1,2,...,B
+    + σ[t,b] =  std(x[1:C, t, b]), t ∈ 1,2,...,T and b ∈ 1,2,...,B
 ## None-Sequential samples
 If `x` is batched samples without sequential concepts, then
-+ μ[b] = mean(x[1:C, 1:T, 1:B]), c ∈ 1,2,...,C
-+ σ[b] =  std(x[1:C, 1:T, 1:B]), c ∈ 1,2,...,C
-for example an single picture sample has RGB channles
+    + μ[b] = mean(x[1:C, 1:T, b]), b ∈ 1,2,...,B
+    + σ[b] =  std(x[1:C, 1:T, b]), b ∈ 1,2,...,B
+### A picture sample has RGB channles
     ┌┬┬┬┬┬┬┬┐R Channel
     ├┼┼┼┼┼┼┼┤
     H┼┼┼┼┼┼┼┤    ────────────────────────┐
     ├┼┼┼┼┼┼┼┤                            │
     └┴┴┴W┴┴┴┘                            │
-    ┌┬┬┬┬┬┬┬┐G Channel                   │
-    ├┼┼┼┼┼┼┼┤                            ▼
-    H┼┼┼┼┼┼┼┤    ───────────────────────►▓ μ or σ (shape of 1×1)
-    ├┼┼┼┼┼┼┼┤                            ▲
-    └┴┴┴W┴┴┴┘                            │
+    ┌┬┬┬┬┬┬┬┐G Channel                   ▼
+    ├┼┼┼┼┼┼┼┤
+    H┼┼┼┼┼┼┼┤    ──────────────────────► ▓ μ or σ (shape of 1×1)
+    ├┼┼┼┼┼┼┼┤
+    └┴┴┴W┴┴┴┘                            ▲
     ┌┬┬┬┬┬┬┬┐B Channel                   │
     ├┼┼┼┼┼┼┼┤                            │
-    H┼┼┼┼┼┼┼┤   ─────────────────────────┘
+    H┼┼┼┼┼┼┼┤    ────────────────────────┘
     ├┼┼┼┼┼┼┼┤
     └┴┴┴W┴┴┴┘
+all elements from RGB channles are used to estimate mean and variance.
+
 # Constructor
     LayerNorm(;ndims :: Int,
                dims  :: IntOrDims{D},
@@ -56,7 +58,6 @@ mutable struct LayerNorm <: Normalizer
         for (i, d) in enumerate(dims)
             shape[d] = size[i]
         end
-
         sz = ntuple(i -> shape[i], ndims)
         γ  = Variable{type}( Ones(type, sz), true, true, true)
         β  = Variable{type}(Zeros(type, sz), true, true, true)

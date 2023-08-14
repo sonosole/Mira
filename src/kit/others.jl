@@ -99,6 +99,18 @@ function ShapeAndViews(ndims::Int,                    # ndims of input Tensor
 end
 
 
+"""
+    dimsfilter(sz::Dims{N}, dims::IntOrDims{D}) where {N,D} -> shape::Dims{N}
+
+Make a new shape::Dims{N}, whose elements are specified by `dims` from `sz`, while
+the other elements are all 1. Now used in `xdropout` and `xdropout!`
+
+# Example
+    julia> Mira.dimsfilter((20,2,3), 1)
+    (20, 1, 1)
+    julia> Mira.dimsfilter((7,716,522,1990,1997), (3,2))
+    (1, 716, 522, 1, 1)
+"""
 @inline function dimsfilter(sz::Dims{N}, dims::IntOrDims{D}) where {N,D}
     shape = ones(Int, N)
     for (i, d) in enumerate(dims)

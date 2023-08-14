@@ -5,8 +5,8 @@ export BatchNorm
 Applies mean and variance normalization over a N-dimensional input `x`. Suppose `x` has
 shape (C, `W1,W2,...,Wd`, B), and reshape `x` to shape (C, `T`, B), Each element of `μ` and `σ`
 are collected from each channle of all samples, i.e.
-+ μ[c] = mean(x[c, 1:T, 1:B]), c ∈ 1,2,...,C
-+ σ[c] =  std(x[c, 1:T, 1:B]), c ∈ 1,2,...,C
+    + μ[c] = mean(x[c, 1:T, 1:B]), c ∈ 1,2,...,C
+    + σ[c] =  std(x[c, 1:T, 1:B]), c ∈ 1,2,...,C
 finally, the shape of `μ` or `σ` is (C, `1,1,...,1`, 1).
 # Constructor
     BatchNorm(;ndims::Int,                     # dimentions the input data has
