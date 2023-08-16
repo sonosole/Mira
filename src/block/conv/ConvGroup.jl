@@ -26,15 +26,15 @@ Applies a D-dims group convolution over an (D+2)-dims input tensor of shape (ich
 mutable struct GroupConv{D} <: Block
     blocks :: Vector{Conv{D}}
     groups :: Int
-    function GroupConv{D}(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                          groups   :: Int = 2,
-                          kernel   :: Dims{D} = ntuple(i -> 3, D),
-                          dilation :: Dims{D} = ntuple(i -> 1, D),
-                          stride   :: Dims{D} = ntuple(i -> 1, D),
-                          padval   :: Real = 0f0,
-                          padmode  :: String = "repeat",
-                          padding  :: PadsDOrStr = "valid",
-                          type     :: Type = Array{Float32}) where D
+    function GroupConv{D}(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                           groups   :: Int = 2,
+                           kernel   :: Dims{D} = ntuple(i -> 3, D),
+                           dilation :: Dims{D} = ntuple(i -> 1, D),
+                           stride   :: Dims{D} = ntuple(i -> 1, D),
+                           padval   :: Real = 0f0,
+                           padmode  :: String = "repeat",
+                           padding  :: PadsDOrStr = "valid",
+                           type     :: Type = Array{Float32}) where D
 
         if groups < 2
             error("since groups=$groups, use Conv1d instead")
@@ -50,13 +50,9 @@ mutable struct GroupConv{D} <: Block
         for i in 1:groups
             blocks[i] = Conv{D}(ichannels ÷ groups,
                                 ochannels ÷ groups, fn;
-                                kernel   = kernel,
-                                dilation = dilation,
-                                stride   = stride,
-                                padval   = padval,
-                                padmode  = padmode,
-                                padding  = padding,
-                                type     = type)
+                                kernel, dilation, stride,
+                                padval, padmode, padding,
+                                type)
         end
         new{D}(blocks, groups)
     end
@@ -178,28 +174,28 @@ end
 Applies a `1`-D group convolution over an `3`-D input tensor of shape (ichannels, `steps`, batchsize)\n
 
 # Constructor
-    GroupConv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                groups   :: Int = 2,
-                kernel   :: Int = 3,
-                dilation :: Int = 1,
-                stride   :: Int = 1,
-                padval   :: Real = 0f0,
-                padmode  :: String = "repeat",
-                padding  :: Pads1OrStr = "valid",
-                type     :: Type = Array{Float32})
+    GroupConv1d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                 groups   :: Int = 2,
+                 kernel   :: Int = 3,
+                 dilation :: Int = 1,
+                 stride   :: Int = 1,
+                 padval   :: Real = 0f0,
+                 padmode  :: String = "repeat",
+                 padding  :: Pads1OrStr = "valid",
+                 type     :: Type = Array{Float32})
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `Dims{2}`
 """
-function GroupConv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                     groups   :: Int = 2,
-                     kernel   :: Int = 3,
-                     dilation :: Int = 1,
-                     stride   :: Int = 1,
-                     padval   :: Real = 0f0,
-                     padmode  :: String = "repeat",
-                     padding  :: Pads1OrStr = "valid",
-                     type     :: Type = Array{Float32})
+function GroupConv1d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                      groups   :: Int = 2,
+                      kernel   :: Int = 3,
+                      dilation :: Int = 1,
+                      stride   :: Int = 1,
+                      padval   :: Real = 0f0,
+                      padmode  :: String = "repeat",
+                      padding  :: Pads1OrStr = "valid",
+                      type     :: Type = Array{Float32})
 
     if !isa(padding, String)
         padding = singletuple(padding)
@@ -210,14 +206,10 @@ function GroupConv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
     stride   = singletuple(stride)
 
     return GroupConv{1}(ichannels, ochannels, fn;
-                        groups   = groups,
-                        kernel   = kernel,
-                        dilation = dilation,
-                        stride   = stride,
-                        padval   = padval,
-                        padmode  = padmode,
-                        padding  = padding,
-                        type     = type)
+                        groups,
+                        kernel, dilation, stride,
+                        padval, padmode, padding,
+                        type)
 end
 
 
@@ -225,20 +217,20 @@ end
 Applies a `2`-D group convolution over an `4`-D input tensor of shape (ichannels, `hight`, `width`, batchsize)\n
 
 # Constructor
-    GroupConv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                groups   :: Int = 2,
-                kernel   :: Dims{2} = (3,3),
-                dilation :: Dims{2} = (1,1),
-                stride   :: Dims{2} = (1,1),
-                padval   :: Real = 0f0,
-                padmode  :: String = "repeat",
-                padding  :: Pads2OrStr = "valid",
-                type     :: Type = Array{Float32})
+    GroupConv2d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                 groups   :: Int = 2,
+                 kernel   :: Dims{2} = (3,3),
+                 dilation :: Dims{2} = (1,1),
+                 stride   :: Dims{2} = (1,1),
+                 padval   :: Real = 0f0,
+                 padmode  :: String = "repeat",
+                 padding  :: Pads2OrStr = "valid",
+                 type     :: Type = Array{Float32})
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
 """
-function GroupConv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+function GroupConv2d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
                       kernel   :: Dims{2} = (3,3),
                       dilation :: Dims{2} = (1,1),
@@ -249,14 +241,10 @@ function GroupConv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       type     :: Type = Array{Float32})
 
     return GroupConv{2}(ichannels, ochannels, fn;
-                        groups   = groups,
-                        kernel   = kernel,
-                        dilation = dilation,
-                        stride   = stride,
-                        padval   = padval,
-                        padmode  = padmode,
-                        padding  = padding,
-                        type     = type)
+                        groups,
+                        kernel, dilation, stride,
+                        padval, padmode, padding,
+                        type)
 end
 
 
@@ -265,20 +253,20 @@ end
 Applies a `3`-D group convolution over an `5`-D input tensor of shape (ichannels, `hight`, `width`, `steps`, batchsize)\n
 
 # Constructor
-    GroupConv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                groups   :: Int     = 2,
-                kernel   :: Dims{3} = (3,3,3),
-                dilation :: Dims{3} = (1,1,1),
-                stride   :: Dims{3} = (1,1,1),
-                padval   :: Real = 0f0,
-                padmode  :: String = "repeat",
-                padding  :: Pads3OrStr = "valid",
-                type     :: Type = Array{Float32})
+    GroupConv3d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                 groups   :: Int     = 2,
+                 kernel   :: Dims{3} = (3,3,3),
+                 dilation :: Dims{3} = (1,1,1),
+                 stride   :: Dims{3} = (1,1,1),
+                 padval   :: Real = 0f0,
+                 padmode  :: String = "repeat",
+                 padding  :: Pads3OrStr = "valid",
+                 type     :: Type = Array{Float32})
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
 """
-function GroupConv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+function GroupConv3d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int     = 2,
                       kernel   :: Dims{3} = (3,3,3),
                       dilation :: Dims{3} = (1,1,1),
@@ -289,14 +277,10 @@ function GroupConv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       type     :: Type = Array{Float32})
 
     return GroupConv{3}(ichannels, ochannels, fn;
-                        groups   = groups,
-                        kernel   = kernel,
-                        dilation = dilation,
-                        stride   = stride,
-                        padval   = padval,
-                        padmode  = padmode,
-                        padding  = padding,
-                        type     = type)
+                        groups,
+                        kernel, dilation, stride,
+                        padval, padmode, padding,
+                        type)
 end
 
 
@@ -305,20 +289,20 @@ end
 Applies a `4`-D group convolution over an `6`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`, batchsize)\n
 
 # Constructor
-    GroupConv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                groups   :: Int = 2,
-                kernel   :: Dims{4} = (3,3,3,3),
-                dilation :: Dims{4} = (1,1,1,1),
-                stride   :: Dims{4} = (1,1,1,1),
-                padval   :: Real = 0f0,
-                padmode  :: String = "repeat",
-                padding  :: Pads4OrStr = "valid",
-                type     :: Type = Array{Float32})
+    GroupConv4d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                 groups   :: Int = 2,
+                 kernel   :: Dims{4} = (3,3,3,3),
+                 dilation :: Dims{4} = (1,1,1,1),
+                 stride   :: Dims{4} = (1,1,1,1),
+                 padval   :: Real = 0f0,
+                 padmode  :: String = "repeat",
+                 padding  :: Pads4OrStr = "valid",
+                 type     :: Type = Array{Float32})
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
 """
-function GroupConv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+function GroupConv4d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
                       kernel   :: Dims{4} = (3,3,3,3),
                       dilation :: Dims{4} = (1,1,1,1),
@@ -329,14 +313,10 @@ function GroupConv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       type     :: Type = Array{Float32})
 
     return GroupConv{4}(ichannels, ochannels, fn;
-                        groups   = groups,
-                        kernel   = kernel,
-                        dilation = dilation,
-                        stride   = stride,
-                        padval   = padval,
-                        padmode  = padmode,
-                        padding  = padding,
-                        type     = type)
+                        groups,
+                        kernel, dilation, stride,
+                        padval, padmode, padding,
+                        type)
 end
 
 
@@ -344,20 +324,20 @@ end
 Applies a `5`-D group convolution over an `7`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`,`w5`, batchsize)\n
 
 # Constructor
-    GroupConv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
-                groups   :: Int = 2,
-                kernel   :: Dims{5} = (3,3,3,3,3),
-                dilation :: Dims{5} = (1,1,1,1,1),
-                stride   :: Dims{5} = (1,1,1,1,1),
-                padval   :: Real = 0f0,
-                padmode  :: String = "repeat",
-                padding  :: Pads5OrStr = "valid",
-                type     :: Type = Array{Float32})
+    GroupConv5d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
+                 groups   :: Int = 2,
+                 kernel   :: Dims{5} = (3,3,3,3,3),
+                 dilation :: Dims{5} = (1,1,1,1,1),
+                 stride   :: Dims{5} = (1,1,1,1,1),
+                 padval   :: Real = 0f0,
+                 padmode  :: String = "repeat",
+                 padding  :: Pads5OrStr = "valid",
+                 type     :: Type = Array{Float32})
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
 """
-function GroupConv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
+function GroupConv5d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
                       kernel   :: Dims{5} = (3,3,3,3,3),
                       dilation :: Dims{5} = (1,1,1,1,1),
@@ -368,12 +348,8 @@ function GroupConv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                       type     :: Type = Array{Float32})
 
     return GroupConv{5}(ichannels, ochannels, fn;
-                        groups   = groups,
-                        kernel   = kernel,
-                        dilation = dilation,
-                        stride   = stride,
-                        padval   = padval,
-                        padmode  = padmode,
-                        padding  = padding,
-                        type     = type)
+                        groups,
+                        kernel, dilation, stride,
+                        padval, padmode, padding,
+                        type)
 end

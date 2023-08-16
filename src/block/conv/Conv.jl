@@ -204,13 +204,9 @@ function Conv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
     stride   = singletuple(stride)
 
     return Conv{1}(ichannels, ochannels, fn;
-                   kernel   = kernel,
-                   dilation = dilation,
-                   stride   = stride,
-                   padval   = padval,
-                   padmode  = padmode,
-                   padding  = padding,
-                   type     = type)
+                   kernel, dilation, stride,
+                   padval, padmode, padding,
+                   type)
 end
 
 
@@ -240,13 +236,9 @@ function Conv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 type     :: Type = Array{Float32})
 
     return Conv{2}(ichannels, ochannels, fn;
-                   kernel   = kernel,
-                   dilation = dilation,
-                   stride   = stride,
-                   padval   = padval,
-                   padmode  = padmode,
-                   padding  = padding,
-                   type     = type)
+                   kernel, dilation, stride,
+                   padval, padmode, padding,
+                   type)
 end
 
 
@@ -277,13 +269,9 @@ function Conv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 type     :: Type = Array{Float32})
 
     return Conv{3}(ichannels, ochannels, fn;
-                   kernel   = kernel,
-                   dilation = dilation,
-                   stride   = stride,
-                   padval   = padval,
-                   padmode  = padmode,
-                   padding  = padding,
-                   type     = type)
+                   kernel, dilation, stride,
+                   padval, padmode, padding,
+                   type)
 end
 
 
@@ -314,13 +302,9 @@ function Conv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 type     :: Type = Array{Float32})
 
     return Conv{4}(ichannels, ochannels, fn;
-                   kernel   = kernel,
-                   dilation = dilation,
-                   stride   = stride,
-                   padval   = padval,
-                   padmode  = padmode,
-                   padding  = padding,
-                   type     = type)
+                   kernel, dilation, stride,
+                   padval, padmode, padding,
+                   type)
 end
 
 
@@ -350,11 +334,7 @@ function Conv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 type     :: Type = Array{Float32})
 
     return Conv{5}(ichannels, ochannels, fn;
-                   kernel   = kernel,
-                   dilation = dilation,
-                   stride   = stride,
-                   padval   = padval,
-                   padmode  = padmode,
-                   padding  = padding,
-                   type     = type)
+                   kernel, dilation, stride,
+                   padval, padmode, padding,
+                   type)
 end
