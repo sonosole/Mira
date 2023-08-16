@@ -52,17 +52,18 @@ end
 
 
 """
-    ShapeAndViews(ndims::Int,
-                  keptdims::Union{Tuple,Int},
-                  keptsize::Union{Tuple,Int}) -> (shape::NTuple, views::NTuple)
+    shape_and_dims(ndims::Int,
+                   keptdims::Union{Tuple,Int},
+                   keptsize::Union{Tuple,Int}) -> (shape::NTuple, views::NTuple)
 
 mainly serves for batchnorm like operations. `ndims` is the dims of input Tensor x.
 `keptdims` is the dims that will be kept after reduction like mean(x,dims=`views`) and
 `keptsize` is the number of elements on the `keptdims`. i.e. ⤦\n
 `shape` = size( reductionFunction(x, dims=`views`) )
 NOTE: If no dims to kept, then `keptdims` shall be 0
+This fn is mainly used by `BatchNorm`
 # Example
-    julia> ShapeAndViews(4, (1,4), (5,3))
+    julia> shape_and_dims(4, (1,4), (5,3))
        keptsize
       ↓        ↓
      (5, 1, 1, 3), (2, 3)
@@ -70,9 +71,9 @@ NOTE: If no dims to kept, then `keptdims` shall be 0
       ↑        ↑    dims to reduce
        keptdims
 """
-function ShapeAndViews(ndims::Int,                    # ndims of input Tensor
-                       keptdims::Union{Tuple,Int},    # must be unique and sorted and positive
-                       keptsize::Union{Tuple,Int})    # must be positive
+function shape_and_dims(ndims::Int,                        # ndims of input Tensor
+                        keptdims::IntOrDims{D},            # must be unique and sorted and positive
+                        keptsize::IntOrDims{D}) where D    # must be positive
 
     @assert typeof(keptsize)==typeof(keptdims) "keptsize & keptdims shall be the same type"
     @assert ndims ≥ maximum(keptdims) "ndims ≥ maximum(keptdims) shall be met"
