@@ -23,10 +23,13 @@
 
     # [0] prepare model
     model = Chain(
-        IndRNN(2,128,leakyrelu; type=TYPE),
-        IndLSTM(128,64; type=TYPE),
-        RNN(64,64,cos;  type=TYPE),
-        Dense(64,1,leakyrelu;   type=TYPE)
+        IndRNN(2, 64, leakyrelu; type=TYPE),
+        IndGRU(64, 64; type=TYPE),
+        IndLSTM(64, 64; type=TYPE),
+        RNN(64, 64, cos;  type=TYPE),
+        LSTM(64, 64; type=TYPE),
+        GRU(64, 64; type=TYPE),
+        Dense(64,1, relu; type=TYPE)
     )
 
     # [1] prepare input data and its label
