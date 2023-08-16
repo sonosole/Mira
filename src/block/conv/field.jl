@@ -49,7 +49,8 @@ end
 
 
 """
-  convfield(KDS::Vector{NTuple{2,Dims{D}}}) where D
+  convfield(KS::Vector{NTuple{2,Dims{D}}}) where D
+Suppose dilations are one.
 # Example
       julia> kernel_stride = [
              ((3,4),(2,2)),  # layer 1
@@ -75,7 +76,7 @@ end
 """
   convfield(KS::Vector{Dims{2}}, offset::Int=1)
 
-For Conv1d conv field calculation
+For Conv1d conv field calculation. Suppose dilations are one.
 # Example
       julia> kernel_stride = [
              (3,2),  # layer 1
