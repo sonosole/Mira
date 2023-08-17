@@ -1,8 +1,8 @@
-mutable struct PickyRNN
+mutable struct PickyRNN <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
     f::Function # activation function
-    h::Any
+    h::Hidden
     function PickyRNN(isize::Int, hsize::Int, fn::Function=relu; type::Type=Array{Float32})
         T = eltype(type)
         a = T(sqrt(2/isize))
@@ -83,14 +83,15 @@ function forward(p::PickyRNN, x::Variable{T}) where T
     f = p.f  # activition function
     w = p.w  # input's weights
     b = p.b  # input's bias
-    F = size(w,1) # feat dims
+    C = size(w,1) # feat dims
     B = size(x,2) # batch size
-    𝟏 = eltype(T)(1.0f0)
+    l = eltype(T)(1.0f0)
+    θ = eltype(T)(sqrt(l/ndims(b)))
 
-    z = w * x .+ b                                             # new info
-    h = p.h ≠ nothing ? p.h : Variable(Zeros(T, F, B), type=T) # old info
-    σ = sigmoid(sum(h .* z, dims=1))
-    γ = 𝟏 .- σ
+    z = w * x .+ b                                               # new info
+    h = !isnothing(p.h) ? p.h : Variable(Zeros(T, C, B), type=T) # old info
+    σ = sigmoid(sum(h .* z, dims=1) .* θ)
+    γ = l .- σ
     y   = f(h + σ .* z)
     p.h =   h + γ .* z
     return y
@@ -101,12 +102,14 @@ function predict(p::PickyRNN, x::T) where T
     f = p.f     # activition function
     w = ᵛ(p.w)  # input's weights
     b = ᵛ(p.b)  # input's bias
-    F = size(w,1)
+    C = size(w,1)
     B = size(x,2)
     l = eltype(T)(1.0f0)
-    z = w * x .+ b                           # new info
-    h = p.h ≠ nothing ? p.h : Zeros(T, F, B) # old info
-    σ = sigmoid(sum(h .* z, dims=1)) # corr of old-info and new-info
+    θ = eltype(T)(sqrt(l/ndims(b)))
+
+    z = w * x .+ b                             # new info
+    h = !isnothing(p.h) ? p.h : Zeros(T, C, B) # old info
+    σ = sigmoid(sum(h .* z, dims=1) .* θ)      # corr of old-info and new-info
     γ = l .- σ
 
     y   = f(h + σ .* z)

@@ -1,3 +1,5 @@
+const Hidden = Union{Nil, AbstractArray, Variable}
+
 include("./1-IndRNN.jl")
 include("./1-RNN.jl")
 include("./2-IndLSTM.jl")
@@ -26,7 +28,8 @@ export PickyRNN
 export resethidden
 
 
-global RNNLIST = [RNN, RNNs, IndRNN, IndRNNs,
-                  LSTM, LSTMs, IndLSTM, IndLSTMs,
-                  GRU, GRUs, IndGRU, IndGRUs,
-                  PickyRNN];
+global RNNSet = Set([
+    RNN, RNNs, IndRNN, IndRNNs,
+    LSTM, LSTMs, IndLSTM, IndLSTMs,
+    GRU, GRUs, IndGRU, IndGRUs,
+    PickyRNN]);

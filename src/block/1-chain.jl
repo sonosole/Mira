@@ -129,7 +129,7 @@ end
 
 function resethidden(c::Chain)
     for i = 1:length(c)
-        if typeof(c[i]) ∈ RNNLIST
+        if typeof(c[i]) in RNNSet
             resethidden(c[i])
         end
     end

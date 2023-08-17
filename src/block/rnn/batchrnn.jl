@@ -51,7 +51,13 @@ end
 function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
     T = size(x, 2)
     v = Vector{Variable{S}}(undef, T)
-    !keepstate && resethidden(chain)
+
+    if !keepstate
+        if typeof(chain) in RNNSet
+            resethidden(chain)
+        end
+    end
+
     for t = 1:T
         v[t] = forward(chain, x[:,t,:])
     end
@@ -69,7 +75,7 @@ function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
         y.backward = function ∇PackSeqSlices()
             Threads.@threads for t = 1:T
                 if need2computeδ!(v[t])
-                    v[t].delta .+= y.delta[:,t,:]
+                    v[t] ← y.delta[:,t,:]
                 end
             end
             ifNotKeepδThenFreeδ!(y)

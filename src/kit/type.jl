@@ -16,3 +16,4 @@ const    VecInt =        Vector{Int}
 const VecVecInt = Vector{Vector{Int}}
 const Dimtype = Union{Int,NTuple{N,Int}} where {N}
 const IntOrDims{N} = Union{Int, Dims{N}} where N
+const AtArray = AbstractArray
