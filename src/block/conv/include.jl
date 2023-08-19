@@ -13,6 +13,7 @@ include("./Conv.jl")
 include("./ConvGroup.jl")
 
 include("./Conv11.jl")
+include("./Pooling.jl")
 
 include("./scaledown.jl")
 include("./1-conv1d.jl")

@@ -91,6 +91,9 @@ Extend spatial-padding by `C`hannels-padding and `B`atchsize-padding
 end
 
 
+"""
+Return full size of conv layer's output
+"""
 function fullsize(w        :: AbstractArray, # weights of conv layer
                   x        :: AbstractArray, # input before padding
                   padding  :: Pads{D},
@@ -118,6 +121,9 @@ function fullsize(w        :: AbstractArray, # weights of conv layer
     end
 end
 
+"""
+Return full size of conv layer's output
+"""
 function fullsize(w        :: Variable, # weights of conv layer
                   x        :: Variable, # input before padding
                   padding  :: Pads{D},
@@ -136,6 +142,66 @@ function fullsize(w        :: Variable, # weights of conv layer
     return ntuple(N) do j
         if isequal(j, 1)
             return zchannels
+        end
+        if 1 < j < N
+            i = j - 1
+            return (xsize[i] - ekernel[i]) ÷ stride[i] + 1
+        end
+        return batchsize
+    end
+end
+
+
+
+"""
+Return full size of pooling layer's output
+"""
+function poolsize(x        :: AbstractArray, # input before padding
+                  padding  :: Pads{D},
+                  kernel   :: Dims{D},
+                  dilation :: Dims{D},
+                  stride   :: Dims{D}) where D
+
+    sizeofx = size(x)
+    xsize   = ntuple(i -> sizeofx[i+1] + sum(padding[i]), D)    # equivalent spatial width after padding
+    ekernel = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) # equivalent kernel size when dialating
+
+    N = 2 + D
+    xchannels = size(x, 1)
+    batchsize = sizeofx[N]
+
+    return ntuple(N) do j
+        if isequal(j, 1)
+            return xchannels
+        end
+        if 1 < j < N
+            i = j - 1
+            return (xsize[i] - ekernel[i]) ÷ stride[i] + 1
+        end
+        return batchsize
+    end
+end
+
+"""
+Return full size of pooling layer's output
+"""
+function poolsize(x        :: Variable, # input before padding
+                  padding  :: Pads{D},
+                  kernel   :: Dims{D},
+                  dilation :: Dims{D},
+                  stride   :: Dims{D}) where D
+
+    sizeofx = size(x)
+    xsize   = ntuple(i -> sizeofx[i+1] + sum(padding[i]), D)    # equivalent spatial width after padding
+    ekernel = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) # equivalent kernel size when dialating
+
+    N = 2 + D
+    xchannels = size(x, 1)
+    batchsize = sizeofx[N]
+
+    return ntuple(N) do j
+        if isequal(j, 1)
+            return xchannels
         end
         if 1 < j < N
             i = j - 1
