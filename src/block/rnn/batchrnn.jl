@@ -91,7 +91,13 @@ end
 function PackedSeqPredict(chain::Block, x::AbstractArray{S}; keepstate=false) where S
     T = size(x,2)
     v = Vector{AbstractArray{S}}(undef,T)
-    !keepstate && resethidden(chain)
+
+    if !keepstate
+        if typeof(chain) in RNNSet
+            resethidden(chain)
+        end
+    end
+
     for t = 1:T
         v[t] = predict(chain, x[:,t,:])
     end

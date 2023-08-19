@@ -1,12 +1,30 @@
 """
-```
-z = tanh(    wc * x + uc * h .+ bc )
-i = sigmoid( wi * x + ui * h .+ bi )
-f = sigmoid( wf * x + uf * h .+ bf )
-o = sigmoid( wo * x + uo * h .+ bo )
-c = f .* c + i .* z
-h = o .* tanh(c)
-```
+    LSTM(isize::Int, hsize::Int; type::Type=Array{Float32})
+# Math
+    z = tanh(    wc * x + uc * h .+ bc )
+    i = sigmoid( wi * x + ui * h .+ bi )
+    f = sigmoid( wf * x + uf * h .+ bf )
+    o = sigmoid( wo * x + uo * h .+ bo )
+    c = f .* c + i .* z
+    h = o .* tanh(c)
+# Struct
+                                                                  ▲ h[t]
+                                                                  │
+    c[t-1] ──► × ──────────────► + ────────────────────────┬──────|──► c[t]
+               ▲                 ▲                         │      │
+               │                 │                      ┌──┴───┐  │
+               │                 │                      │ tanh │  │
+               │                 │                      └──┬───┘  │
+             f |          i      |      z         o        ▼      │
+               │          ┌────► × ◄────┐         ┌──────► × ─────┘
+           ┌───┴───┐  ┌───┴───┐     ┌───┴──┐  ┌───┴───┐    │
+           │sigmoid│  │sigmoid│     │ tanh │  │sigmoid│    │
+           └─┬───┬─┘  └─┬───┬─┘     └┬────┬┘  └┬────┬─┘    │
+             ▲   ▲      ▲   ▲        ▲    ▲    ▲    ▲      │
+    h[t-1] ──┴───|──────┴───|────────┴────|────┘    │      └─────────► h[t]
+                 └──────────┴──────┬──────┴─────────┘
+                                   |
+                                   𝓧[t]
 """
 mutable struct LSTM <: Block
     # input control gate params
@@ -25,25 +43,28 @@ mutable struct LSTM <: Block
     wc::VarOrNil
     uc::VarOrNil
     bc::VarOrNil
-    h::Any  # hidden variable
-    c::Any  #   cell variable
+    # hidden and cell states
+    h::Hidden
+    c::Hidden
     function LSTM(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
+        λ  = sqrt(T(1/isize))
+        β  = T(0.1)
 
-        wi = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        ui = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        wi = randn(T, hsize, isize) .* λ
+        ui = randdiagonal(T, hsize, from=-β, to=β)
         bi = zeros(T, hsize, 1)
 
-        wf = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        uf = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        wf = randn(T, hsize, isize) .* λ
+        uf = randdiagonal(T, hsize, from=-β, to=β)
         bf = zeros(T, hsize, 1) .+ T(1)
 
-        wo = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        uo = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        wo = randn(T, hsize, isize) .* λ
+        uo = randdiagonal(T, hsize, from=-β, to=β)
         bo = zeros(T, hsize, 1)
 
-        wc = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        uc = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        wc = randn(T, hsize, isize) .* λ
+        uc = randdiagonal(T, hsize, from=-β, to=β)
         bc = zeros(T, hsize, 1)
 
         new(Variable{type}(wi,true,true,true), Variable{type}(ui,true,true,true), Variable{type}(bi,true,true,true),
@@ -132,35 +153,39 @@ end
 
 
 function forward(model::LSTM, x::Variable{T}) where T
-    wi = model.wi
-    ui = model.ui
-    bi = model.bi
+    wi, ui, bi = model.wi, model.ui, model.bi
+    wf, uf, bf = model.wf, model.uf, model.bf
+    wo ,uo, bo = model.wo, model.uo, model.bo
+    wc, uc, bc = model.wc, model.uc, model.bc
 
-    wf = model.wf
-    uf = model.uf
-    bf = model.bf
+    h = !isnothing(model.h) ? model.h : Variable(Zeros(T, size(wi,1), size(x,2)), type=T)
+    c = !isnothing(model.c) ? model.c : Variable(Zeros(T, size(wc,1), size(x,2)), type=T)
 
-    wo = model.wo
-    uo = model.uo
-    bo = model.bo
-
-    wc = model.wc
-    uc = model.uc
-    bc = model.bc
-
-    h = model.h ≠ nothing ? model.h : Variable(Zeros(T, size(wi,1), size(x,2)), type=T)
-    c = model.c ≠ nothing ? model.c : Variable(Zeros(T, size(wc,1), size(x,2)), type=T)
-
-    z = tanh(    wc * x + uc * h .+ bc )
-    i = sigmoid( wi * x + ui * h .+ bi )
-    f = sigmoid( wf * x + uf * h .+ bf )
-    o = sigmoid( wo * x + uo * h .+ bo )
-    c = f .* c + i .* z
-    h = o .* tanh(c)
-
+    WcX, WiX, WfX, WoX = nothing,nothing,nothing,nothing
+    UcH, UiH, UfH, UoH = nothing,nothing,nothing,nothing
+    z,  i,  f,  o      = nothing,nothing,nothing,nothing
+    @sync begin
+        Threads.@spawn WcX = wc * x
+        Threads.@spawn WiX = wi * x
+        Threads.@spawn WfX = wf * x
+        Threads.@spawn WoX = wo * x
+        Threads.@spawn UcH = uc * h
+        Threads.@spawn UiH = ui * h
+        Threads.@spawn UfH = uf * h
+        Threads.@spawn UoH = uo * h
+    end
+    @sync begin
+        Threads.@spawn z = tanh(    WcX + UcH .+ bc )
+        Threads.@spawn i = sigmoid( WiX + UiH .+ bi )
+        Threads.@spawn f = sigmoid( WfX + UfH .+ bf )
+        Threads.@spawn o = sigmoid( WoX + UoH .+ bo )
+    end
+    @sync begin
+        Threads.@spawn c = f .* c + i .* z
+        Threads.@spawn h = o .* tanh(c)
+    end
     model.c = c
     model.h = h
-
     return h
 end
 
@@ -193,16 +218,31 @@ function predict(model::LSTM, x::T) where T
     h = model.h ≠ nothing ? model.h : Zeros(T, size(wi,1), size(x,2))
     c = model.c ≠ nothing ? model.c : Zeros(T, size(wc,1), size(x,2))
 
-    z = tanh(    wc * x + uc * h .+ bc )
-    i = sigmoid( wi * x + ui * h .+ bi )
-    f = sigmoid( wf * x + uf * h .+ bf )
-    o = sigmoid( wo * x + uo * h .+ bo )
-    c = f .* c + i .* z
-    h = o .* tanh(c)
-
+    WcX, WiX, WfX, WoX = nothing,nothing,nothing,nothing
+    UcH, UiH, UfH, UoH = nothing,nothing,nothing,nothing
+    z,  i,  f,  o      = nothing,nothing,nothing,nothing
+    @sync begin
+        Threads.@spawn WcX = wc * x
+        Threads.@spawn WiX = wi * x
+        Threads.@spawn WfX = wf * x
+        Threads.@spawn WoX = wo * x
+        Threads.@spawn UcH = uc * h
+        Threads.@spawn UiH = ui * h
+        Threads.@spawn UfH = uf * h
+        Threads.@spawn UoH = uo * h
+    end
+    @sync begin
+        Threads.@spawn z = tanh(    WcX + UcH .+ bc )
+        Threads.@spawn i = sigmoid( WiX + UiH .+ bi )
+        Threads.@spawn f = sigmoid( WfX + UfH .+ bf )
+        Threads.@spawn o = sigmoid( WoX + UoH .+ bo )
+    end
+    @sync begin
+        Threads.@spawn c = f .* c + i .* z
+        Threads.@spawn h = o .* tanh(c)
+    end
     model.c = c
     model.h = h
-
     return h
 end
 

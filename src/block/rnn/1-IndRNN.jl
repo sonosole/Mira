@@ -1,13 +1,15 @@
 """
+    IndRNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
+# Math
 Independently Recurrent Neural Networks, i.e. ⤦\n
-    hᵗ = f(w*xᵗ + u .* hᵗ⁻¹ + b), where u is a vector
+    h[t] = f(w*x[t] + u .* h[t-1] .+ b), where u is a vector
 """
 mutable struct IndRNN <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
     u::VarOrNil # recurrent weights
     f::FunOrNil # activation function or nothing
-    h::Any      # hidden variable
+    h::Hidden   # hidden variable
     function IndRNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
         w = randn(T, hsize, isize) .* sqrt( T(2/isize) )
@@ -84,8 +86,14 @@ function forward(m::IndRNN, x::Variable{T}) where T
     w = m.w  # input's weights
     b = m.b  # input's bias
     u = m.u  # memory's weights
-    h = m.h ≠ nothing ? m.h : Variable(Zeros(T, size(w,1), size(x,2)), type=T)
-    x = f(matAddVec(matMulVec(h, u) + w*x, b))
+    h = !isnothing(m.h) ? m.h : Variable(Zeros(T, size(w,1), size(x,2)), type=T)
+    hu = nothing
+    wx = nothing
+    @sync begin
+        Threads.@spawn hu = matMulVec(h, u)
+        Threads.@spawn wx = w * x
+    end
+    x = f(matAddVec(hu + wx, b))
     m.h = x
     return x
 end
@@ -105,7 +113,14 @@ function predict(m::IndRNN, x::T) where T
     b = m.b.value  # input's bias
     u = m.u.value  # memory's weights
     h = m.h ≠ nothing ? m.h : Zeros(T, size(w,1), size(x,2))
-    x = f(w*x + h .* u .+ b)
+    hu = nothing
+    wx = nothing
+    @sync begin
+        Threads.@spawn hu = h .* u
+        Threads.@spawn wx = w * x
+    end
+
+    x = f(wx + hu .+ b)
     m.h = x
     return x
 end

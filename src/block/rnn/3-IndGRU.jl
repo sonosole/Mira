@@ -1,3 +1,11 @@
+"""
+    IndGRU(isize::Int, hsize::Int; type::Type=Array{Float32})
+# Math
+    z = sigmoid(Wz * x + Uz .* h .+ bz)
+    r = sigmoid(Wr * x + Ur .* h .+ br)
+    c = tanh(   Wc * x + Uc .* (r .* h) .+ bc )
+    h = z .* h + (1 - z) .* c
+"""
 mutable struct IndGRU <: Block
     # update gate
     Wz::VarOrNil
@@ -11,20 +19,23 @@ mutable struct IndGRU <: Block
     Wc::VarOrNil
     Uc::VarOrNil
     bc::VarOrNil
-    h::Any  # hidden variable
+    # hidden state
+    h ::Hidden
     function IndGRU(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
-        A  = T(sqrt(1 / isize))
-        Wz = randn(T, hsize, isize) .* A
-        Uz = uniform(T, (hsize, 1), from=-0.2, to=0.2)
+        λ  = sqrt(T(1/isize))
+        β  = T(0.1)
+        
+        Wz = randn(T, hsize, isize) .* λ
+        Uz = uniform(T, (hsize, 1), from=-β, to=β)
         bz = zeros(T, hsize, 1)
 
-        Wr = randn(T, hsize, isize) .* A
-        Ur = uniform(T, (hsize, 1), from=-0.2, to=0.2)
+        Wr = randn(T, hsize, isize) .* λ
+        Ur = uniform(T, (hsize, 1), from=-β, to=β)
         br = zeros(T, hsize, 1)
 
-        Wc = randn(T, hsize, isize) .* A
-        Uc = uniform(T, (hsize, 1), from=-0.2, to=0.2)
+        Wc = randn(T, hsize, isize) .* λ
+        Uc = uniform(T, (hsize, 1), from=-β, to=β)
         bc = zeros(T, hsize, 1)
 
 
@@ -117,12 +128,29 @@ function forward(model::IndGRU, x::Variable{T}) where T
     Uc = model.Uc
     bc = model.bc
 
-    h = model.h ≠ nothing ? model.h : Variable(Zeros(T, size(Wr,1), size(x,2)), type=T)
+    h = !isnothing(model.h) ? model.h : Variable(Zeros(T, size(Wr,1), size(x,2)), type=T)
+    l = eltype(T)(1)
 
-    z = sigmoid(Wz * x + Uz .* h .+ bz)
-    r = sigmoid(Wr * x + Ur .* h .+ br)
-    c = tanh(   Wc * x + Uc .* (r .* h) .+ bc )
-    h = z .* h + (1 - z) .* c
+    WzX, WrX, WcX, UzH, UrH = nothing, nothing, nothing, nothing, nothing
+    z, r, zh, zc            = nothing, nothing, nothing, nothing
+    @sync begin
+        Threads.@spawn WzX = Wz * x
+        Threads.@spawn WrX = Wr * x
+        Threads.@spawn WcX = Wc * x
+
+        Threads.@spawn UzH = Uz .* h
+        Threads.@spawn UrH = Ur .* h
+    end
+    @sync begin
+        Threads.@spawn z = sigmoid(WzX + UzH .+ bz)
+        Threads.@spawn r = sigmoid(WrX + UrH .+ br)
+    end
+    c = tanh(WcX + Uc .* (r .* h) .+ bc)
+    @sync begin
+        Threads.@spawn zh = z .* h
+        Threads.@spawn zc = (l - z) .* c
+    end
+    h = zh + zc
 
     model.h = h
 
@@ -154,10 +182,26 @@ function predict(model::IndGRU, x::T) where T
     h = model.h ≠ nothing ? model.h : Zeros(T, size(Wr,1), size(x,2))
     l = eltype(T)(1)
 
-    z = sigmoid(Wz * x + Uz .* h .+ bz)
-    r = sigmoid(Wr * x + Ur .* h .+ br)
-    c = tanh(   Wc * x + Uc .* (r .* h) .+ bc )
-    h = z .* h + (l .- z) .* c
+    WzX, WrX, WcX, UzH, UrH = nothing, nothing, nothing, nothing, nothing
+    z, r, zh, zc            = nothing, nothing, nothing, nothing
+    @sync begin
+        Threads.@spawn WzX = Wz * x
+        Threads.@spawn WrX = Wr * x
+        Threads.@spawn WcX = Wc * x
+
+        Threads.@spawn UzH = Uz .* h
+        Threads.@spawn UrH = Ur .* h
+    end
+    @sync begin
+        Threads.@spawn z = sigmoid(WzX + UzH .+ bz)
+        Threads.@spawn r = sigmoid(WrX + UrH .+ br)
+    end
+    c = tanh(WcX + Uc .* (r .* h) .+ bc)
+    @sync begin
+        Threads.@spawn zh = z .* h
+        Threads.@spawn zc = (l - z) .* c
+    end
+    h = zh + zc
 
     model.h = h
 

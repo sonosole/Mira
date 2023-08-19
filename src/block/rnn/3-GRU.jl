@@ -1,3 +1,30 @@
+"""
+    GRU(isize::Int, hsize::Int; type::Type=Array{Float32})
+# Math
+    z = sigmoid(Wz * x + Uz * h .+ bz)
+    r = sigmoid(Wr * x + Ur * h .+ br)
+    c = tanh(   Wc * x + Uc * (r .* h) .+ bc )
+    h = z .* h + (1 - z) .* c
+# Struct
+                                                                ▲ h[t]
+                                                                │
+                                                                │
+    h[t-1] ──┬───┬──────────────────────► × ─────────────► + ───┴────► h[t]
+             │   │                        ▲                ▲
+             │   │                        │                │
+             │   ▼    r                 z │     (1 - z)    │
+             │   × ◄─────┐                ├──────────────► ×
+             │   │       │                │                ▲
+             │   │       │                │                │ c
+             │   │   ┌───┴───┐Reset   ┌───┴───┐Update   ┌──┴───┐
+             │   │   │sigmoid│Gate    │sigmoid│Gate     │ tanh │
+             │   │   └─┬───┬─┘        └─┬───┬─┘         └┬────┬┘
+             │   │     ▲   ▲            ▲   ▲            ▲    ▲
+             │   └─────|───|────────────|───|────────────┘    │
+             └─────────┴───|────────────┘   │                 │
+                           └────────────────┴─────────────────┘
+                                            𝓧[t]
+"""
 mutable struct GRU <: Block
     # update gate
     Wz::VarOrNil
@@ -11,20 +38,23 @@ mutable struct GRU <: Block
     Wc::VarOrNil
     Uc::VarOrNil
     bc::VarOrNil
-    h::Any  # hidden variable
+    # hidden state
+    h ::Hidden
     function GRU(isize::Int, hsize::Int; type::Type=Array{Float32})
         T  = eltype(type)
+        λ  = sqrt(T(1/isize))
+        β  = T(0.1)
 
-        Wz = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        Uz = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        Wz = randn(T, hsize, isize) .* λ
+        Uz = randdiagonal(T, hsize, from=-β, to=β)
         bz = zeros(T, hsize, 1)
 
-        Wr = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        Ur = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        Wr = randn(T, hsize, isize) .* λ
+        Ur = randdiagonal(T, hsize, from=-β, to=β)
         br = zeros(T, hsize, 1)
 
-        Wc = randn(T, hsize, isize) .* sqrt( T(1/isize) )
-        Uc = randdiagonal(T, hsize, from=-0.2, to=0.2)
+        Wc = randn(T, hsize, isize) .* λ
+        Uc = randdiagonal(T, hsize, from=-β, to=β)
         bc = zeros(T, hsize, 1)
 
 
@@ -79,7 +109,7 @@ Base.iterate(m::GRUs, i=firstindex(m)) = i>length(m) ? nothing : (m[i], i+1)
 
 
 function Base.show(io::IO, m::GRU)
-    SIZE = size(m.Wr)
+    SIZE =   size(m.Wr.value)
     TYPE = typeof(m.Wr.value)
     print(io, "GRU($(SIZE[2]), $(SIZE[1]); type=$TYPE)")
 end
@@ -105,27 +135,33 @@ end
 
 
 function forward(model::GRU, x::Variable{T}) where T
-    Wz = model.Wz
-    Uz = model.Uz
-    bz = model.bz
+    Wz, Uz, bz = model.Wz, model.Uz, model.bz
+    Wr, Ur, br = model.Wr, model.Ur, model.br
+    Wc, Uc, bc = model.Wc, model.Uc, model.bc
 
-    Wr = model.Wr
-    Ur = model.Ur
-    br = model.br
+    h = !isnothing(model.h) ? model.h : Variable(Zeros(T, size(Wr,1), size(x,2)), type=T)
+    l = eltype(T)(1)
 
-    Wc = model.Wc
-    Uc = model.Uc
-    bc = model.bc
-
-    h = model.h ≠ nothing ? model.h : Variable(Zeros(T, size(Wr,1), size(x,2)), type=T)
-
-    z = sigmoid(Wz * x + Uz * h .+ bz)
-    r = sigmoid(Wr * x + Ur * h .+ br)
-    c = tanh(   Wc * x + Uc * (r .* h) .+ bc )
-    h = z .* h + (1 - z) .* c
-
+    WzX, WrX, WcX, UzH, UrH = nothing, nothing, nothing, nothing, nothing
+    z, r, zh, zc            = nothing, nothing, nothing, nothing
+    @sync begin
+        Threads.@spawn WzX = Wz * x
+        Threads.@spawn WrX = Wr * x
+        Threads.@spawn WcX = Wc * x
+        Threads.@spawn UzH = Uz * h
+        Threads.@spawn UrH = Ur * h
+    end
+    @sync begin
+        Threads.@spawn z = sigmoid(WzX + UzH .+ bz)
+        Threads.@spawn r = sigmoid(WrX + UrH .+ br)
+    end
+    c = tanh(WcX + Uc * (r .* h) .+ bc)
+    @sync begin
+        Threads.@spawn zh = z .* h
+        Threads.@spawn zc = (l - z) .* c
+    end
+    h = zh + zc
     model.h = h
-
     return h
 end
 
@@ -139,27 +175,34 @@ end
 
 
 function predict(model::GRU, x::T) where T
-    Wz = model.Wz.value
-    Uz = model.Uz.value
-    bz = model.bz.value
-
-    Wr = model.Wr.value
-    Ur = model.Ur.value
-    br = model.br.value
-
-    Wc = model.Wc.value
-    Uc = model.Uc.value
-    bc = model.bc.value
+    Wz,Uz,bz = ᵛ(model.Wz),ᵛ(model.Uz),ᵛ(model.bz)
+    Wr,Ur,br = ᵛ(model.Wr),ᵛ(model.Ur),ᵛ(model.br)
+    Wc,Uc,bc = ᵛ(model.Wc),ᵛ(model.Uc),ᵛ(model.bc)
 
     h = model.h ≠ nothing ? model.h : Zeros(T, size(Wr,1), size(x,2))
+    l = eltype(T)(1)
 
-    z = sigmoid(Wz * x + Uz * h .+ bz)
-    r = sigmoid(Wr * x + Ur * h .+ br)
-    c = tanh(   Wc * x + Uc * (r .* h) .+ bc )
-    h = z .* h + (eltype(x)(1) .- z) .* c
+    WzX, WrX, WcX, UzH, UrH = nothing, nothing, nothing, nothing, nothing
+    z, r, zh, zc            = nothing, nothing, nothing, nothing
+    @sync begin
+        Threads.@spawn WzX = Wz * x .+ bz
+        Threads.@spawn WrX = Wr * x .+ br
+        Threads.@spawn WcX = Wc * x .+ bc
 
+        Threads.@spawn UzH = Uz * h
+        Threads.@spawn UrH = Ur * h
+    end
+    @sync begin
+        Threads.@spawn z = sigmoid(WzX + UzH)
+        Threads.@spawn r = sigmoid(WrX + UrH)
+    end
+    c = tanh(WcX + Uc * (r .* h))
+    @sync begin
+        Threads.@spawn zh = z .* h
+        Threads.@spawn zc = (l .- z) .* c
+    end
+    h = zh + zc
     model.h = h
-
     return h
 end
 

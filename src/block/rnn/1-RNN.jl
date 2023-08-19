@@ -1,18 +1,23 @@
 """
+    RNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
+# Math
 Vanilla RNN, i.e. ⤦\n
-    hᵗ = f(w*xᵗ + u*hᵗ⁻¹ .+ b)
+    h[t] = f(w * x[t] + u * h[t-1] .+ b)
 """
 mutable struct RNN <: Block
     w::VarOrNil # input to hidden weights
     b::VarOrNil # bias of hidden units
     u::VarOrNil # recurrent weights
     f::FunOrNil # activation function
-    h::Any      # hidden variable
+    h::Hidden   # hidden variable
     function RNN(isize::Int, hsize::Int, fn::FunOrNil=relu; type::Type=Array{Float32})
         T = eltype(type)
-        w = randn(T, hsize, isize) .* sqrt(T(2 / isize))
+        λ = sqrt(T(2 / isize))
+        β = T(0.1)
+        
+        w = randn(T, hsize, isize) .* λ
         b = zeros(T, hsize, 1)
-        u = randdiagonal(T, hsize; from=-0.1990, to=0.1997)
+        u = randdiagonal(T, hsize; from=-β, to=β)
         new(Variable{type}(w,true,true,true),
             Variable{type}(b,true,true,true),
             Variable{type}(u,true,true,true), fn, nothing)
@@ -84,8 +89,14 @@ function forward(m::RNN, x::Variable{T}) where T
     w = m.w  # input's weights
     b = m.b  # input's bias
     u = m.u  # memory's weights
-    h = m.h ≠ nothing ? m.h : Variable(Zeros(T, size(w,1), size(x,2)), type=T)
-    x = f(matAddVec(w*x + u*h, b))
+    h = !isnothing(m.h) ? m.h : Variable(Zeros(T, size(w,1), size(x,2)), type=T)
+    uh = nothing
+    wx = nothing
+    @sync begin
+        Threads.@spawn uh = u * h
+        Threads.@spawn wx = w * x
+    end
+    x = f(matAddVec(wx + uh, b))
     m.h = x
     return x
 end
@@ -105,7 +116,13 @@ function predict(m::RNN, x::T) where T
     b = m.b.value  # input's bias
     u = m.u.value  # memory's weights
     h = m.h ≠ nothing ? m.h : Zeros(T, size(w,1), size(x,2))
-    x = f(w*x + u*h .+ b)
+    uh = nothing
+    wx = nothing
+    @sync begin
+        Threads.@spawn uh = u * h
+        Threads.@spawn wx = w * x
+    end
+    x = f(wx + uh .+ b)
     m.h = x
     return x
 end
