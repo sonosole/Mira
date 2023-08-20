@@ -9,7 +9,7 @@ export Pool5d
 """
 Applies a `D`-dim pooling over an `(D+2)`-dim input tensor of shape (ichannels, w1, w2, ..., wn, batchsize)\n
 # Constructor
-    Pool{D}(maxoravg :: FunOrNil=max;
+    Pool{D}(maxoravg :: FunOrNil;
             kernel   :: Dims{D} = ntuple(i -> 3, D),
             dilation :: Dims{D} = ntuple(i -> 1, D),
             stride   :: Dims{D} = ntuple(i -> 1, D),
@@ -145,17 +145,25 @@ end
 
 
 
-function forward(P::Pool{D}, x::Variable, backend::Function=ten2mat) where D
-    S = poolsize(x, P.padding, P.kernel, P.dilation, P.stride)
-    y = backend( x, P.padding, P.kernel, P.dilation, P.stride, P.padmode, P.padval)
-    return reshape(P.f(y, dims=1), S)
+function forward(C::Pool{D}, x::Variable) where D
+    S = poolsize(x, C.padding, C.kernel, C.dilation, C.stride)
+    y =  ten2mat(x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    xchannels = size(x, 1)
+    kernellen = prod(C.kernel)
+    columns   = size(y, 2)
+    z = reshape(y, xchannels,kernellen,columns)
+    return reshape(C.f(z, dims=2), S)
 end
 
 
-function predict(P::Pool{D}, x::AbstractArray, backend::Function=ten2mat) where D
-    S = poolsize(x, P.padding, P.kernel, P.dilation, P.stride)
-    y = backend( x, P.padding, P.kernel, P.dilation, P.stride, P.padmode, P.padval)
-    return reshape(P.f(y, dims=1), S)
+function predict(C::Pool{D}, x::AbstractArray) where D
+    S = poolsize(x, C.padding, C.kernel, C.dilation, C.stride)
+    y =  ten2mat(x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    xchannels = size(x, 1)
+    kernellen = prod(C.kernel)
+    columns   = size(y, 2)
+    z = reshape(y, xchannels,kernellen,columns)
+    return reshape(C.f(z, dims=2), S)
 end
 
 
@@ -164,7 +172,7 @@ end
 Applies a `1`-D pooling over an `3`-D input tensor of shape (ichannels, `steps`, batchsize)\n
 
 # Constructor
-    Pool1d(maxoravg :: FunOrNil=max;
+    Pool1d(maxoravg :: FunOrNil;
            kernel   :: Int = 3,
            dilation :: Int = 1,
            stride   :: Int = 1,
@@ -175,7 +183,7 @@ Applies a `1`-D pooling over an `3`-D input tensor of shape (ichannels, `steps`,
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `Dims{2}`
 """
-function Pool1d(maxoravg :: FunOrNil=max;
+function Pool1d(maxoravg :: FunOrNil;
                 kernel   :: Int = 3,
                 dilation :: Int = 1,
                 stride   :: Int = 1,
@@ -201,7 +209,7 @@ end
 Applies a `2`-D pooling over an `4`-D input tensor of shape (ichannels, `hight`, `width`, batchsize)\n
 
 # Constructor
-    Pool2d(maxoravg :: FunOrNil=max;
+    Pool2d(maxoravg :: FunOrNil;
            kernel   :: Dims{2} = (3,3),
            dilation :: Dims{2} = (1,1),
            stride   :: Dims{2} = (1,1),
@@ -212,7 +220,7 @@ Applies a `2`-D pooling over an `4`-D input tensor of shape (ichannels, `hight`,
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
 """
-function Pool2d(maxoravg :: FunOrNil=max;
+function Pool2d(maxoravg :: FunOrNil;
                 kernel   :: Dims{2} = (3,3),
                 dilation :: Dims{2} = (1,1),
                 stride   :: Dims{2} = (1,1),
@@ -231,7 +239,7 @@ end
 Applies a `3`-D pooling over an `5`-D input tensor of shape (ichannels, `hight`, `width`, `steps`, batchsize)\n
 
 # Constructor
-    Pool3d(maxoravg :: FunOrNil=max;
+    Pool3d(maxoravg :: FunOrNil;
            kernel   :: Dims{3} = (3,3,3),
            dilation :: Dims{3} = (1,1,1),
            stride   :: Dims{3} = (1,1,1),
@@ -242,7 +250,7 @@ Applies a `3`-D pooling over an `5`-D input tensor of shape (ichannels, `hight`,
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
 """
-function Pool3d(maxoravg :: FunOrNil=max;
+function Pool3d(maxoravg :: FunOrNil;
                 kernel   :: Dims{3} = (3,3,3),
                 dilation :: Dims{3} = (1,1,1),
                 stride   :: Dims{3} = (1,1,1),
@@ -261,7 +269,7 @@ end
 Applies a `4`-D pooling over an `6`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`, batchsize)\n
 
 # Constructor
-    Pool4d(maxoravg :: FunOrNil=max;
+    Pool4d(maxoravg :: FunOrNil;
            kernel   :: Dims{4} = (3,3,3,3),
            dilation :: Dims{4} = (1,1,1,1),
            stride   :: Dims{4} = (1,1,1,1),
@@ -272,7 +280,7 @@ Applies a `4`-D pooling over an `6`-D input tensor of shape (ichannels, `w1`,`w2
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
 """
-function Pool4d(maxoravg :: FunOrNil=max;
+function Pool4d(maxoravg :: FunOrNil;
                 kernel   :: Dims{4} = (3,3,3,3),
                 dilation :: Dims{4} = (1,1,1,1),
                 stride   :: Dims{4} = (1,1,1,1),
@@ -290,7 +298,7 @@ end
 Applies a `5`-D pooling over an `7`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`,`w5`, batchsize)\n
 
 # Constructor
-    Pool5d(maxoravg :: FunOrNil=max;
+    Pool5d(maxoravg :: FunOrNil;
            kernel   :: Dims{5} = (3,3,3,3,3),
            dilation :: Dims{5} = (1,1,1,1,1),
            stride   :: Dims{5} = (1,1,1,1,1),
@@ -301,7 +309,7 @@ Applies a `5`-D pooling over an `7`-D input tensor of shape (ichannels, `w1`,`w2
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
 """
-function Pool5d(maxoravg :: FunOrNil=max;
+function Pool5d(maxoravg :: FunOrNil;
                 kernel   :: Dims{5} = (3,3,3,3,3),
                 dilation :: Dims{5} = (1,1,1,1,1),
                 stride   :: Dims{5} = (1,1,1,1,1),
