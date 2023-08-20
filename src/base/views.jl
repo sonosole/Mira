@@ -91,9 +91,36 @@ function Base.reshape(x::Variable{T}, newsize::Dims{N}) where {T,N}
     return y
 end
 
+function Base.reshape(x::Variable{T}, shape::Int...) where T
+    y = Variable{T}( reshape(ᵛ(x), shape), x.backprop )
+    if y.backprop
+        y.backward = function ∇reshape()
+            if need2computeδ!(x)
+                x ← reshape(δ(y), x.shape)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
 
 function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int) where T
     y = Variable{T}( reshape(ᵛ(x), s₁, s₂), x.backprop )
+    if y.backprop
+        y.backward = function ∇reshape()
+            if need2computeδ!(x)
+                x ← reshape(δ(y), x.shape)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int, s₃::Int) where T
+    y = Variable{T}( reshape(ᵛ(x), s₁, s₂, s₃), x.backprop )
     if y.backprop
         y.backward = function ∇reshape()
             if need2computeδ!(x)
