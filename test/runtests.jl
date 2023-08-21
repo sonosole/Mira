@@ -18,4 +18,5 @@ using Mira
     include("./checkgrad/10-pool.jl")
     include("./checkgrad/znorm.jl")
     include("./advanced/jacobian.jl")
+    include("./misc/convpool.jl")
 end
