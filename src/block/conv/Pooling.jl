@@ -9,14 +9,14 @@ export Pool5d
 """
 Applies a `D`-dim pooling over an `(D+2)`-dim input tensor of shape (ichannels, w1, w2, ..., wn, batchsize)\n
 # Constructor
-    Pool{D}(maxoravg :: FunOrNil;
+    Pool{D}(poolingf :: Function;
             kernel   :: Dims{D} = ntuple(i -> 3, D),
             dilation :: Dims{D} = ntuple(i -> 1, D),
             stride   :: Dims{D} = ntuple(i -> 1, D),
             padval   :: Real = 0f0,
             padmode  :: String  = "zeros",
             padding  :: PadsDOrStr = "valid") where D
-
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
 """
@@ -28,7 +28,7 @@ mutable struct Pool{D} <: Block
     padding  :: Pads{D}
     padmode  :: Function
     padval   :: Float32
-    function Pool{D}(maxoravg :: FunOrNil;
+    function Pool{D}(poolingf :: Function;
                      kernel   :: Dims{D} = ntuple(i -> 3, D),
                      dilation :: Dims{D} = ntuple(i -> 1, D),
                      stride   :: Dims{D} = ntuple(i -> 1, D),
@@ -50,15 +50,10 @@ mutable struct Pool{D} <: Block
                 end
             end
         end
-        if isequal(maxoravg, max)
+        if isequal(poolingf, max)
             padval = -Inf
         end
-
-        if isequal(maxoravg, nil)
-            error("a pooling function must be specified")
-        end
-
-        new{D}(maxoravg, kernel, dilation, stride,
+        new{D}(poolingf, kernel, dilation, stride,
                npads, selectpad(padmode), padval)
     end
     function Pool{D}() where D
@@ -172,18 +167,18 @@ end
 Applies a `1`-D pooling over an `3`-D input tensor of shape (ichannels, `steps`, batchsize)\n
 
 # Constructor
-    Pool1d(maxoravg :: FunOrNil;
+    Pool1d(poolingf :: Function;
            kernel   :: Int = 3,
            dilation :: Int = 1,
            stride   :: Int = 1,
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Dims2OrStr = "valid")
-
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `Dims{2}`
 """
-function Pool1d(maxoravg :: FunOrNil;
+function Pool1d(poolingf :: Function;
                 kernel   :: Int = 3,
                 dilation :: Int = 1,
                 stride   :: Int = 1,
@@ -199,7 +194,7 @@ function Pool1d(maxoravg :: FunOrNil;
     dilation = singletuple(dilation)
     stride   = singletuple(stride)
 
-    return Pool{1}(maxoravg;
+    return Pool{1}(poolingf;
                    kernel, dilation, stride,
                    padval, padmode, padding)
 end
@@ -209,18 +204,18 @@ end
 Applies a `2`-D pooling over an `4`-D input tensor of shape (ichannels, `hight`, `width`, batchsize)\n
 
 # Constructor
-    Pool2d(maxoravg :: FunOrNil;
+    Pool2d(poolingf :: Function;
            kernel   :: Dims{2} = (3,3),
            dilation :: Dims{2} = (1,1),
            stride   :: Dims{2} = (1,1),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads2OrStr = "valid")
-
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
 """
-function Pool2d(maxoravg :: FunOrNil;
+function Pool2d(poolingf :: Function;
                 kernel   :: Dims{2} = (3,3),
                 dilation :: Dims{2} = (1,1),
                 stride   :: Dims{2} = (1,1),
@@ -228,7 +223,7 @@ function Pool2d(maxoravg :: FunOrNil;
                 padmode  :: String = "repeat",
                 padding  :: Pads2OrStr = "valid")
 
-    return Pool{2}(maxoravg;
+    return Pool{2}(poolingf;
                    kernel, dilation, stride,
                    padval, padmode, padding)
 end
@@ -239,18 +234,18 @@ end
 Applies a `3`-D pooling over an `5`-D input tensor of shape (ichannels, `hight`, `width`, `steps`, batchsize)\n
 
 # Constructor
-    Pool3d(maxoravg :: FunOrNil;
+    Pool3d(poolingf :: Function;
            kernel   :: Dims{3} = (3,3,3),
            dilation :: Dims{3} = (1,1,1),
            stride   :: Dims{3} = (1,1,1),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads3OrStr = "valid")
-
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
 """
-function Pool3d(maxoravg :: FunOrNil;
+function Pool3d(poolingf :: Function;
                 kernel   :: Dims{3} = (3,3,3),
                 dilation :: Dims{3} = (1,1,1),
                 stride   :: Dims{3} = (1,1,1),
@@ -258,7 +253,7 @@ function Pool3d(maxoravg :: FunOrNil;
                 padmode  :: String = "repeat",
                 padding  :: Pads3OrStr = "valid")
 
-    return Pool{3}(maxoravg;
+    return Pool{3}(poolingf;
                    kernel, dilation, stride,
                    padval, padmode, padding)
 end
@@ -269,18 +264,18 @@ end
 Applies a `4`-D pooling over an `6`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`, batchsize)\n
 
 # Constructor
-    Pool4d(maxoravg :: FunOrNil;
+    Pool4d(poolingf :: Function;
            kernel   :: Dims{4} = (3,3,3,3),
            dilation :: Dims{4} = (1,1,1,1),
            stride   :: Dims{4} = (1,1,1,1),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads4OrStr = "valid")
-
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
 """
-function Pool4d(maxoravg :: FunOrNil;
+function Pool4d(poolingf :: Function;
                 kernel   :: Dims{4} = (3,3,3,3),
                 dilation :: Dims{4} = (1,1,1,1),
                 stride   :: Dims{4} = (1,1,1,1),
@@ -288,7 +283,7 @@ function Pool4d(maxoravg :: FunOrNil;
                 padmode  :: String = "repeat",
                 padding  :: Pads4OrStr = "valid")
 
-    return Pool{4}(maxoravg;
+    return Pool{4}(poolingf;
                    kernel, dilation, stride,
                    padval, padmode, padding)
 end
@@ -298,18 +293,18 @@ end
 Applies a `5`-D pooling over an `7`-D input tensor of shape (ichannels, `w1`,`w2`,`w3`,`w4`,`w5`, batchsize)\n
 
 # Constructor
-    Pool5d(maxoravg :: FunOrNil;
+    Pool5d(poolingf :: Function;
            kernel   :: Dims{5} = (3,3,3,3,3),
            dilation :: Dims{5} = (1,1,1,1,1),
            stride   :: Dims{5} = (1,1,1,1,1),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads5OrStr = "valid")
-
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
 """
-function Pool5d(maxoravg :: FunOrNil;
+function Pool5d(poolingf :: Function;
                 kernel   :: Dims{5} = (3,3,3,3,3),
                 dilation :: Dims{5} = (1,1,1,1,1),
                 stride   :: Dims{5} = (1,1,1,1,1),
@@ -317,7 +312,7 @@ function Pool5d(maxoravg :: FunOrNil;
                 padmode  :: String = "repeat",
                 padding  :: Pads5OrStr = "valid")
 
-    return Pool{5}(maxoravg;
+    return Pool{5}(poolingf;
                    kernel, dilation, stride,
                    padval, padmode, padding)
 end
