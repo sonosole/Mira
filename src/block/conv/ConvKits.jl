@@ -6,6 +6,20 @@ const Pads3OrStr = Union{Int, NTuple{3, Union{Dims{2},Int}}, String} # for conv3
 const Pads4OrStr = Union{Int, NTuple{4, Union{Dims{2},Int}}, String} # for conv4d
 const Pads5OrStr = Union{Int, NTuple{5, Union{Dims{2},Int}}, String} # for conv5d
 
+@doc """
+`Pads{D}` is a very strict type for padding infomations, for a D-dims Conv,
+the padding pixels at each dim is described with a Tuple{Int,Int}
+""" Pads
+
+@doc """
+`PadsDOrStr` is a loose type for passing padding infomations for a N-dims Conv, it allows the following types
++ `String`, can be "same" or "valid"
++ `Int`, all dims use the same padding, e.g. ((3,3), (3,3), (3,3))
++ `NTuple{D, Int}`, each dim's left and right padding are given with the same Int-typed value, e.g. ((2,2), (7,7))
++ `NTuple{D, Dims{2}}`, each dim's left and right padding are given with Dims{2}-typed value, e.g. ((2,9), (6,5))
+""" PadsDOrStr
+
+
 @inline function singletuple(i::Int)
     return (i,)
 end

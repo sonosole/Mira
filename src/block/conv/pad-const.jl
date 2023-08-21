@@ -24,10 +24,32 @@ end
 """
     size_and_range(x::AbstractArray, pads::Pads{D}) where D
 
-# Example
+# Example One
     julia> x = reshape(collect(1:12), (2,3,2));
     julia> size_and_range( x, ( (1,1), (1,2) ) )
     ((4, 6, 2), CartesianIndices((2:3, 2:4, 1:2)))
+# Example Two
+    julia> x = reshape(collect(1:6), (2,3));
+    julia> size_and_range( x, ( (1,2), (1,3) ) )
+    (5, 7), CartesianIndices((2:3, 2:4))
+    ┌───┬───┬───┐
+    │ 1 │ 3 │ 5 │
+    ├───┼───┼───┤
+    │ 2 │ 4 │ 6 │
+    └───┴───┴───┘
+          ⬇  padding = ((1,2), (1,3))
+    ┌───┬───┬───┬───┬───┬───┬───┐
+    │   │   │   │   │   │   │   │ 1
+    ├───┼───┼───┼───┼───┼───┼───┤
+    │   │ 1 │ 3 │ 5 │   │   │   │ 2
+    ├───┼───┼───┼───┼───┼───┼───┤
+    │   │ 2 │ 4 │ 6 │   │   │   │ 3
+    ├───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │ 4
+    ├───┼───┼───┼───┼───┼───┼───┤
+    │   │   │   │   │   │   │   │ 5
+    └───┴───┴───┴───┴───┴───┴───┘
+      1   2   3   4   5   6   7
 """
 function size_and_range(x::AbstractArray, pads::Pads{D}) where D
     sizex = size(x)
