@@ -16,7 +16,7 @@ export padcircular
 """
 function padcircular(x::AbstractArray, pads::Pads{D}) where D
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x, pads)
+    ysize, xranges = ysize_and_xrange_when_pad(x, pads)
     y = fill!(similar(x, ysize), 0)
     y[xranges] = x
 
@@ -45,7 +45,7 @@ end
 
 function padcircular(x::Variable{T}, pads::Pads{D}) where {T,D}
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(ᵛ(x), pads)
+    ysize, xranges = ysize_and_xrange_when_pad(ᵛ(x), pads)
     v = fill!(similar(ᵛ(x), ysize), eltype(x)(0))
     y = Variable{T}(v, x.backprop)
     v[xranges] = ᵛ(x)

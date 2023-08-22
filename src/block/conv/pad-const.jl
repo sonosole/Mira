@@ -1,4 +1,4 @@
-export size_and_range
+export ysize_and_xrange_when_pad
 export padconst
 
 const Dims2 = Tuple{Int, Int}
@@ -22,28 +22,34 @@ end
 
 
 """
-    size_and_range(x::AbstractArray, pads::Pads{D}) where D
+    ysize_and_xrange_when_pad(x::AbstractArray, pads::Pads{D}) where D -> ysize, xrange
 
+Suppose padding `x` to `y` according to `pads`, the returned arg has the following meaning
++ `ysize`::NTuple is the size of y
++ `xrange`::CartesianIndices is the range that we should insert x into y
 # Example One
     julia> x = reshape(collect(1:12), (2,3,2));
-    julia> size_and_range( x, ( (1,1), (1,2) ) )
+    julia> p = ((1,1), (1,2));
+    julia> ysize_and_xrange_when_pad(x, p)
     ((4, 6, 2), CartesianIndices((2:3, 2:4, 1:2)))
+         ↑                              ↑
+         ysize                          xrange
 # Example Two
     julia> x = reshape(collect(1:6), (2,3));
-    julia> size_and_range( x, ( (1,2), (1,3) ) )
+    julia> ysize_and_xrange_when_pad( x, ( (1,2), (1,3) ) )
     (5, 7), CartesianIndices((2:3, 2:4))
-    ┌───┬───┬───┐
-    │ 1 │ 3 │ 5 │
-    ├───┼───┼───┤
-    │ 2 │ 4 │ 6 │
-    └───┴───┴───┘
-          ⬇  padding = ((1,2), (1,3))
+        ┌───┬───┬───┐
+        │ 1 │ 3 │ 5 │
+        ├───┼───┼───┤
+        │ 2 │ 4 │ 6 │
+        └───┴───┴───┘
+             ↓↓↓
     ┌───┬───┬───┬───┬───┬───┬───┐
     │   │   │   │   │   │   │   │ 1
     ├───┼───┼───┼───┼───┼───┼───┤
     │   │ 1 │ 3 │ 5 │   │   │   │ 2
     ├───┼───┼───┼───┼───┼───┼───┤
-    │   │ 2 │ 4 │ 6 │   │   │   │ 3
+    │   │ 2 │ 4 │ 6 │   │   │   │ 3     padding = ((1,2), (1,3))
     ├───┼───┼───┼───┼───┼───┼───┤
     │   │   │   │   │   │   │   │ 4
     ├───┼───┼───┼───┼───┼───┼───┤
@@ -51,44 +57,47 @@ end
     └───┴───┴───┴───┴───┴───┴───┘
       1   2   3   4   5   6   7
 """
-function size_and_range(x::AbstractArray, pads::Pads{D}) where D
+function ysize_and_xrange_when_pad(x::AbstractArray, pads::Pads{D}) where D
     sizex = size(x)
     N = length(sizex)
     @assert D ≤ N "too much padding dims"
     newsize = ntuple(i -> i > D ? 0 : pads[i][1] + pads[i][2], N) .+ sizex
     offsets = ntuple(i -> i > D ? 0 : pads[i][1],  N)
-    xranges = ntuple(i -> offsets[i] .+ axes(x,i), N)
-    return newsize, CartesianIndices(xranges)
+    xrange  = ntuple(i -> offsets[i] .+ axes(x,i), N)
+    return newsize, CartesianIndices(xrange)
 end
 
 """
-    size_and_range(x::AbstractArray, pads::Vector{Dims2})
+    ysize_and_xrange_when_pad(x::AbstractArray, pads::Vector{Dims2})
 
 # Example
     julia> x = reshape(collect(1:12), (2,3,2));
-    julia> size_and_range(x, [(1,1),(1,2)])
+    julia> p = [(1,1),(1,2)];
+    julia> ysize_and_xrange_when_pad(x, p)
     ((4, 6, 2), CartesianIndices((2:3, 2:4, 1:2)))
 """
-function size_and_range(x::AbstractArray, pads::Vector{Dims2})
+function ysize_and_xrange_when_pad(x::AbstractArray, pads::Vector{Dims2})
     sizex = size(x)
     D = length(pads)
     N = length(sizex)
     @assert D ≤ N "too much padding dims"
     newsize = ntuple(i -> i > D ? 0 : pads[i][1] + pads[i][2], N) .+ sizex
     offsets = ntuple(i -> i > D ? 0 : pads[i][1],  N)
-    xranges = ntuple(i -> offsets[i] .+ axes(x,i), N)
-    return newsize, CartesianIndices(xranges)
+    xrange  = ntuple(i -> offsets[i] .+ axes(x,i), N)
+    return newsize, CartesianIndices(xrange)
 end
 
 
 """
-    size_and_range(x::AbstractArray, pads::Vector{Pair{Int,Dims2}})
+    ysize_and_xrange_when_pad(x::AbstractArray, pads::Vector{Pair{Int,Dims2}})
 
 # Example
-    julia> size_and_range(reshape( collect(1:12), (2,3,2) ), [2=>(1,2),1=>(1,1)])
+    julia> x = reshape( collect(1:12), (2,3,2) );
+    julia> p = [2=>(1,2),1=>(1,1)];
+    julia> ysize_and_xrange_when_pad(x, p)
     ((4, 6, 2), CartesianIndices((2:3, 2:4, 1:2)))
 """
-function size_and_range(x::AbstractArray, pads::Vector{Pair{Int,Dims2}})
+function ysize_and_xrange_when_pad(x::AbstractArray, pads::Vector{Pair{Int,Dims2}})
     P = length(pads)
     D = ndims(x)
     @assert P ≤ D "too much padding dims"
@@ -114,8 +123,8 @@ function size_and_range(x::AbstractArray, pads::Vector{Pair{Int,Dims2}})
     end
 
     newsize = ntuple(i -> ysize[i],          D)
-    xranges = ntuple(i -> start[i]:final[i], D)
-    return newsize, CartesianIndices(xranges)
+    xrange  = ntuple(i -> start[i]:final[i], D)
+    return newsize, CartesianIndices(xrange)
 end
 
 
@@ -145,9 +154,9 @@ The argment `pads` is like ((1,2),(4,3)), which means:
 """
 function padconst(x::AbstractArray, pads::Pads{D}, val::Real=0) where D
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x, pads)
+    ysize, xrange = ysize_and_xrange_when_pad(x, pads)
     y = fill!(similar(x, ysize), val)
-    y[xranges] = x
+    y[xrange] = x
     return y
 end
 
@@ -176,9 +185,9 @@ The argment `pads` is like [(1,2),(4,3)], which means:
 """
 function padconst(x::AbstractArray, pads::Vector{Dims2}, val::Real=0)
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x, pads)
+    ysize, xrange = ysize_and_xrange_when_pad(x, pads)
     y = fill!(similar(x, ysize), val)
-    y[xranges] = x
+    y[xrange] = x
     return y
 end
 
@@ -208,24 +217,24 @@ The argment `pads` is like [2=>(1,2),1=>(4,3)], which means:
 """
 function padconst(x::AbstractArray, pads::Vector{Pair{Int,Dims2}}, val::Real=0)
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x, pads)
+    ysize, xrange = ysize_and_xrange_when_pad(x, pads)
     y = fill!(similar(x, ysize), val)
-    y[xranges] = x
+    y[xrange] = x
     return y
 end
 
 
 function padconst(x::Variable{T}, pads::Pads{D}, val::Real=0) where {T,D}
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x.value, pads)
+    ysize, xrange = ysize_and_xrange_when_pad(x.value, pads)
     t = fill!(similar(x.value, ysize), val)
-    t[xranges] = x.value
+    t[xrange] = x.value
 
     y = Variable{T}(t, x.backprop)
     if y.backprop
         y.backward = function ∇padconst()
             if need2computeδ!(x)
-                x ← δ(y)[xranges]
+                x ← δ(y)[xrange]
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -237,15 +246,15 @@ end
 
 function padconst(x::Variable{T}, pads::Vector{Dims2}, val::Real=0) where T
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x.value, pads)
+    ysize, xrange = ysize_and_xrange_when_pad(x.value, pads)
     t = fill!(similar(x.value, ysize), val)
-    t[xranges] = x.value
+    t[xrange] = x.value
 
     y = Variable{T}(t, x.backprop)
     if y.backprop
         y.backward = function ∇padconst()
             if need2computeδ!(x)
-                x ← δ(y)[xranges]
+                x ← δ(y)[xrange]
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -257,15 +266,15 @@ end
 
 function padconst(x::Variable{T}, pads::Vector{Pair{Int,Dims2}}, val::Real=0) where T
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x.value, pads)
+    ysize, xrange = ysize_and_xrange_when_pad(x.value, pads)
     t = fill!(similar(x.value, ysize), val)
-    t[xranges] = x.value
+    t[xrange] = x.value
 
     y = Variable{T}(t, x.backprop)
     if y.backprop
         y.backward = function ∇padconst()
             if need2computeδ!(x)
-                x ← δ(y)[xranges]
+                x ← δ(y)[xrange]
             end
             ifNotKeepδThenFreeδ!(y)
         end

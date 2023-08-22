@@ -16,7 +16,7 @@ export padrepeat
 """
 function padrepeat(x::AbstractArray, pads::Pads{D}) where D
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(x, pads)
+    ysize, xranges = ysize_and_xrange_when_pad(x, pads)
     y = similar(x, ysize)
     y[xranges] = x
 
@@ -45,7 +45,7 @@ end
 
 function padrepeat(x::Variable{T}, pads::Pads{D}) where {T,D}
     paddings(pads) == 0 && return x
-    ysize, xranges = size_and_range(ᵛ(x), pads)
+    ysize, xranges = ysize_and_xrange_when_pad(ᵛ(x), pads)
     v = similar(ᵛ(x), ysize)
     y = Variable{T}(v, x.backprop)
     v[xranges] = ᵛ(x)
