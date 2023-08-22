@@ -21,3 +21,5 @@ include("./6-tdc.jl")
 include("./7-fast-ctc.jl")
 include("./8-ace.jl")
 include("./9-pool.jl")
+
+include("./compare.jl")
