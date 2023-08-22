@@ -45,9 +45,9 @@ end
         c = Loss(x < y)
         l = cost(c)
         if l > 0
-            @test x.value[1] ≥ y.value[1]
             # println("$(x.value[1]) ≥ $(y.value[1])" |> yellow!)
         else
+            @test x.value[1] < y.value[1]
             # println("$(x.value[1]) < $(y.value[1])" |> green!)
             break
         end
@@ -65,9 +65,9 @@ end
         c = Loss(x ≤ y)
         l = cost(c)
         if l > 0
-            @test x.value[1] > y.value[1]
             # println("$(x.value[1]) > $(y.value[1])" |> yellow!)
         else
+            @test x.value[1] ≤ y.value[1]
             # println("$(x.value[1]) ≤ $(y.value[1])" |> green!)
             break
         end

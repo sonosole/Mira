@@ -14,7 +14,7 @@ Suppose `xₖ` is an element in `x`. `xₖ` > 0 is a constraint.
 """
 function require_great_than_zero(x::Variable{T}) where T
     o = eltype(T)(0)  # typed zero
-    m = ᵛ(x) .≤ o     # mask that meets requirement
+    m = ᵛ(x) .≤ o     # unsatisfied is marked 1, satisfied is marked 0
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_great_than_zero()
@@ -38,7 +38,7 @@ Suppose `xₖ` is an element in `x`. `xₖ` ≥ 0 is a constraint.
 """
 function require_great_equal_than_zero(x::Variable{T}) where T
     o = eltype(T)(0)  # typed zero
-    m = ᵛ(x) .< o     # mask that meets requirement
+    m = ᵛ(x) .< o     # unsatisfied is marked 1, satisfied is marked 0
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_great_equal_than_zero()
@@ -64,7 +64,7 @@ Suppose `xₖ` is an element in `x`. `xₖ` < 0 is a constraint.
 """
 function require_less_than_zero(x::Variable{T}) where T
     o = eltype(T)(0)  # typed zero
-    m = ᵛ(x) .≥ o     # mask that meets requirement
+    m = ᵛ(x) .≥ o     # unsatisfied is marked 1, satisfied is marked 0
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_less_than_zero()
@@ -88,8 +88,8 @@ Suppose `xₖ` is an element in `x`. `xₖ` ≤ 0 is a constraint.
 """
 function require_less_equal_than_zero(x::Variable{T}) where T
     o = eltype(T)(0)  # typed zero
-    m = ᵛ(x) .> o     # mask that meets requirement
-    y = Variable{T}(ᵛ(x) .* m, x.backprop)
+    m = ᵛ(x) .> o     # unsatisfied is marked 1, satisfied is marked 0
+    y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_less_equal_than_zero()
             if need2computeδ!(x)
