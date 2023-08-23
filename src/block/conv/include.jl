@@ -11,7 +11,7 @@ include("./pad-reflect.jl")
 
 include("./Conv.jl")
 include("./ConvGroup.jl")
-
+include("./ConvTrans.jl")
 include("./Conv11.jl")
 include("./Pooling.jl")
 

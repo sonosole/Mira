@@ -122,21 +122,21 @@ function ten2mat(x        :: Array{T},
                  padmode  :: Function = padconst,
                  padval   :: Real = 0) where {T,D}
 
-    rows, cols, batchsize, YXIndices = ten2matFwdInfo(x, padding, kernel, dilation, stride)
+    rows, cols, batchsize, FwdIter = ten2matFwdInfo(x, padding, kernel, dilation, stride)
 
     if padmode == padconst
-        x = padmode(x, extendpad(padding), padval)
+        xten = padmode(x, extendpad(padding), padval)
     else
-        x = padmode(x, extendpad(padding))
+        xten = padmode(x, extendpad(padding))
     end
 
-    y = similar(x, rows, cols)
+    xmat = similar(xten, rows, cols)
 
-    Threads.@threads for (o, i) in YXIndices
-        @inbounds y[o] .= reshape(x[i], rows, batchsize)
+    Threads.@threads for (o, i) in FwdIter
+        @inbounds xmat[o] .= reshape(xten[i], rows, batchsize)
     end
 
-    return y
+    return xmat
 end
 
 
@@ -211,49 +211,49 @@ function ten2mat(x        :: Variable{Array{T}},
                  padmode  :: Function = padconst,
                  padval   :: Real = 0) where {T,D}
 
-    rows, cols, batchsize, YXIndices = ten2matFwdInfo(ᵛ(x), padding, kernel, dilation, stride)
+    rows, cols, batchsize, FwdIter = ten2matFwdInfo(ᵛ(x), padding, kernel, dilation, stride)
 
     if padmode == padconst
-        px = padmode(x, extendpad(padding), padval)
+        xten = padmode(x, extendpad(padding), padval)
     else
-        px = padmode(x, extendpad(padding))
+        xten = padmode(x, extendpad(padding))
     end
 
-    vy = similar(ᵛ(x), rows, cols)
+    mat = similar(ᵛ(xten), rows, cols)
 
-    Threads.@threads for (o, i) in YXIndices
-        @inbounds vy[o] .= reshape(px.value[i], rows, batchsize)
+    Threads.@threads for (o, i) in FwdIter
+        @inbounds mat[o] .= reshape(xten.value[i], rows, batchsize)
     end
-    y = Variable{Array{T}}(vy, px.backprop)
+    xmat = Variable{Array{T}}(mat, xten.backprop)
 
-    if y.backprop
+    if xmat.backprop
         parallizable = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) .≤ stride
 
-        y.backward = function ∇ten2mat()
-            if need2computeδ!(px)
-                zerodelta(px)
+        xmat.backward = function ∇ten2mat()
+            if need2computeδ!(xten)
+                zerodelta(xten)
                 if !all(parallizable)
-                    BwdIter = Ten2matBwdIter(YXIndices.zsize, parallizable)
+                    BwdIter = Ten2matBwdIter(FwdIter.zsize, parallizable)
                     for pindices in BwdIter
                         # locally parallel calculation
                         Threads.@threads for coords in pindices
                             n = coords2nth(BwdIter.sizez, coords)
-                            o, i = YXIndices[n]
-                            @inbounds px.delta[i] .+= reshape(y.delta[o], size(px.delta[i]))
+                            o, i = FwdIter[n]
+                            @inbounds xten.delta[i] .+= reshape(xmat.delta[o], size(xten.delta[i]))
                         end
                     end
                 else
                     # globally parallel calculation
-                    Threads.@threads for (o, i) in YXIndices
-                        @inbounds px.delta[i] .+= reshape(y.delta[o], size(px.delta[i]))
+                    Threads.@threads for (o, i) in FwdIter
+                        @inbounds xten.delta[i] .+= reshape(xmat.delta[o], size(xten.delta[i]))
                     end
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
+            ifNotKeepδThenFreeδ!(xmat)
         end
 
-        addchild(y, px)
+        addchild(xmat, xten)
     end
 
-    return y
+    return xmat
 end
