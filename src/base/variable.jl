@@ -67,6 +67,7 @@ end
 
 const XVariable  = Tuple{Char, Variable}
 const VarOrNil   = Union{Variable, Nothing}
+const VarOrReal  = Union{Variable, Real}
 const Variables  = Vector{Variable}
 const XVariables = Vector{XVariable}
 

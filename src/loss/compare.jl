@@ -102,8 +102,18 @@ function require_less_equal_than_zero(x::Variable{T}) where T
     return y
 end
 
-
+# Variable vs Variable
 Base.:>(x::Variable, y::Variable) = require_great_than_zero(x - y)
 Base.:≥(x::Variable, y::Variable) = require_great_equal_than_zero(x - y)
 Base.:<(x::Variable, y::Variable) = require_less_than_zero(x - y)
 Base.:≤(x::Variable, y::Variable) = require_less_equal_than_zero(x - y)
+# Variable vs TensorOrReal
+Base.:>(x::Variable, y::TensorOrReal) = require_great_than_zero(x - y)
+Base.:≥(x::Variable, y::TensorOrReal) = require_great_equal_than_zero(x - y)
+Base.:<(x::Variable, y::TensorOrReal) = require_less_than_zero(x - y)
+Base.:≤(x::Variable, y::TensorOrReal) = require_less_equal_than_zero(x - y)
+# TensorOrReal vs Variable
+Base.:>(x::TensorOrReal, y::Variable) = require_great_than_zero(x - y)
+Base.:≥(x::TensorOrReal, y::Variable) = require_great_equal_than_zero(x - y)
+Base.:<(x::TensorOrReal, y::Variable) = require_less_than_zero(x - y)
+Base.:≤(x::TensorOrReal, y::Variable) = require_less_equal_than_zero(x - y)
