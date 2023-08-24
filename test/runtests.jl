@@ -17,6 +17,7 @@ using Mira
     include("./checkgrad/9-ace.jl")
     include("./checkgrad/10-pool.jl")
     include("./checkgrad/znorm.jl")
+    include("./checkgrad/ten2mat.jl")
     include("./advanced/jacobian.jl")
     include("./misc/convpool.jl")
     include("./misc/compare.jl")
