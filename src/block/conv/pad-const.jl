@@ -282,3 +282,33 @@ function padconst(x::Variable{T}, pads::Vector{Pair{Int,Dims2}}, val::Real=0) wh
     end
     return y
 end
+
+
+"""
+    range_when_unpad(xten::AbstractArray, pads::Pads{D}) where D
+Suppose `x` was padded to `xten`, so we reverse inference the coords of `x` give `xten` and `pads` info
+"""
+function range_when_unpad(xten::AbstractArray, pads::Pads{D}) where D
+    xsize = size(xten)
+    N = length(xsize)
+    @assert D ≤ N "too much padding dims"
+    xrange  = ntuple(N) do i
+        i > D && return 1:xsize[i]
+        return (pads[i][1]+1):(xsize[i] - pads[i][2])
+    end
+    return CartesianIndices(xrange)
+end
+
+
+function unpad(xten::AbstractArray, pads::Pads{D}) where D
+    paddings(pads) == 0 && return xten
+    range = range_when_unpad(xten, pads)
+    return xten[range]
+end
+
+
+function unpad(xten::Variable, pads::Pads{D}) where D
+    paddings(pads) == 0 && return xten
+    range = range_when_unpad(ᵛ(xten), pads)
+    return xten[range]
+end
