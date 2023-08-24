@@ -20,6 +20,9 @@ Applies a `D`-dim convolution over an `(D+2)`-dim input tensor of shape (ichanne
 
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
+# Detailed Processes
++ Ordinary Conv Processes:
+    X → [padfn] → Xten → [ten2mat] → Xmat → [W*(●) + B] → Y → [reshape] → Z
 """
 mutable struct Conv{D} <: Block
     w :: VarOrNil
@@ -149,23 +152,25 @@ end
 
 
 
-function forward(C::Conv{D}, x::Variable, backend::Function=ten2mat) where D
+function forward(C::Conv{D}, xten::Variable) where D
     w = C.w
     b = C.b
-    S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
-    y = backend(    x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
-    z = reshape(matAddVec(w * y, b), S)
-    return C.f(z)
+    S = fullsize(w, xten, C.padding, C.kernel, C.dilation, C.stride)
+    xmat = ten2mat( xten, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    ymat = matAddVec(w * xmat, b)
+    zten = reshape(ymat, S)
+    return C.f(zten)
 end
 
 
-function predict(C::Conv{D}, x::AbstractArray, backend::Function=ten2mat) where D
-    w = value(C.w)
-    b = value(C.b)
-    S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
-    y = backend(    x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
-    z = reshape(w * y .+ b, S)
-    return C.f(z)
+function predict(C::Conv{D}, xten::AbstractArray) where D
+    w = C.w
+    b = C.b
+    S = fullsize(w, xten, C.padding, C.kernel, C.dilation, C.stride)
+    xmat = ten2mat( xten, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    ymat = w * xmat .+ b
+    zten = reshape(ymat, S)
+    return C.f(zten)
 end
 
 
