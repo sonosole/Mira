@@ -18,11 +18,13 @@ Applies a `D`-dim convolution over an `(D+2)`-dim input tensor of shape (ichanne
             padding  :: PadsDOrStr = "valid",
             type     :: Type = Array{Float32}) where D
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{D, Dims{2}}`
 # Detailed Processes
-+ Ordinary Conv Processes:
-    X → [padfn] → Xten → [ten2mat] → Xmat → [W*(●) + B] → Y → [reshape] → Z
+Suppose Convolution processes is\n
+    Zten = Conv(Xten)
+then the detailed process is decomposed into\n
+    Xten → ( [pad] → Xten → [ten2mat] → Xmat → [W*(∙) + B] → Y → [reshape] ) → Zten
 """
 mutable struct Conv{D} <: Block
     w :: VarOrNil
@@ -151,7 +153,10 @@ function bytesof(c::Conv{D}, unit::String="MB") where D
 end
 
 
-
+"""
+    forward(C::Conv{D}, xten::Variable)
++ `xten` is input tensor before padding
+"""
 function forward(C::Conv{D}, xten::Variable) where D
     w = C.w
     b = C.b
