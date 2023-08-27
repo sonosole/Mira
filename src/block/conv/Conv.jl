@@ -104,7 +104,7 @@ function Base.show(io::IO, c::Conv{1})
     P = ifelse(paddings(c.padding)==0, "", " padding=$(first(c.padding)),")
     D = ifelse(first(c.dilation)==1,   "", " dilation=$(first(c.dilation)),")
     S = ifelse(first(c.stride)==1,     "", " stride=$(first(c.stride)),")
-    SIZE = size(c.w)
+    SIZE =   size(c.w.value)
     TYPE = typeof(c.w.value)
     och  = SIZE[2] ÷ prod(c.kernel)
     ich  = SIZE[1]
@@ -115,7 +115,7 @@ function Base.show(io::IO, c::Conv{N}) where N
     P = ifelse(paddings(c.padding)==0, "", " padding=$(c.padding),")
     D = ifelse(prod(c.dilation)==1,   "", " dilation=$(c.dilation),")
     S = ifelse(prod(c.stride)==1,     "", " stride=$(c.stride),")
-    SIZE = size(c.w)
+    SIZE =   size(c.w.value)
     TYPE = typeof(c.w.value)
     och  = SIZE[2] ÷ prod(c.kernel)
     ich  = SIZE[1]
