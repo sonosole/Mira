@@ -292,7 +292,7 @@ function range_when_unpad(xten::AbstractArray, pads::Pads{D}) where D
     xsize = size(xten)
     N = length(xsize)
     @assert D ≤ N "too much padding dims"
-    xrange  = ntuple(N) do i
+    xrange = ntuple(N) do i
         i > D && return 1:xsize[i]
         return (pads[i][1]+1):(xsize[i] - pads[i][2])
     end
