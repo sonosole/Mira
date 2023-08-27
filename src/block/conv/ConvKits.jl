@@ -53,10 +53,11 @@ function inferpadding(padding::String, kernel::Int, stride::Int, dilation::Int)
         error("padmode should be \"zeros\" or \"const\", but got $padding")
     end
     if isequal(padding, "same")
-        (stride   ≠ 1) && error("when padding==\"same\", stride should be 1, but only got stride=$stride")
-        (dilation ≠ 1) && error("when padding==\"same\", dilation should be 1, but only got dilation=$dilation")
-        leftpad  = div(kernel-1, 2, RoundUp)
-        rightpad = div(kernel-1, 2, RoundDown)
+        if stride ≠ 1
+            error("when padding==\"same\", stride should be 1, but only got stride=$stride")
+        end
+        leftpad  = div(dilation*(kernel-1)+1, 2, RoundUp)
+        rightpad = div(dilation*(kernel-1)+1, 2, RoundDown)
     end
     if isequal(padding, "valid")
         leftpad  = 0
@@ -73,11 +74,12 @@ function inferpadding(padding::String, kernel::Dims{D}, stride::Dims{D}, dilatio
         error("padmode should be \"zeros\" or \"const\", but got $padding")
     end
     if isequal(padding, "same")
-        (prod(stride)   ≠ 1) && error("when padding==\"same\", stride should be 1, but only got stride=$stride")
-        (prod(dilation) ≠ 1) && error("when padding==\"same\", dilation should be 1, but only got dilation=$dilation")
+        if prod(stride) ≠ 1
+            error("when padding==\"same\", stride should be 1, but only got stride=$stride")
+        end
         npads = ntuple(D) do i
-            leftpad  = div(kernel[i]-1, 2, RoundUp)
-            rightpad = div(kernel[i]-1, 2, RoundDown)
+            leftpad  = div(dilation[i]*(kernel[i]-1)+1, 2, RoundUp)
+            rightpad = div(dilation[i]*(kernel[i]-1)+1, 2, RoundDown)
             return (leftpad, rightpad)
         end
     end
