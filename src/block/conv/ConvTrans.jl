@@ -1,148 +1,9 @@
-"""
-    infer_conv_out_size(x::Array, padding,kernel,dilation,stride) -> zsize::Dims
-Infer Conv operation's output size, if `z` = Conv(`x`), then `zsize` = size(`z`). This function
-is just for checking, not for training or inferencing.
-# Example
-```julia
-padding = ((1,3), (1,3))
-kernel  = (2,3)
-dilation= (3,2)
-stride  = (1,2)
-
-# conv size calc
-x = reshape([i for i in 1:6], 1,2,3,1);
-ysize = infer_conv_out_size(x, padding, kernel, dilation, stride)
-```
-
-    ┌───┬───┬───┐
-    │ 1 │ 3 │ 5 │
-    ├───┼───┼───┤
-    │ 2 │ 4 │ 6 │
-    └───┴───┴───┘ 2×3
-         ↓↓↓  padding = ((1,3), (1,3))
-    ┌───┬───┬───┬───┬───┬───┬───┐
-    │   │   │   │   │   │   │   │
-    ├───┼───┼───┼───┼───┼───┼───┤
-    │   │ 1 │ 3 │ 5 │   │   │   │                         ┌───┬───┐
-    ├───┼───┼───┼───┼───┼───┼───┤       kernel = (2,3)    │ 1 │ 4 │
-    │   │ 2 │ 4 │ 6 │   │   │   │     dilation = (3,2)    ├───┼───┤
-    ├───┼───┼───┼───┼───┼───┼───┤       stride = (1,2)    │ 2 │ 5 │
-    │   │   │   │   │   │   │   │     ────────────────►   ├───┼───┤
-    ├───┼───┼───┼───┼───┼───┼───┤                         │ 3 │ 6 │
-    │   │   │   │   │   │   │   │                         └───┴───┘ 3×2
-    ├───┼───┼───┼───┼───┼───┼───┤
-    │   │   │   │   │   │   │   │
-    └───┴───┴───┴───┴───┴───┴───┘ 6×7
-"""
-function infer_conv_out_size(x        :: AbstractArray,
-                             padding  :: Mira.Pads{D},
-                             kernel   :: Mira.Dims{D},
-                             dilation :: Mira.Dims{D},
-                             stride   :: Mira.Dims{D}) where D
-    N = D + 2
-    Mira.assertdim(x, N)
-    shape   = size(x)
-    xsize   = ntuple(i -> shape[i+1] + sum(padding[i]), D)           # spatial width after padding
-    ekernel = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D)      # equivalent kernel widths
-    zsize   = ntuple(N) do j
-        isequal(j, 1) && return shape[1]
-        isequal(j, N) && return shape[j]
-        i = j - 1
-        return (xsize[i] - ekernel[i]) ÷ stride[i] + 1
-    end
-    return zsize
-end
-
-
-"""
-    infer_tconv_out_size(z, padding,kernel,dilation,stride) -> xsize::Dims
-Infer Transpose Conv operation's output size, if `x` = TransConv(`z`), then xsize = size(`x`).
-# Detailed Explanation
-Normal Conv's Output size is
-`O = {I - [D*(K-1) + 1]}/S + 1`
-of which `D` is dialetion, `K` is equivalent kernel width, `S` is stride. So the input spatial width is
-`I = (O - 1) * S + D*(K-1) + 1`
-# Example
-```julia
-padding = ((1,3), (1,3))
-kernel  = (2,3)
-dilation= (3,2)
-stride  = (1,2)
-
-# conv size calc
-x = reshape([i for i in 1:6], 1,2,3,1);
-zsize = infer_conv_out_size(x, padding, kernel, dilation, stride)
-
-# trans-conv size calc
-z = reshape([i for i in 1:6], 1,3,2,1);
-xsize = infer_tconv_out_size(z, kernel, dilation, stride)
-```
-"""
-function infer_tconv_out_size(z        :: AbstractArray,
-                              kernel   :: Mira.Dims{D},
-                              dilation :: Mira.Dims{D},
-                              stride   :: Mira.Dims{D}) where D
-    N = D + 2
-    Mira.assertdim(z, N)
-    shape = size(z)
-    zsize = ntuple(i -> shape[i+1], D)
-    xsize = ntuple(N) do j
-        isequal(j,1) && return shape[1]
-        isequal(j,N) && return shape[j]
-        i = j - 1
-        return (zsize[i] - 1) * stride[i] + dilation[i]*(kernel[i] - 1) + 1
-    end
-    return xsize
-end
-
-
-function mat2ten(xmat     :: Variable{Array{T}},
-                 xten     :: Array{T},
-                 padding  :: Pads{D},
-                 kernel   :: Dims{D},
-                 dilation :: Dims{D},
-                 stride   :: Dims{D},
-                 padmode  :: Function = padconst,
-                 padval   :: Real = 0) where {T,D}
-
-    rows, cols, batchsize, YXIndices = ten2matFwdInfo(ᵛ(xten), padding, kernel, dilation, stride)
-    parallizable = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) .≤ stride
-
-    if !all(parallizable)
-        BwdIter = Ten2matBwdIter(YXIndices.zsize, parallizable)
-        for pindices in BwdIter
-            # locally parallel calculation
-            Threads.@threads for coords in pindices
-                n = coords2nth(BwdIter.sizez, coords)
-                o, i = YXIndices[n]
-                @inbounds xten[i] .+= reshape(xmat.value[o], size(xten[i]))
-            end
-        end
-    else
-        # globally parallel calculation
-        Threads.@threads for (o, i) in YXIndices
-            @inbounds xten[i] .+= reshape(xmat.value[o], size(xten[i]))
-        end
-    end
-
-    Xten = Variable{Array{T}}(xten, px.backprop)
-
-    if Xten.backprop
-        Xten.backward = function ∇mat2ten()
-            if need2computeδ!(xmat)
-                zerodelta(xmat)
-                Threads.@threads for (o, i) in YXIndices
-                    @inbounds xmat.delta[o] .= reshape(xten[i], rows, batchsize)
-                end
-            end
-            ifNotKeepδThenFreeδ!(Xten)
-        end
-        addchild(Xten, xmat)
-    end
-
-    return Xten
-end
-
+export TransConv
+export TransConv1d
+export TransConv2d
+export TransConv3d
+export TransConv4d
+export TransConv5d
 
 
 """
@@ -152,13 +13,16 @@ Applies a `D`-dim convolution over an `(D+2)`-dim input tensor of shape (ichanne
                  kernel   :: Dims{D} = ntuple(i -> 3, D),
                  dilation :: Dims{D} = ntuple(i -> 1, D),
                  stride   :: Dims{D} = ntuple(i -> 1, D),
-                 padval   :: Real = 0f0,
-                 padmode  :: String  = "zeros",
                  padding  :: PadsDOrStr = "valid",
                  type     :: Type = Array{Float32}) where D
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{D, Dims{2}}`
+# Detailed Processes
++ Ordinary Conv Processes:
+    `X` → [padfn] → `Xten` → [ten2mat] → `Xmat` → [W*(∙) + B] → `Y` → [reshape] → `Z`
++ Transpose Conv Processes:
+    `X` ← [unpad] ← `Xten` ← [mat2ten] ← `Xmat` ← [W*(∙) + B] ← `Y` ← [reshape] ← `Z`
 """
 mutable struct TransConv{D} <: Block
     w :: VarOrNil
@@ -168,14 +32,11 @@ mutable struct TransConv{D} <: Block
     dilation :: Dims{D}
     stride   :: Dims{D}
     padding  :: Pads{D}
-    padmode  :: Function
-    padval   :: Float32
+    outshape :: DimsOrNil
     function TransConv{D}(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                           kernel   :: Dims{D} = ntuple(i -> 3, D),
                           dilation :: Dims{D} = ntuple(i -> 1, D),
                           stride   :: Dims{D} = ntuple(i -> 1, D),
-                          padval   :: Real = 0f0,
-                          padmode  :: String  = "zeros",
                           padding  :: PadsDOrStr = "valid",
                           type     :: Type = Array{Float32}) where D
 
@@ -195,46 +56,80 @@ mutable struct TransConv{D} <: Block
         end
 
         dtype    = eltype(type)
-        patchlen = prod(kernel) * ichannels
+        patchlen = prod(kernel) * ochannels
         Amplifer = dtype(sqrt(2 / patchlen))
 
-        w = Amplifer * randn(dtype, ochannels, patchlen)
-        b = Amplifer * randn(dtype, ochannels,        1)
+        w = Amplifer * randn(dtype, patchlen, ichannels)
+        b = Amplifer * randn(dtype, patchlen,        1)
 
         new{D}(Variable{type}(w,true,true,true),
                Variable{type}(b,true,true,true), fn,
-               kernel, dilation, stride,
-               npads, selectpad(padmode), padval)
+               kernel, dilation, stride, npads, nothing)
     end
-    function Conv{D}() where D
+    function TransConv{D}() where D
         O = (0, 0)
         new{D}(nothing, nothing, nothing,
                ntuple(i -> 3, D),
                ntuple(i -> 1, D),
                ntuple(i -> 1, D),
-               ntuple(i -> O, D), padconst, 0f0)
+               ntuple(i -> O, D), nothing)
     end
+end
+
+
+function Base.show(io::IO, c::TransConv{N}) where N
+    P = ifelse(paddings(c.padding)==0, "", " padding=$(c.padding),")
+    D = ifelse(prod(c.dilation)==1,   "", " dilation=$(c.dilation),")
+    S = ifelse(prod(c.stride)==1,     "", " stride=$(c.stride),")
+    SIZE =   size(c.w.value)
+    TYPE = typeof(c.w.value)
+    och  = SIZE[1] ÷ prod(c.kernel)
+    ich  = SIZE[2]
+    print(io, "TransConv$(N)d($ich => $och, $(c.f), kernel=$(c.kernel),$D$S$P type=$TYPE)")
+end
+
+function Base.show(io::IO, c::TransConv{1})
+    P = ifelse(paddings(c.padding)==0, "", " padding=$(first(c.padding)),")
+    D = ifelse(first(c.dilation)==1,   "", " dilation=$(first(c.dilation)),")
+    S = ifelse(first(c.stride)==1,     "", " stride=$(first(c.stride)),")
+    SIZE =   size(c.w.value)
+    TYPE = typeof(c.w.value)
+    och  = SIZE[1] ÷ prod(c.kernel)
+    ich  = SIZE[2]
+    print(io, "TransConv($ich => $och, $(c.f), kernel=$(first(c.kernel)),$D$S$P type=$TYPE)")
 end
 
 
 """
 + Ordinary Conv Processes:
-X → [padfn] → Xten → [ten2mat] → Xmat → [W*(●) + B] → Y → [reshape] → Z
+X → ([padfn] → Xten → [ten2mat] → Xmat → [W*(∙) + B] → Y → [reshape]) → Z
 
 + Transpose Conv Processes:
-X ← [unpad] ← Xten ← [mat2ten] ← Xmat ← [W*(●) + B] ← Y ← [reshape] ← Z
+X ← ([unpad] ← Xten ← [mat2ten] ← Xmat ← [W*(∙) + B] ← Y ← [reshape]) ← Z
 """
 function forward(C::TransConv{D}, Z::Variable{T}) where {T,D}
     W = C.w
     B = C.b
     N = D + 2
-    Zchannels = size(Z, 1)
-    batchsize = size(Z, N)
-    xtensize = infer_tconv_out_size(ᵛ(Z), C.padding, C.kernel, C.dilation, C.stride)
-    Y = reshape(ᵛ(Z), Zchannels, :)
-    Xmat = Y * W .+ B
-    Xten = mat2ten(Xmat, Zeros(T, xtensize), C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
 
-    # UNPAD OP HERE
-    return C.f(Xten)
+    ZSIZE = size(Z)
+    YSIZE = (ZSIZE[1], prod(ZSIZE[2:N]))
+
+    Y = reshape(Z, YSIZE)
+    X = mat2ten(W * Y .+ B, ZSIZE, C.outshape, C.padding, C.kernel, C.dilation, C.stride)
+    return C.f(X)
+end
+
+
+function predict(C::TransConv{D}, Z::AbstractArray) where D
+    W = value(C.w)
+    B = value(C.b)
+    N = D + 2
+
+    ZSIZE = size(Z)
+    YSIZE = (ZSIZE[1], prod(ZSIZE[2:N]))
+
+    Y = reshape(Z, YSIZE)
+    X = mat2ten(W * Y .+ B, ZSIZE, C.outshape, C.padding, C.kernel, C.dilation, C.stride)
+    return C.f(X)
 end
