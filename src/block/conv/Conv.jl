@@ -106,9 +106,9 @@ function Base.show(io::IO, c::Conv{1})
     S = ifelse(first(c.stride)==1,     "", " stride=$(first(c.stride)),")
     SIZE =   size(c.w.value)
     TYPE = typeof(c.w.value)
-    och  = SIZE[2] ÷ prod(c.kernel)
-    ich  = SIZE[1]
-    print(io, "Conv1d($och => $ich, $(c.f), kernel=$(first(c.kernel)),$D$S$P type=$TYPE)")
+    ich  = SIZE[2] ÷ prod(c.kernel)
+    och  = SIZE[1]
+    print(io, "Conv1d($ich => $och, $(c.f), kernel=$(first(c.kernel)),$D$S$P type=$TYPE)")
 end
 
 function Base.show(io::IO, c::Conv{N}) where N
@@ -117,9 +117,9 @@ function Base.show(io::IO, c::Conv{N}) where N
     S = ifelse(prod(c.stride)==1,     "", " stride=$(c.stride),")
     SIZE =   size(c.w.value)
     TYPE = typeof(c.w.value)
-    och  = SIZE[2] ÷ prod(c.kernel)
-    ich  = SIZE[1]
-    print(io, "Conv$(N)d($(och) => $(ich), $(c.f), kernel=$(c.kernel),$D$S$P type=$TYPE)")
+    ich  = SIZE[2] ÷ prod(c.kernel)
+    och  = SIZE[1]
+    print(io, "Conv$(N)d($ich => $och, $(c.f), kernel=$(c.kernel),$D$S$P type=$TYPE)")
 end
 
 
@@ -157,25 +157,23 @@ end
     forward(C::Conv{D}, xten::Variable)
 + `xten` is input tensor before padding
 """
-function forward(C::Conv{D}, xten::Variable) where D
+function forward(C::Conv{D}, x::Variable) where D
     w = C.w
     b = C.b
-    S = fullsize(w, xten, C.padding, C.kernel, C.dilation, C.stride)
-    xmat = ten2mat( xten, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
-    ymat = matAddVec(w * xmat, b)
-    zten = reshape(ymat, S)
-    return C.f(zten)
+    S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
+    y = ten2mat( x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    z = reshape(matAddVec(w * y, b), S)
+    return C.f(z)
 end
 
 
-function predict(C::Conv{D}, xten::AbstractArray) where D
-    w = C.w
-    b = C.b
-    S = fullsize(w, xten, C.padding, C.kernel, C.dilation, C.stride)
-    xmat = ten2mat( xten, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
-    ymat = w * xmat .+ b
-    zten = reshape(ymat, S)
-    return C.f(zten)
+function predict(C::Conv{D}, x::AbstractArray) where D
+    w = ᵛ(C.w)
+    b = ᵛ(C.b)
+    S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
+    y = ten2mat( x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    z = reshape(w * y .+ b, S)
+    return C.f(z)
 end
 
 
