@@ -5,6 +5,7 @@ const Pads2OrStr = Union{Int, NTuple{2, Union{Dims{2},Int}}, String} # for conv2
 const Pads3OrStr = Union{Int, NTuple{3, Union{Dims{2},Int}}, String} # for conv3d
 const Pads4OrStr = Union{Int, NTuple{4, Union{Dims{2},Int}}, String} # for conv4d
 const Pads5OrStr = Union{Int, NTuple{5, Union{Dims{2},Int}}, String} # for conv5d
+const DimsOrNil  = Union{Dims, Nil}
 
 @doc """
 `Pads{D}` is a very strict type for padding infomations, for a D-dims Conv,
