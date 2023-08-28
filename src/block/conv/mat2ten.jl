@@ -182,7 +182,7 @@ function ten2matFwdInfo(sizeofx  :: Dims{N},
     COLS = batchsize * npatches        # total moving steps in a batch
     Iter = Ten2matFwdIter(ekernel, dilation, stride, zwidth, ROWS, COLS, npatches, xchannels, batchsize)
 
-    return batchsize, Iter
+    return Iter
 end
 
 function mat2ten(xmat     :: Array{T},
@@ -201,9 +201,9 @@ function mat2ten(xmat     :: Array{T},
     else
         paddedxsize = size_after_padded(xsize, ndpadding)
     end
-    xten  = Zeros(Array{T}, paddedxsize)
+    xten = Zeros(Array{T}, paddedxsize)
 
-    batchsize, FwdIter = ten2matFwdInfo(xsize, padding, kernel, dilation, stride)
+    FwdIter = ten2matFwdInfo(xsize, padding, kernel, dilation, stride)
     parallizable = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) .≤ stride
 
     if !all(parallizable)
@@ -241,9 +241,9 @@ function mat2ten(xmat     :: Variable{Array{T}},
     else
         paddedxsize = size_after_padded(xsize, ndpadding)
     end
-    xten  = Zeros(Array{T}, paddedxsize)
+    xten = Zeros(Array{T}, paddedxsize)
 
-    batchsize, FwdIter = ten2matFwdInfo(xsize, padding, kernel, dilation, stride)
+    FwdIter = ten2matFwdInfo(xsize, padding, kernel, dilation, stride)
     parallizable = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) .≤ stride
 
     if !all(parallizable)
@@ -266,6 +266,8 @@ function mat2ten(xmat     :: Variable{Array{T}},
     xten = Variable{Array{T}}(xten, xmat.backprop)
 
     if xten.backprop
+        batchsize = zsize[N]
+        rows = size(xmat, 1)
         xten.backward = function ∇mat2ten()
             if need2computeδ!(xmat)
                 zerodelta(xmat)
