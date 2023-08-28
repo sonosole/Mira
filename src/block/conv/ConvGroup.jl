@@ -141,12 +141,12 @@ end
 
 
 
-function forward(G::GroupConv{D}, x::Variable{T}, backend::Function=ten2mat) where {D,T}
+function forward(G::GroupConv{D}, x::Variable{T}) where {D,T}
     N  = groups(G)
     ys = Vector{Variable{T}}(undef, N)
     xs = divchannel(x, N)
     for i in 1:N
-        ys[i] = forward(G[i], xs[i], backend)
+        ys[i] = forward(G[i], xs[i])
     end
     zs = catchannel(ys)
     return zs
@@ -154,12 +154,12 @@ end
 
 
 
-function predict(G::GroupConv{D}, x::AbstractArray, backend::Function=ten2mat) where D
+function predict(G::GroupConv{D}, x::AbstractArray) where D
     N  = groups(G)
     ys = Vector{Variable{T}}(undef, N)
     xs = divchannel(x, N)
     for i in 1:N
-        ys[i] = predict(G[i], xs[i], backend)
+        ys[i] = predict(G[i], xs[i])
     end
     zs = catchannel(ys)
     return zs
