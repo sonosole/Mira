@@ -55,6 +55,9 @@ function min2max!(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
     return y
 end
 
+Base.clamp(x::AbstractArray, lo::Real, hi::Real) = clamp.(x, lo, hi)
+Base.clamp(x::Variable, lo::Real, hi::Real)  = min2max(x, lower=lo, upper=hi)
+Base.clamp!(x::Variable, lo::Real, hi::Real) = min2max!(x, lower=lo, upper=hi)
 
 """
     min2max(x::Variable{S}; lower=0.0, upper=1.0) where S -> y::Variable{S}
