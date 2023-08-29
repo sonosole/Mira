@@ -125,6 +125,19 @@ function ten2matFwdInfo(x        :: AbstractArray,
 end
 
 
+"""
+    ten2mat
+A part of Conv module
+# Explain
+The nomal convolution is X = Conv(Z), decomposed into following:
+```julia
+   ┌──────────────────────────────────────────────────────────────────┐
+   │ ┌────────────────────────┐         ┌───────────┐       ┌───────┐ │
+X →│ │[padfn] → Xten ← [tomat]│→ Xmat → │ W*(∙) + B │ → Y → │reshape│ │→ Z
+   │ └────────ten2mat─────────┘         └───Dense───┘       └───────┘ │
+   └──────────────────────────────Conv────────────────────────────────┘
+```
+"""
 function ten2mat(x        :: Array{T},
                  padding  :: Pads{D},
                  kernel   :: Dims{D},

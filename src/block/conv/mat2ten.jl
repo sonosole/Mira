@@ -117,9 +117,11 @@ function infer_tconv_out_size(z         :: AbstractArray,
                               stride    :: Dims{D},
                               xchannels :: Int) where D
     # The transpose convolution is X = TransConv(Z), decomposed into following:
-    #    ┌─────────────────────────────────────────────────────────────────┐
-    # X ←│ [unpad] ← Xten ← [mat2ten] ← Xmat ← [W*(∙) + B] ← Y ← [reshape] │← Z
-    #    └─────────────────────────────────────────────────────────────────┘
+    #    ┌──────────────────────────────────────────────────────────────────┐
+    #    │ ┌────────────────────────┐         ┌───────────┐       ┌───────┐ │
+    # X ←│ │[unpad] ← Xten ← [toten]│← Xmat ← │ W*(∙) + B │ ← Y ← │reshape│ │← Z
+    #    │ └─────── mat2ten ────────┘         └───────────┘       └───────┘ │
+    #    └─────────────────────────────TransConv────────────────────────────┘
     # It's a one-to-many mapping from size(Z) to size(X) when stride ≠ 1, so the
     # size return by this function maybe not precise, but a least guarantee.
     N = D + 2
@@ -141,9 +143,11 @@ function infer_tconv_out_size(zsize     :: Dims{N},
                               stride    :: Dims{D},
                               xchannels :: Int) where {N,D}
     # The transpose convolution is X = TransConv(Z), decomposed into following:
-    #    ┌─────────────────────────────────────────────────────────────────┐
-    # X ←│ [unpad] ← Xten ← [mat2ten] ← Xmat ← [W*(∙) + B] ← Y ← [reshape] │← Z
-    #    └─────────────────────────────────────────────────────────────────┘
+    #    ┌──────────────────────────────────────────────────────────────────┐
+    #    │ ┌────────────────────────┐         ┌───────────┐       ┌───────┐ │
+    # X ←│ │[unpad] ← Xten ← [toten]│← Xmat ← │ W*(∙) + B │ ← Y ← │reshape│ │← Z
+    #    │ └────────mat2ten─────────┘         └───Dense───┘       └───────┘ │
+    #    └────────────────────────────TransConv─────────────────────────────┘
     # It's a one-to-many mapping from size(Z) to size(X) when stride ≠ 1, so the
     # size return by this function maybe not precise, but a least guarantee.
     @assert isequal(N, D+2) "dims mismatch, $N≠$(D+2)"
@@ -185,6 +189,20 @@ function ten2matFwdInfo(sizeofx  :: Dims{N},
     return Iter
 end
 
+
+"""
+    mat2ten
+A part of TransConv module
+# Explain
+The transpose convolution is X = TransConv(Z), decomposed into following:
+```julia
+   ┌──────────────────────────────────────────────────────────────────┐
+   │ ┌────────────────────────┐         ┌───────────┐       ┌───────┐ │
+X ←│ │[unpad] ← Xten ← [toten]│← Xmat ← │ W*(∙) + B │ ← Y ← │reshape│ │← Z
+   │ └────────mat2ten─────────┘         └───Dense───┘       └───────┘ │
+   └──────────────────────────────────────────────────────────────────┘
+```
+"""
 function mat2ten(xmat     :: Array{T},
                  zsize    :: Dims{N},
                  xsize    :: DimsOrNil,

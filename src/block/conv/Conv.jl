@@ -21,10 +21,14 @@ Applies a `D`-dim convolution over an `(D+2)`-dim input tensor of shape (ichanne
 + `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
 + `padding` can be "valid", "same", or type `NTuple{D, Dims{2}}`
 # Detailed Processes
-Suppose Convolution processes is\n
-    Zten = Conv(Xten)
-then the detailed process is decomposed into\n
-    Xten → ( [pad] → Xten → [ten2mat] → Xmat → [W*(∙) + B] → Y → [reshape] ) → Zten
+The nomal convolution is X = Conv(Z), decomposed into following:
+```julia
+   ┌──────────────────────────────────────────────────────────────────┐
+   │ ┌────────────────────────┐         ┌───────────┐       ┌───────┐ │
+X →│ │[padfn] → Xten ← [tomat]│→ Xmat → │ W*(∙) + B │ → Y → │reshape│ │→ Z
+   │ └────────ten2mat─────────┘         └───Dense───┘       └───────┘ │
+   └──────────────────────────────Conv────────────────────────────────┘
+```
 """
 mutable struct Conv{D} <: Block
     w :: VarOrNil
@@ -123,7 +127,7 @@ function Base.show(io::IO, c::Conv{N}) where N
 end
 
 
-function paramsof(c::Conv{D}) where D
+function paramsof(c::Conv)
     params = Vector{Variable}(undef,2)
     params[1] = c.w
     params[2] = c.b
@@ -131,7 +135,7 @@ function paramsof(c::Conv{D}) where D
 end
 
 
-function xparamsof(c::Conv{D}) where D
+function xparamsof(c::Conv)
     xparams = Vector{XVariable}(undef,2)
     xparams[1] = ('w', c.w)
     xparams[2] = ('b', c.b)
@@ -139,7 +143,7 @@ function xparamsof(c::Conv{D}) where D
 end
 
 
-function nparamsof(c::Conv{D}) where D
+function nparamsof(c::Conv)
     lw = length(c.w)
     lb = length(c.b)
     return (lw + lb)
@@ -147,7 +151,7 @@ end
 
 elsizeof(c::Conv{D}) where D = elsizeof(c.w)
 
-function bytesof(c::Conv{D}, unit::String="MB") where D
+function bytesof(c::Conv, unit::String="MB")
     n = nparamsof(c) * elsizeof(c)
     return blocksize(n, uppercase(unit))
 end
@@ -157,21 +161,21 @@ end
     forward(C::Conv{D}, xten::Variable)
 + `xten` is input tensor before padding
 """
-function forward(C::Conv{D}, x::Variable) where D
+function forward(C::Conv, x::Variable)
     w = C.w
     b = C.b
     S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
-    y = ten2mat( x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    y = ten2mat(    x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
     z = reshape(matAddVec(w * y, b), S)
     return C.f(z)
 end
 
 
-function predict(C::Conv{D}, x::AbstractArray) where D
+function predict(C::Conv, x::AbstractArray)
     w = ᵛ(C.w)
     b = ᵛ(C.b)
     S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
-    y = ten2mat( x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
+    y = ten2mat(    x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
     z = reshape(w * y .+ b, S)
     return C.f(z)
 end
@@ -191,8 +195,8 @@ Applies a `1`-D convolution over an `3`-D input tensor of shape (ichannels, `ste
            padding  :: Dims2OrStr = "valid",
            type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `Dims{2}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `Dims{2}`
 """
 function Conv1d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 kernel   :: Int = 3,
@@ -231,8 +235,8 @@ Applies a `2`-D convolution over an `4`-D input tensor of shape (ichannels, `hig
            padding  :: Pads2OrStr = "valid",
            type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{2, Dims{2}}`
 """
 function Conv2d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 kernel   :: Dims{2} = (3,3),
@@ -264,8 +268,8 @@ Applies a `3`-D convolution over an `5`-D input tensor of shape (ichannels, `hig
            padding  :: Pads3OrStr = "valid",
            type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{3, Dims{2}}`
 """
 function Conv3d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 kernel   :: Dims{3} = (3,3,3),
@@ -297,8 +301,8 @@ Applies a `4`-D convolution over an `6`-D input tensor of shape (ichannels, `w1`
            padding  :: Pads4OrStr = "valid",
            type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{4, Dims{2}}`
 """
 function Conv4d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 kernel   :: Dims{4} = (3,3,3,3),
@@ -329,8 +333,8 @@ Applies a `5`-D convolution over an `7`-D input tensor of shape (ichannels, `w1`
            padding  :: Pads5OrStr = "valid",
            type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{5, Dims{2}}`
 """
 function Conv5d(ichannels::Int, ochannels::Int, fn::FunOrNil=relu;
                 kernel   :: Dims{5} = (3,3,3,3,3),
