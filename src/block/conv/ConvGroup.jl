@@ -20,8 +20,8 @@ Applies a D-dims group convolution over an (D+2)-dims input tensor of shape (ich
                  padding  :: Dims2OrStr = "valid",
                  type     :: Type = Array{Float32}) where D
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{D, Dims{2}}`
 """
 mutable struct GroupConv{D} <: Block
     blocks :: Vector{Conv{D}}
@@ -61,14 +61,14 @@ mutable struct GroupConv{D} <: Block
     end
 end
 
-@inline groups(G::GroupConv{D}) where D = G.groups
-@inline Base.first(G::GroupConv{D}) where D  = G.blocks[1]
-@inline Base.getindex(G::GroupConv{D}, i::Int) where D = G.blocks[i]
+@inline groups(G::GroupConv) = G.groups
+@inline Base.first(G::GroupConv)  = G.blocks[1]
+@inline Base.getindex(G::GroupConv, i::Int) = G.blocks[i]
 
-@inline Base.lastindex(G::GroupConv{D}) where D = G.groups
-@inline Base.firstindex(G::GroupConv{D}) where D = 1
+@inline Base.lastindex(G::GroupConv) = G.groups
+@inline Base.firstindex(G::GroupConv) = 1
 
-function Base.iterate(G::GroupConv{D}, i::Int=1) where D
+function Base.iterate(G::GroupConv, i::Int=1)
     if i ≤ G.groups
         return G[i], i+1
     end
@@ -111,7 +111,7 @@ function Base.show(io::IO, G::GroupConv{N}) where N
 end
 
 
-function paramsof(G::GroupConv{D}) where D
+function paramsof(G::GroupConv)
     params = Vector{Variable}(undef, 0)
     for conv in G
         append!(params, paramsof(conv))
@@ -120,7 +120,7 @@ function paramsof(G::GroupConv{D}) where D
 end
 
 
-function xparamsof(G::GroupConv{D}) where D
+function xparamsof(G::GroupConv)
     xparams = Vector{XVariable}(undef, 0)
     for conv in G
         append!(xparams, xparamsof(conv))
@@ -129,19 +129,19 @@ function xparamsof(G::GroupConv{D}) where D
 end
 
 
-function nparamsof(G::GroupConv{D}) where D
+function nparamsof(G::GroupConv)
     return nparamsof(first(G)) * groups(G)
 end
 
-elsizeof(G::GroupConv{D}) where D = elsizeof(first(G))
+elsizeof(G::GroupConv) = elsizeof(first(G))
 
-function bytesof(G::GroupConv{D}, unit::String="MB") where D
+function bytesof(G::GroupConv, unit::String="MB")
     return bytesof(first(G), unit) * groups(G)
 end
 
 
 
-function forward(G::GroupConv{D}, x::Variable{T}) where {D,T}
+function forward(G::GroupConv, x::Variable{T}) where T
     N  = groups(G)
     ys = Vector{Variable{T}}(undef, N)
     xs = divchannel(x, N)
@@ -154,9 +154,9 @@ end
 
 
 
-function predict(G::GroupConv{D}, x::AbstractArray) where D
+function predict(G::GroupConv, x::AbstractArray)
     N  = groups(G)
-    ys = Vector{Variable{T}}(undef, N)
+    ys = Vector{AbstractArray}(undef, N)
     xs = divchannel(x, N)
     for i in 1:N
         ys[i] = predict(G[i], xs[i])
@@ -184,8 +184,8 @@ Applies a `1`-D group convolution over an `3`-D input tensor of shape (ichannels
                  padding  :: Pads1OrStr = "valid",
                  type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `Dims{2}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `Dims{2}`
 """
 function GroupConv1d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
@@ -227,8 +227,8 @@ Applies a `2`-D group convolution over an `4`-D input tensor of shape (ichannels
                  padding  :: Pads2OrStr = "valid",
                  type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{2, Dims{2}}`
 """
 function GroupConv2d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
@@ -263,8 +263,8 @@ Applies a `3`-D group convolution over an `5`-D input tensor of shape (ichannels
                  padding  :: Pads3OrStr = "valid",
                  type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{3, Dims{2}}`
 """
 function GroupConv3d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int     = 2,
@@ -299,8 +299,8 @@ Applies a `4`-D group convolution over an `6`-D input tensor of shape (ichannels
                  padding  :: Pads4OrStr = "valid",
                  type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{4, Dims{2}}`
 """
 function GroupConv4d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
@@ -334,8 +334,8 @@ Applies a `5`-D group convolution over an `7`-D input tensor of shape (ichannels
                  padding  :: Pads5OrStr = "valid",
                  type     :: Type = Array{Float32})
 
-+ `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
-+ `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
++ `padmode` should be one of "zeros", "constant", "repeat", "reflect", "symmetric", "circular"
++ `padding` can be "valid", "same", or type `NTuple{5, Dims{2}}`
 """
 function GroupConv5d(ichannels :: Int, ochannels::Int, fn::FunOrNil=relu;
                       groups   :: Int = 2,
