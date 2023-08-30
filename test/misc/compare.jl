@@ -76,3 +76,22 @@ end
         zerograds!(x)
     end
 end
+
+
+@testset "test logit 1 ≤ x ≤ 2" begin
+    Random.seed!(UInt(time_ns()))
+    x = Variable(3rand(4,8), keepsgrad=true)
+    # display(x.value)
+    for _ in 1:20
+        y = Loss(1 ≤ x) + Loss(x ≤ 2)
+        println(cost(y))
+        if cost(y) == 0
+            @test true
+            # display(x.value)
+            break
+        end
+        backward(y)
+        update!(x, 0.5)
+        zerograds!(x)
+    end
+end

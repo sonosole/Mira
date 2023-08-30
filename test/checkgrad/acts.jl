@@ -1,6 +1,4 @@
 @testset "check activation fn's gradient" begin
-
-    using Random, Test
     Random.seed!(UInt(time_ns()))
 
     T = Array{Float64}

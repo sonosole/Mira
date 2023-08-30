@@ -1,4 +1,5 @@
 @testset "check CTCLoss op's gradient" begin
+    Random.seed!(UInt(time_ns()))
     SOFTMAX(x) = softmax(x, dims=1)
 
     # [1] creat model

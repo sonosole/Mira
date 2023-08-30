@@ -1,5 +1,4 @@
 @testset "check PoolLoss op's gradient" begin
-    using Random
     Random.seed!(UInt(time_ns()))
     input = Variable(2randn(8,10,2), type=Array{Float64})
     LOSS1(x) = PoolLoss(softmax(x,dims=1), [[2,2,2,2,4],[0]], blank=1)

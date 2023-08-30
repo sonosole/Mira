@@ -1,5 +1,4 @@
 @testset "check softmax & polymax op's gradient" begin
-    using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
     inputdims = 64;

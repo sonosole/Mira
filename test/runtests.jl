@@ -1,6 +1,6 @@
 using Test
 using Mira
-
+using Random
 
 @testset "checking gradient" begin
     include("./checkgrad/acts.jl")

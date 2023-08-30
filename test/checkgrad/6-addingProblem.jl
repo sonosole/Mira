@@ -17,7 +17,6 @@
         return [x1;x2],[y]
     end
 
-    using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
 

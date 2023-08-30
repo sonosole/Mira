@@ -1,7 +1,5 @@
-using Random
-Random.seed!(UInt(time_ns()))
-
 @testset "check pooling op's gradient at single dim" begin
+    Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
     inputdims = 64;
     timeSteps = 16;
@@ -24,6 +22,7 @@ end
 
 
 @testset "check pooling op's gradient at mutiple dims" begin
+    Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
     inputdims = 64;
     timeSteps = 16;
@@ -43,6 +42,7 @@ end
 
 
 @testset "check maxmin and minmax op's gradient at mutiple dims" begin
+    Random.seed!(UInt(time_ns()))
     DIM1 = 1
     DIM2 = 2
     TYPE = Array{Float64};

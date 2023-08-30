@@ -1,5 +1,4 @@
 @testset "check gradient for Conv1d block" begin
-    using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
     ichannels = 2

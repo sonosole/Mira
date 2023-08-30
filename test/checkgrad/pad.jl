@@ -1,5 +1,4 @@
 @testset "check gradient for 1-D Paddings" begin
-    using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
     ichannels = 2
@@ -15,7 +14,6 @@ end
 
 
 @testset "check gradient for 2-D Paddings" begin
-    using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64};
     C = 2

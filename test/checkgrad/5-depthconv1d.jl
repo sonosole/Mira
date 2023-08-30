@@ -1,5 +1,4 @@
 @testset "check gradient for PlainDepthConv1d block" begin
-    using Random
     Random.seed!(UInt(time_ns()))
     TYPE = Array{Float64}
     CHANNEL = 8

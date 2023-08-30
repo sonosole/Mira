@@ -1,6 +1,5 @@
 @testset "check gradient for Chain" begin
     # [1] prepare input data and its label
-    using Random
     Random.seed!(UInt(time_ns()))
 
     TYPE = Array{Float64}
