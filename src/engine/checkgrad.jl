@@ -2,6 +2,7 @@ export checkgrad
 
 
 function iseq(x::Real, y::Real; tol::AbstractFloat=0.05)
+    (x == 0   &&   y == 0) && return true
     (isnan(x) || isinf(x)) && return false
     (isnan(y) || isinf(y)) && return false
     sign(x) ≠ sign(y)      && return false
