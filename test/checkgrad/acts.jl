@@ -33,6 +33,8 @@
 
     _reshape_(x) = reshape(x, (4,4))
     @test checkgrad(_reshape_, Variable(randn(2, 8), type=T))
+    _flatten_(x) = flatten(x, from=2,to=3)
+    @test checkgrad(_flatten_, Variable(randn(4, 3, 2), type=T))
 
     @test checkgrad(sec,  Variable(rand(2, 8), type=T))
     @test checkgrad(sec!, Variable(rand(2, 8), type=T))
