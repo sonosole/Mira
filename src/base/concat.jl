@@ -1,35 +1,37 @@
 """
-    vcat(x₁::Variable{T}, x₂::Variable{T}) where T
-Concatenate along dimension 1.
+    cat(x₁::Variable{T}, x₂::Variable{T}; dims::Int=1) where T
+Concatenate along dimension `dims`.
 # Example
-```julia
-julia> x1 = Variable(1ones(1,4),keepsgrad=true);
-julia> x2 = Variable(2ones(2,4),keepsgrad=true);
-julia> x12 = vcat(x1,x2)
- None Leaf's value is 3×4 Matrix{Float32}:
- 1.0  1.0  1.0  1.0
- 2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0
+```
+julia> x1 = Variable(1ones(2,1));
+julia> x2 = Variable(2ones(2,2));
+julia> x12 = cat(x1,x2; dims=2)
+ None Leaf's value is 2×3 Matrix{Float32}:
+ 1.0  2.0  2.0
+ 1.0  2.0  2.0
 ```
 """
-function Base.vcat(x₁::Variable{T}, x₂::Variable{T}) where T
+function Base.cat(x₁::Variable{T}, x₂::Variable{T}; dims::Int=1) where T
     D      = ndims(x₁)
     sizex₁ = size(x₁)
     sizex₂ = size(x₂)
 
-    if !(sizex₁[2:D] == sizex₂[2:D])
-        error("Dimention mismatch from 2 to $D dims")
+    for d in 1:D
+        isequal(d, dims) && continue
+        if !isequal(sizex₁[d], sizex₂[d])
+            error("Dimention mismatch at $d-dim")
+        end
     end
 
     c₁ = ntuple(i -> 1:sizex₁[i], D)
     c₂ = ntuple(D) do i
-        i≠1 && return 1:sizex₂[i]
-        offset = sizex₁[1]
-        return (1 + offset):(sizex₂[1] + offset)
+        i ≠ dims && return 1:sizex₂[i]
+        offset = sizex₁[i]
+        return (1 + offset):(sizex₂[i] + offset)
     end
     sizex = ntuple(D) do i
-        i≠1 && return sizex₁[i]
-        return sizex₁[1] + sizex₂[1]
+        i ≠ dims && return sizex₁[i]
+        return sizex₁[i] + sizex₂[i]
     end
 
     v = similar(ᵛ(x₁), sizex)
@@ -55,48 +57,47 @@ end
 
 
 """
-    vcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
-Concatenate along dimension 1.
+    cat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}; dims::Int=1) where T
+Concatenate along dimension `dims`.
 # Example
 ```
-julia> x1 = Variable(1ones(1,4),keepsgrad=true);
-julia> x2 = Variable(2ones(2,4),keepsgrad=true);
-julia> x3 = Variable(3ones(3,4),keepsgrad=true);
-julia> x123 = vcat(x1,x2,x3)
- None Leaf's value is 6×4 Matrix{Float32}:
- 1.0  1.0  1.0  1.0
- 2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0
- 3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0
+julia> x1 = Variable(1ones(2,1));
+julia> x2 = Variable(2ones(2,2));
+julia> x3 = Variable(3ones(2,3));
+julia> x123 = cat(x1,x2,x3;dims=2)
+ None Leaf's value is 2×6 Matrix{Float32}:
+ 1.0  2.0  2.0  3.0  3.0  3.0
+ 1.0  2.0  2.0  3.0  3.0  3.0
 ```
 """
-function Base.vcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
+function Base.cat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}; dims::Int=1) where T
     D      = ndims(x₁)
     sizex₁ = size(x₁)
     sizex₂ = size(x₂)
     sizex₃ = size(x₃)
 
-    if !(sizex₁[2:D] == sizex₂[2:D] == sizex₃[2:D])
-        error("Dimention mismatch from 2 to $D dims")
+    for d in 1:D
+        isequal(d, dims) && continue
+        if sizex₁[d] ≠ sizex₂[d] ≠ sizex₃[d]
+            error("Dimention mismatch at $d-dim")
+        end
     end
 
     c₁ = ntuple(i -> 1:sizex₁[i], D)
     c₂ = ntuple(D) do i
-        i≠1 && return 1:sizex₂[i]
-        offset = sizex₁[1]
-        return (1 + offset):(sizex₂[1] + offset)
+        i ≠ dims && return 1:sizex₂[i]
+        offset = sizex₁[i]
+        return (1 + offset):(sizex₂[i] + offset)
     end
     c₃ = ntuple(D) do i
-        i≠1 && return 1:sizex₃[i]
-        offset = sizex₁[1] + sizex₂[1]
-        return (1 + offset):(sizex₃[1] + offset)
+        i ≠ dims && return 1:sizex₃[i]
+        offset = sizex₁[i] + sizex₂[i]
+        return (1 + offset):(sizex₃[i] + offset)
     end
 
     sizex = ntuple(D) do i
-        i≠1 && return sizex₁[i]
-        return sizex₁[1] + sizex₂[1] + sizex₃[1]
+        i ≠ dims && return sizex₁[i]
+        return sizex₁[i] + sizex₂[i] + sizex₃[i]
     end
 
     v = similar(ᵛ(x₁), sizex)
@@ -125,59 +126,55 @@ end
 
 
 """
-    vcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
-Concatenate along dimension 1.
+    cat(xs::Vector{Variable{T}}; dims=1) where T
+Concatenate along dimension `dims`.
 # Example
 ```
-julia> x1 = Variable(1ones(1,4),keepsgrad=true);
-julia> x2 = Variable(2ones(2,4),keepsgrad=true);
-julia> x3 = Variable(3ones(3,4),keepsgrad=true);
-julia> x4 = Variable(4ones(4,4),keepsgrad=true);
-julia> x1234 = vcat([x1,x2,x3,x4])
- None Leaf's value is 10×4 Matrix{Float32}:
- 1.0  1.0  1.0  1.0
- 2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0
- 3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0
- 4.0  4.0  4.0  4.0
- 4.0  4.0  4.0  4.0
- 4.0  4.0  4.0  4.0
- 4.0  4.0  4.0  4.0
+julia> x1 = Variable(1ones(2,1));
+julia> x2 = Variable(2ones(2,2));
+julia> x3 = Variable(3ones(2,3));
+julia> x4 = Variable(4ones(2,4));
+julia> x1234 = cat([x1,x2,x3,x4];dims=2)
+ None Leaf's value is 2×10 Matrix{Float32}:
+ 1.0  2.0  2.0  3.0  3.0  3.0  4.0  4.0  4.0  4.0
+ 1.0  2.0  2.0  3.0  3.0  3.0  4.0  4.0  4.0  4.0
 ```
 """
-function Base.vcat(xs::Vector{Variable{T}}) where T
+function Base.cat(xs::Vector{Variable{T}}; dims=1) where T
     N = length(xs)
+    isequal(N, 1) && return first(xs)
     D = ndims(first(xs))
-    @assert N>1 "you don't have to vcat,because you only have one input"
+
     sizexs = Vector{Dims{D}}(undef, N)
     sizexs[1] = size(first(xs))
     for n in 2:N
         sizexs[n] = size(xs[n])
-        if !(sizexs[n][2:D] == sizexs[n-1][2:D])
-            error("Dimention mismatch from 2 to $D dims")
+        for d in 1:D
+            isequal(d, dims) && continue
+            if sizexs[n][d] ≠ sizexs[n-1][d]
+                error("Dimention mismatch at $d-dim")
+            end
         end
     end
 
     cs = Vector{CartesianIndices}(undef, N)
     for n in 1:N
         cⁿ = ntuple(D) do i
-            i≠1 && return 1:sizexs[n][i]
+            i ≠ dims && return 1:sizexs[n][i]
             offset = 0
             for k in 1:n-1
-                offset += sizexs[k][1]
+                offset += sizexs[k][i]
             end
-            return (1 + offset):(sizexs[n][1] + offset)
+            return (1 + offset):(sizexs[n][i] + offset)
         end
         cs[n] = CartesianIndices(cⁿ)
     end
 
     sizex = ntuple(D) do i
-        i≠1 && return sizexs[1][i]
+        i ≠ dims && return sizexs[1][i]
         d = 0
         for n in 1:N
-            d += sizexs[n][1]
+            d += sizexs[n][i]
         end
         return d
     end
@@ -204,4 +201,99 @@ function Base.vcat(xs::Vector{Variable{T}}) where T
         end
     end
     return x
+end
+
+
+"""
+    vcat(x₁::Variable{T}, x₂::Variable{T}) where T
+Concatenate along dimension 1.
+# Example
+```julia
+julia> x1 = Variable(1ones(1,4));
+julia> x2 = Variable(2ones(2,4));
+julia> x12 = vcat(x1,x2)
+ None Leaf's value is 3×4 Matrix{Float32}:
+ 1.0  1.0  1.0  1.0
+ 2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0
+```
+"""
+function Base.vcat(x₁::Variable{T}, x₂::Variable{T}) where T
+    return cat(x₁, x₂; dims=1)
+end
+
+
+"""
+    vcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
+Concatenate along dimension 1.
+# Example
+```
+julia> x1 = Variable(1ones(1,4));
+julia> x2 = Variable(2ones(2,4));
+julia> x3 = Variable(3ones(3,4));
+julia> x123 = vcat(x1,x2,x3)
+ None Leaf's value is 6×4 Matrix{Float32}:
+ 1.0  1.0  1.0  1.0
+ 2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0
+ 3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0
+```
+"""
+function Base.vcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
+    return cat(x₁, x₂, x₃; dims=1)
+end
+
+
+"""
+    vcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
+Concatenate along dimension 1.
+# Example
+```
+julia> x1 = Variable(1ones(1,4));
+julia> x2 = Variable(2ones(2,4));
+julia> x3 = Variable(3ones(3,4));
+julia> x4 = Variable(4ones(4,4));
+julia> x1234 = vcat([x1,x2,x3,x4])
+ None Leaf's value is 10×4 Matrix{Float32}:
+ 1.0  1.0  1.0  1.0
+ 2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0
+ 3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0
+ 4.0  4.0  4.0  4.0
+ 4.0  4.0  4.0  4.0
+ 4.0  4.0  4.0  4.0
+ 4.0  4.0  4.0  4.0
+```
+"""
+function Base.vcat(xs::Vector{Variable{T}}) where T
+    return cat(xs; dims=1)
+end
+
+
+"""
+    hcat(x₁::Variable{T}, x₂::Variable{T}) where T
+Concatenate along dimension 2.
+"""
+function Base.hcat(x₁::Variable{T}, x₂::Variable{T}) where T
+    return cat(x₁, x₂; dims=2)
+end
+
+"""
+    hcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T})
+Concatenate along dimension 2.
+"""
+function Base.hcat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}) where T
+    return cat(x₁, x₂, x₃; dims=2)
+end
+
+"""
+    hcat(xs::Vector{Variable{T}}) where T
+Concatenate along dimension 2.
+"""
+function Base.hcat(xs::Vector{Variable{T}}) where T
+    return cat(xs; dims=2)
 end
