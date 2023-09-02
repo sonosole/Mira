@@ -37,7 +37,7 @@ function divchannel(x::AbstractArray, G::Int)
     X = Vector{AbstractArray}(undef, G)
     Threads.@threads for i in 1:G
         offset = (i-1) * E
-        preidx = (1:E) .+ offset
+        preidx = 1 + offset : E + offset
         X[i] = x[preidx, postidx]
     end
 
@@ -87,7 +87,7 @@ function divchannel(x::Variable{T}, G::Int) where T
     X = Vector{Variable{T}}(undef, G)
     Threads.@threads for i in 1:G
         offset = (i-1) * E
-        preidx = (1:E) .+ offset
+        preidx = 1 + offset : E + offset
         X[i] = x[preidx, postidx]
     end
 
@@ -105,7 +105,7 @@ function catchannel(xs::Vector{AbstractArray})
 
     Threads.@threads for i in 1:G
         offset = (i-1) * C
-        preidx = (1:C) .+ offset
+        preidx = 1 + offset : C + offset
         y[preidx, postidx] .= xs[i]
     end
     return y
@@ -128,7 +128,7 @@ function catchannel(xs::Vector{Variable{T}}) where T
 
     Threads.@threads for i in 1:G
         offset = (i-1) * C
-        preidx = (1:C) .+ offset
+        preidx = 1 + offset : C + offset
         v[preidx, postidx] .= value(xs[i])
     end
 
@@ -139,7 +139,7 @@ function catchannel(xs::Vector{Variable{T}}) where T
             if need2computeδ!(x)
                 Threads.@threads for i in 1:G
                     offset = (i-1) * C
-                    preidx = (1:C) .+ offset
+                    preidx = 1 + offset : C + offset
                     xs[i] ← y.delta[preidx, postidx]
                 end
             end
