@@ -1,29 +1,61 @@
-export PadSeqPackBatch
-export PackedSeqPredict
-export PackedSeqForward
+export packsequences
+export seqpredict
+export seqforward
 
 
 """
-    PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true) -> output
-+ `inputs` <: Vector{AbstractArray{Real,2}}
-+ `output` <: AbstractArray{Real,3}
-pad epsilon to align raw input features probably with different length
+    packsequences(inputs::Vector; eps::Real=0.0, align="random") -> output
+Pad sequences of variable length to the same length `T`, where `T` is the length
+of the longest sequence. Then pack sequences into a batched `output` for RNN block.
+- `inputs` <: Vector{AbstractArray{Real,2}}
+- `eps` is the padding value, default to zero
+- `align` is the alignment method of all sequence, optionals are:
+  - `"random"`, which is the default mode. Sequences are aligned randomly
+  - `"left"`, sequences are aligned to the left
+  - `"right"`, sequences are aligned to the right
+  - `"center"`, sequences are aligned to the center
+- `output` <: AbstractArray{Real,3}
+
 # Examples
-    julia> PadSeqPackBatch([ones(2,1), 2ones(2,2), 3ones(2,3)], disorder=false)
-    2×3×3 Array{Float64,3}:
-    [:, :, 1] =
-     1.0  0.0  0.0
-     1.0  0.0  0.0
+```julia
+julia> packsequences([ones(Int,2,3), 2ones(Int,2,2), 3ones(Int,2,10)], align="random")
+2×10×3 Array{Int64, 3}:
+[:, :, 1] =
+ 0  0  0  1  1  1  0  0  0  0
+ 0  0  0  1  1  1  0  0  0  0
+[:, :, 2] =
+ 0  0  0  2  2  0  0  0  0  0
+ 0  0  0  2  2  0  0  0  0  0
+[:, :, 3] =
+ 3  3  3  3  3  3  3  3  3  3
+ 3  3  3  3  3  3  3  3  3  3
 
-    [:, :, 2] =
-     2.0  2.0  0.0
-     2.0  2.0  0.0
+julia> packsequences([ones(Int,2,3), 2ones(Int,2,2), 3ones(Int,2,10)], align="center")
+2×10×3 Array{Int64, 3}:
+[:, :, 1] =
+ 0  0  0  0  1  1  1  0  0  0
+ 0  0  0  0  1  1  1  0  0  0
+[:, :, 2] =
+ 0  0  0  0  2  2  0  0  0  0
+ 0  0  0  0  2  2  0  0  0  0
+[:, :, 3] =
+ 3  3  3  3  3  3  3  3  3  3
+ 3  3  3  3  3  3  3  3  3  3
 
-    [:, :, 3] =
-     3.0  3.0  3.0
-     3.0  3.0  3.0
+julia> packsequences([ones(Int,2,3), 2ones(Int,2,2), 3ones(Int,2,10)], align="right")
+2×10×3 Array{Int64, 3}:
+[:, :, 1] =
+ 0  0  0  0  0  0  0  1  1  1
+ 0  0  0  0  0  0  0  1  1  1
+[:, :, 2] =
+ 0  0  0  0  0  0  0  0  2  2
+ 0  0  0  0  0  0  0  0  2  2
+[:, :, 3] =
+ 3  3  3  3  3  3  3  3  3  3
+ 3  3  3  3  3  3  3  3  3  3
+```
 """
-function PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true)
+function packsequences(inputs::Vector; eps::Real=0.0, align="random")
     # all Array of inputs shall have the same size in dim-1
     batchsize = length(inputs)
     lengths   = [size(inputs[i], 2) for i in 1:batchsize]
@@ -31,24 +63,39 @@ function PadSeqPackBatch(inputs::Vector; eps::Real=0.0, disorder=true)
     maxlen    = maximum(lengths)
     RNNBatch  = zeros(eltype(inputs[1]), featdim, maxlen, batchsize)
     fill!(RNNBatch, eps)
-    if disorder
+    if isequal(align, "random")
         Threads.@threads for i = 1:batchsize
             T = lengths[i]
-            s = rand(1:(maxlen-T+1))
-            e = s + T - 1
-            RNNBatch[:,s:e,i] .= inputs[i]
+            S = rand(1:(maxlen-T+1))
+            E = S + T - 1
+            RNNBatch[:,S:E,i] .= inputs[i]
+        end
+    elseif isequal(align, "left")
+        Threads.@threads for i = 1:batchsize
+            RNNBatch[:,1:lengths[i],i] .= inputs[i]
+        end
+    elseif isequal(align, "right")
+        Threads.@threads for i = 1:batchsize
+            S = maxlen - lengths[i] + 1
+            RNNBatch[:,S:maxlen,i] .= inputs[i]
+        end
+    elseif isequal(align, "center")
+        Threads.@threads for i = 1:batchsize
+            paddings  = maxlen - lengths[i]
+            leftpads  = div(paddings, 2, RoundUp)
+            rightpads = paddings - leftpads
+            S = leftpads + 1
+            E = maxlen - rightpads
+            RNNBatch[:,S:E,i] .= inputs[i]
         end
     else
-        Threads.@threads for i = 1:batchsize
-            T = lengths[i]
-            RNNBatch[:,1:T,i] .= inputs[i]
-        end
+        error("align mode $align is not known yet...")
     end
     return RNNBatch
 end
 
 
-function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
+function seqforward(chain::Block, x::Variable{S}; keepstate=false) where S
     T = size(x, 2)
     v = Vector{Variable{S}}(undef, T)
 
@@ -88,7 +135,7 @@ function PackedSeqForward(chain::Block, x::Variable{S}; keepstate=false) where S
 end
 
 
-function PackedSeqPredict(chain::Block, x::AbstractArray{S}; keepstate=false) where S
+function seqpredict(chain::Block, x::AbstractArray{S}; keepstate=false) where S
     T = size(x,2)
     v = Vector{AbstractArray{S}}(undef,T)
 
