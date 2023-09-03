@@ -512,6 +512,20 @@ function Base.inv(x::Variable{T}) where T
     return y
 end
 
+function Base.:/(constant::Real, x::Variable{T}) where T
+    c = eltype(ᵛ(x))(constant)
+    y = Variable{T}(c .* inv(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇inv()
+            if need2computeδ!(x)
+                x ← - δ(y) .* ᵛ(y) .* ᵛ(y) .* (1/c)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
 
 export log!
 export log2!

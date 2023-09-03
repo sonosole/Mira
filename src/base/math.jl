@@ -99,8 +99,12 @@ function Base.:*(x::Variable{T}, constant::Real) where T
 end
 
 
-function Base.:*(constant::Real, var::Variable{T}) where T
-    return var * constant
+function Base.:*(constant::Real, x::Variable{T}) where T
+    return x * constant
+end
+
+function Base.:/(x::Variable{T}, constant::Real) where T
+    return x * (1 / constant)
 end
 
 
