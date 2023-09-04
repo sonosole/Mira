@@ -8,12 +8,13 @@ export exppool
 
 
 function Base.maximum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
-    y = Variable{T}(maximum(ᵛ(x), dims=dims), x.backprop)
+    v, i = findmax(ᵛ(x); dims)
+    y = Variable{T}(v, x.backprop)
     if y.backprop
-        mask = ᵛ(x) .== ᵛ(y)
         y.backward = function ∇maximum()
             if need2computeδ!(x)
-                x ← δ(y) .* mask .+ zero(x)
+                zerodelta(x)
+                ᵟ(x)[i] .+= δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -23,12 +24,13 @@ function Base.maximum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
 end
 
 function Base.minimum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
-    y = Variable{T}(minimum(ᵛ(x), dims=dims), x.backprop)
+    v, i = findmin(ᵛ(x); dims)
+    y = Variable{T}(v, x.backprop)
     if y.backprop
-        mask = ᵛ(x) .== ᵛ(y)
         y.backward = function ∇minimum()
             if need2computeδ!(x)
-                x ← δ(y) .* mask .+ zero(x)
+                zerodelta(x)
+                ᵟ(x)[i] .+= δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -38,7 +40,7 @@ function Base.minimum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
 end
 
 function Base.sum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
-    y = Variable{T}(sum(ᵛ(x), dims=dims), x.backprop)
+    y = Variable{T}(sum(ᵛ(x); dims), x.backprop)
     if y.backprop
         y.backward = function ∇sum()
             if need2computeδ!(x)
@@ -54,7 +56,7 @@ end
 
 function mean(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     m⁻¹ = eltype(x)(1 / prod(size(x, i) for i in dims))
-    μ   = Variable{T}(sum(ᵛ(x), dims=dims) .* m⁻¹, x.backprop)
+    μ   = Variable{T}(sum(ᵛ(x); dims) .* m⁻¹, x.backprop)
     if μ.backprop
         μ.backward = function ∇mean()
             if need2computeδ!(x)
@@ -74,7 +76,7 @@ Variance of `x`
           ┌──────────────────────┐
           │                      ▼
         ┌─┴─┐       ┌───┐      ┌─┴─┐
-        │ x ├──────►│ μ │      │ σ²│── ••• ──► l
+        │ x ├──────►│ μ │      │ σ²├── ••• ──► l
         └───┘       └───┘      └───┘
 
              ∂l     ∂σ²     ∂l    ∂σ²    ∂μ    ∂l     ∂σ²
@@ -104,30 +106,17 @@ function std(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
 end
 
 function maxmin(x::Variable{T}; dims1::IntOrDims{N1}, dims2::IntOrDims{N2}) where {T,N1,N2}
-    t = minimum(maximum(ᵛ(x), dims=dims1), dims=dims2)
-    y = Variable{T}(t, x.backprop)
-    if y.backprop
-        mask = ᵛ(x) .== ᵛ(y)
-        y.backward = function ∇maxmin()
-            if need2computeδ!(x)
-                x ← δ(y) .* mask .+ zero(x)
-            end
-            ifNotKeepδThenFreeδ!(y)
-        end
-        addchild(y, x)
-    end
-    return y
+    return minimum( maximum(x, dims=dims1), dims=dims2)
 end
-
 
 function maxmin(x::AbstractArray; dims1::IntOrDims{N1}, dims2::IntOrDims{N2}) where {N1,N2}
     return minimum( maximum(x, dims=dims1), dims=dims2)
 end
 
+
 function Base.minmax(x::Variable{T}; dims1::IntOrDims{N1}, dims2::IntOrDims{N2}) where {T,N1,N2}
     return maxmin(x; dims1=dims2, dims2=dims1)
 end
-
 
 function Base.minmax(x::AbstractArray; dims1::IntOrDims{N1}, dims2::IntOrDims{N2}) where {N1,N2}
     return maximum(minimum(x, dims=dims1), dims=dims2)
