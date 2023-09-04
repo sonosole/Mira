@@ -40,7 +40,7 @@ function sparseLoss(s::SparseMasking)
             if need2computeδ!(p)
                 δ₁ =  (𝟙 - 𝜌) ./ (𝟙 .- ᵛ(p) .+ ϵ)
                 δ₂ =       𝜌  ./ (     ᵛ(p) .+ ϵ)
-                δ(p) .+= δ(y) .* (δ₁ - δ₂)
+                p ← δ(y) .* (δ₁ - δ₂)
             end
             ifNotKeepδThenFreeδ!(y)
         end
