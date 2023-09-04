@@ -137,6 +137,7 @@ end
 export flatten
 export squeeze
 export unsqueeze
+export chunk
 
 """
     flatten(x::Variable; from::Int=2, to::Int=ndims(x)) -> y::Variable
@@ -317,4 +318,100 @@ function unsqueeze(x::Union{Variable, AbstractArray}; dims::Union{Int, Dims})
         end
     end
     return reshape(x, ntuple(i -> shape[i], length(shape)))
+end
+
+
+
+"""
+    chunk(x::AbstractArray, nchunks::Int; dim::Int=1)
+Split `x` into `nchunks` at dimention `dim`. `NOTE`: all returned chunks'
+width at `dim`-th dimention is div(size(`x`,`dim`), `nchunks`, RoundDown)
+# Example
+```
+julia> x = reshape(collect(1:2*9), 2,9)
+2×9 Matrix{Int64}:
+ 1  3  5  7   9  11  13  15  17
+ 2  4  6  8  10  12  14  16  18
+
+julia> xs = chunk(x, 2, dim=2);
+julia> xs[1]
+2×4 Matrix{Int64}:
+ 1  3  5  7
+ 2  4  6  8
+
+julia> xs[2]
+2×4 Matrix{Int64}:
+  9  11  13  15
+ 10  12  14  16
+```
+"""
+function chunk(x::AbstractArray, nchunks::Int; dim::Int=1)
+    xsize = size(x)
+    D = ndims(x)
+    W = xsize[dim]       # width at dim-th dimension
+    C = div(W, nchunks)  # chunk width at dim-th dimension
+
+    X = Vector{AbstractArray}(undef, nchunks)
+    Threads.@threads for i in 1:nchunks
+        coords = ntuple(D) do k
+            !isequal(k, dim) && return 1:xsize[k]
+            offset = (i-1) * C
+            return 1 + offset : C + offset
+        end
+        X[i] = x[CartesianIndices(coords)]
+    end
+
+    return X
+end
+
+
+"""
+    chunk(x::Variable, nchunks::Int; dim::Int=1)
+Split `x` into `nchunks` at dimention `dim`. `NOTE`: all returned chunks'
+width at `dim`-th dimention is div(size(`x`,`dim`), `nchunks`, RoundDown)
+# Example
+```
+julia> x = Variable(reshape(collect(1:2*9), 2,9))
+ Leaf's value is 2×9 Matrix{Float32}:
+ 1.0  3.0  5.0  7.0   9.0  11.0  13.0  15.0  17.0
+ 2.0  4.0  6.0  8.0  10.0  12.0  14.0  16.0  18.0
+
+julia> xs = chunk(x, 2, dim=2);
+julia> xs[1]
+ None Leaf's value is 2×4 Matrix{Float32}:
+ 1.0  3.0  5.0  7.0
+ 2.0  4.0  6.0  8.0
+
+julia> xs[2]
+ None Leaf's value is 2×4 Matrix{Float32}:
+  9.0  11.0  13.0  15.0
+ 10.0  12.0  14.0  16.0
+
+julia> x = Variable(reshape(collect(1:2*9), 2,9), keepsgrad=true);
+julia> xs = chunk(x, 2, dim=2); y = xs[1] + xs[2]; backward(y); x
+ Leaf's value is 2×9 Matrix{Float32}:
+ 1.0  3.0  5.0  7.0   9.0  11.0  13.0  15.0  17.0
+ 2.0  4.0  6.0  8.0  10.0  12.0  14.0  16.0  18.0
+ Leaf's delta is 2×9 Matrix{Float32}:
+ 1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  0.0
+ 1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  0.0
+```
+"""
+function chunk(x::Variable{T}, nchunks::Int; dim::Int=1) where T
+    xsize = size(x)
+    D = ndims(x)
+    W = xsize[dim]       # width at dim-th dimension
+    C = div(W, nchunks)  # chunk width at dim-th dimension
+
+    X = Vector{Variable{T}}(undef, nchunks)
+    Threads.@threads for i in 1:nchunks
+        coords = ntuple(D) do k
+            !isequal(k, dim) && return 1:xsize[k]
+            offset = (i-1) * C
+            return 1 + offset : C + offset
+        end
+        X[i] = x[CartesianIndices(coords)]
+    end
+
+    return X
 end
