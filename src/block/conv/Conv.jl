@@ -4,6 +4,9 @@ export Conv2d
 export Conv3d
 export Conv4d
 export Conv5d
+export fan_in_out
+export fanin
+export fanout
 
 
 """
@@ -102,6 +105,24 @@ function clone(this::Conv{D}; type::Type=Array{Float32}) where D
     return cloned
 end
 
+
+function fan_in_out(c::Conv)
+    SIZE = size(c.w.value)
+    ich  = SIZE[2] ÷ prod(c.kernel)
+    och  = SIZE[1]
+    return ich, och
+end
+
+function fanin(c::Conv)
+    SIZE = size(c.w.value)
+    ich  = SIZE[2] ÷ prod(c.kernel)
+    return ich
+end
+
+function fanout(c::Conv)
+    SIZE = size(c.w)
+    return SIZE[1]
+end
 
 # pretty show
 function Base.show(io::IO, c::Conv{1})

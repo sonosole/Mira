@@ -92,9 +92,9 @@ function Base.show(io::IO, G::GroupConv{1})
     S = ifelse(first(m.stride)==1,     "", " stride=$(first(m.stride)),")
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    och  = g * SIZE[2] ÷ prod(m.kernel)
-    ich  = g * SIZE[1]
-    print(io, "GroupConv1d($och => $ich, $(m.f), groups=$g, kernel=$(first(m.kernel)),$D$S$P type=$TYPE)")
+    ich  = g * SIZE[2] ÷ prod(m.kernel)
+    och  = g * SIZE[1]
+    print(io, "GroupConv1d($ich => $och, $(m.f), groups=$g, kernel=$(first(m.kernel)),$D$S$P type=$TYPE)")
 end
 
 function Base.show(io::IO, G::GroupConv{N}) where N
@@ -105,11 +105,36 @@ function Base.show(io::IO, G::GroupConv{N}) where N
     S = ifelse(prod(m.stride)==1,     "", " stride=$(m.stride),")
     SIZE = size(m.w)
     TYPE = typeof(m.w.value)
-    och  = g * SIZE[2] ÷ prod(m.kernel)
-    ich  = g * SIZE[1]
-    print(io, "GroupConv$(N)d($och => $ich, $(m.f), groups=$g, kernel=$(m.kernel),$D$S$P type=$TYPE)")
+    ich  = g * SIZE[2] ÷ prod(m.kernel)
+    och  = g * SIZE[1]
+    print(io, "GroupConv$(N)d($ich => $och, $(m.f), groups=$g, kernel=$(m.kernel),$D$S$P type=$TYPE)")
 end
 
+
+function fan_in_out(G::GroupConv)
+    m    = first(G)
+    g    = groups(G)
+    SIZE = size(G[1].w)
+    ich  = g * SIZE[2] ÷ prod(G[1].kernel)
+    och  = g * SIZE[1]
+    return ich, och
+end
+
+function fanin(G::GroupConv)
+    m    = first(G)
+    g    = groups(G)
+    SIZE = size(G[1].w)
+    ich  = g * SIZE[2] ÷ prod(G[1].kernel)
+    return ich
+end
+
+function fanout(G::GroupConv)
+    m    = first(G)
+    g    = groups(G)
+    SIZE = size(G[1].w)
+    och  = g * SIZE[1]
+    return och
+end
 
 function paramsof(G::GroupConv)
     params = Vector{Variable}(undef, 0)

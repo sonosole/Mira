@@ -108,6 +108,26 @@ Base.firstindex(m::GRUs)   = 1
 Base.iterate(m::GRUs, i=firstindex(m)) = i>length(m) ? nothing : (m[i], i+1)
 
 
+function fan_in_out(m::GRU)
+    SIZE = size(m.Wz)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::GRU)
+    SIZE = size(m.Wz)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::GRU)
+    SIZE = size(m.Wz)
+    ochs = SIZE[1]
+    return ochs
+end
+
+
 function Base.show(io::IO, m::GRU)
     SIZE =   size(m.Wr.value)
     TYPE = typeof(m.Wr.value)

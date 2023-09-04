@@ -35,6 +35,26 @@ function Base.show(io::IO, m::Linear)
     print(io, "Linear($(SIZE[2]), $(SIZE[1]); type=$TYPE)")
 end
 
+function fan_in_out(l::Linear)
+    SIZE = size(l.w)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(l::Linear)
+    SIZE = size(l.w)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(l::Linear)
+    SIZE = size(l.w)
+    ochs = SIZE[1]
+    return ochs
+end
+
+
 """
     unbiasedof(m::Linear)
 

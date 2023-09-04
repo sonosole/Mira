@@ -40,6 +40,24 @@ function Base.show(io::IO, m::Conv1x1)
     print(io, "Conv1x1($(SIZE[2]) => $(SIZE[1]), $(m.f); type=$TYPE)")
 end
 
+function fan_in_out(c::Conv1x1)
+    SIZE = size(c.w)
+    ich  = SIZE[2]
+    och  = SIZE[1]
+    return ich, och
+end
+
+function fanin(c::Conv1x1)
+    SIZE = size(c.w)
+    ich  = SIZE[2]
+    return ich
+end
+
+function fanout(c::Conv1x1)
+    SIZE = size(c.w)
+    return SIZE[1]
+end
+
 
 function forward(m::Conv1x1, x::Variable)
     f = m.f

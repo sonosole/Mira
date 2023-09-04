@@ -36,6 +36,27 @@ function Base.show(io::IO, m::Dense)
 end
 
 
+
+function fan_in_out(d::Dense)
+    SIZE = size(d.w)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(d::Dense)
+    SIZE = size(d.w)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(d::Dense)
+    SIZE = size(d.w)
+    ochs = SIZE[1]
+    return ochs
+end
+
+
 mutable struct MLP <: Block
     layers::Vector{Dense}
     function MLP(topology::Vector{Int}; type::Type=Array{Float32})

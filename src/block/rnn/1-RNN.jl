@@ -14,7 +14,7 @@ mutable struct RNN <: Block
         T = eltype(type)
         λ = sqrt(T(2 / isize))
         β = T(0.1)
-        
+
         w = randn(T, hsize, isize) .* λ
         b = zeros(T, hsize, 1)
         u = randdiagonal(T, hsize; from=-β, to=β)
@@ -71,6 +71,24 @@ function Base.show(io::IO, m::RNNs)
     print(io, "\n      )")
 end
 
+function fan_in_out(m::RNN)
+    SIZE = size(m.w)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::RNN)
+    SIZE = size(m.w)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::RNN)
+    SIZE = size(m.w)
+    ochs = SIZE[1]
+    return ochs
+end
 
 function resethidden(m::RNN)
     m.h = nothing

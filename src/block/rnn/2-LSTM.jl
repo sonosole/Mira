@@ -125,6 +125,26 @@ Base.firstindex(m::LSTMs)   = 1
 Base.iterate(m::LSTMs, i=firstindex(m)) = i>length(m) ? nothing : (m[i], i+1)
 
 
+function fan_in_out(m::LSTM)
+    SIZE = size(m.wi)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::LSTM)
+    SIZE = size(m.wi)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::LSTM)
+    SIZE = size(m.wi)
+    ochs = SIZE[1]
+    return ochs
+end
+
+
 function Base.show(io::IO, m::LSTM)
     SIZE = size(m.wi)
     TYPE = typeof(m.wi.value)

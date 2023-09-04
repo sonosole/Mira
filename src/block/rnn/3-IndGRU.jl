@@ -25,7 +25,7 @@ mutable struct IndGRU <: Block
         T  = eltype(type)
         λ  = sqrt(T(1/isize))
         β  = T(0.1)
-        
+
         Wz = randn(T, hsize, isize) .* λ
         Uz = uniform(T, (hsize, 1), from=-β, to=β)
         bz = zeros(T, hsize, 1)
@@ -87,6 +87,26 @@ Base.length(m::IndGRUs)       = length(m.layers)
 Base.lastindex(m::IndGRUs)    = length(m.layers)
 Base.firstindex(m::IndGRUs)   = 1
 Base.iterate(m::IndGRUs, i=firstindex(m)) = i>length(m) ? nothing : (m[i], i+1)
+
+
+function fan_in_out(m::IndGRU)
+    SIZE = size(m.Wz)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::IndGRU)
+    SIZE = size(m.Wz)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::IndGRU)
+    SIZE = size(m.Wz)
+    ochs = SIZE[1]
+    return ochs
+end
 
 
 function Base.show(io::IO, m::IndGRU)

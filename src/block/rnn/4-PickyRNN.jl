@@ -26,6 +26,26 @@ function clone(this::PickyRNN; type::Type=Array{Float32})
 end
 
 
+function fan_in_out(m::PickyRNN)
+    SIZE = size(m.w)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::PickyRNN)
+    SIZE = size(m.w)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::PickyRNN)
+    SIZE = size(m.w)
+    ochs = SIZE[1]
+    return ochs
+end
+
+
 function Base.show(io::IO, p::PickyRNN)
     SIZE = size(p.w)
     TYPE = typeof(p.w.value)

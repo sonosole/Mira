@@ -54,6 +54,24 @@ Base.lastindex(m::IndRNNs)    = length(m.layers)
 Base.firstindex(m::IndRNNs)   = 1
 Base.iterate(m::IndRNNs, i=firstindex(m)) = i>length(m) ? nothing : (m[i], i+1)
 
+function fan_in_out(m::IndRNN)
+    SIZE = size(m.w)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::IndRNN)
+    SIZE = size(m.w)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::IndRNN)
+    SIZE = size(m.w)
+    ochs = SIZE[1]
+    return ochs
+end
 
 function Base.show(io::IO, m::IndRNN)
     SIZE = size(m.w)

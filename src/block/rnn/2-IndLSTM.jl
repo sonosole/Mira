@@ -32,7 +32,7 @@ mutable struct IndLSTM <: Block
         T  = eltype(type)
         λ  = sqrt(T(1/isize))
         β  = T(0.1)
-        
+
         wi = randn(T, hsize, isize) .* λ
         ui = randn(T, hsize, 1) .* β
         bi = zeros(T, hsize, 1)
@@ -106,6 +106,24 @@ Base.lastindex(m::IndLSTMs)    = length(m.layers)
 Base.firstindex(m::IndLSTMs)   = 1
 Base.iterate(m::IndLSTMs, i=firstindex(m)) = i>length(m) ? nothing : (m[i], i+1)
 
+function fan_in_out(m::IndLSTM)
+    SIZE = size(m.wi)
+    ochs = SIZE[1]
+    ichs = SIZE[2]
+    return ichs, ochs
+end
+
+function fanin(m::IndLSTM)
+    SIZE = size(m.wi)
+    ichs = SIZE[2]
+    return ichs
+end
+
+function fanout(m::IndLSTM)
+    SIZE = size(m.wi)
+    ochs = SIZE[1]
+    return ochs
+end
 
 function Base.show(io::IO, m::IndLSTM)
     SIZE = size(m.wi)

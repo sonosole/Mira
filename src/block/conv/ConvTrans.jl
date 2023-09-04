@@ -119,6 +119,25 @@ function Base.show(io::IO, c::TransConv{1})
     print(io, "TransConv1d($ich => $och, $(c.f), kernel=$(first(c.kernel)),$D$S$P type=$TYPE)")
 end
 
+function fan_in_out(c::TransConv)
+    SIZE = size(c.w)
+    och  = SIZE[1] ÷ prod(c.kernel)
+    ich  = SIZE[2]
+    return ich, och
+end
+
+function fanin(c::TransConv)
+    SIZE = size(c.w)
+    ich  = SIZE[2]
+    return ich
+end
+
+function fanout(c::TransConv)
+    SIZE = size(c.w)
+    och  = SIZE[1] ÷ prod(c.kernel)
+    return och
+end
+
 
 function setoutsize(C::TransConv{D}, sz::Dims{M}) where {D,M}
     @assert M==D+2 "TransConv$(D)d's dims of output shall be $(D+2) but got $M"
