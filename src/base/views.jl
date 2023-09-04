@@ -135,6 +135,9 @@ end
 
 
 export flatten
+export squeeze
+export unsqueeze
+
 """
     flatten(x::Variable; from::Int=2, to::Int=ndims(x)) -> y::Variable
 Flattens a contiguous range of dimentions of `x` into a tensor `y`. Suppose sizex = size(`x`), then
@@ -239,4 +242,79 @@ function flatten(x::AbstractArray; from::Int=2, to::Int=ndims(x))
         return xshape[i+Δ]
     end
     return reshape(x, newsize)
+end
+
+
+"""
+    squeeze(x::Union{Variable, AbstractArray}; dims::Union{Nothing, Int, Dims}=nothing)
+
+Returns a tensor with all specified dimensions of `x` of size 1 removed.
+`WARNING`: If the tensor has a batch dimension of size 1, then squeeze(`x`)
+will also remove the batch dimension, which can lead to unexpected errors.
+Consider specifying only the dims you wish to be squeezed.
+
+# Exmaple
+```
+julia> x = rand(1, 4, 1, 3, 1, 1, 2);
+julia> squeeze(x, dims=(1,3,5))  |> size
+(4, 3, 1, 2)
+julia> squeeze(x) |> size
+(4, 3, 2)
+```
+"""
+function squeeze(x::Union{Variable, AbstractArray}; dims::Union{Nothing, Int, Dims}=nothing)
+    shape = Vector{Int}(undef, 0)
+    sizex = size(x)
+    if isnothing(dims)
+        for d in sizex
+            if d ≠ 1
+                push!(shape, d)
+            end
+        end
+    elseif dims isa Int
+        for (i, d) in enumerate(sizex)
+            if d ≠ 1 || i ≠ dims
+                push!(shape, d)
+            end
+        end
+    else
+        for (i, d) in enumerate(sizex)
+            if d ≠ 1 || i ∉ dims
+                push!(shape, d)
+            end
+        end
+    end
+    return reshape(x, ntuple(i -> shape[i], length(shape)))
+end
+
+
+"""
+    unsqueeze(x::Union{Variable, AbstractArray}; dims::Union{Int, Dims})
+
+Returns a new tensor with a dimension of size 1 inserted at the specified positions.
+
+# Exmaple
+```
+julia> x = rand(1,2,3,4,5);
+julia> unsqueeze(x, dims=3) |> size
+(1, 2, 1, 3, 4, 5)
+julia> unsqueeze(x, dims=(3,5)) |> size
+(1, 2, 1, 3, 4, 1, 5)
+```
+"""
+function unsqueeze(x::Union{Variable, AbstractArray}; dims::Union{Int, Dims})
+    shape = Vector{Int}(undef, 0)
+    sizex = size(x)
+    if dims isa Int
+        for (i, d) in enumerate(sizex)
+            isequal(i, dims) && push!(shape, 1)
+            push!(shape, d)
+        end
+    else
+        for (i, d) in enumerate(sizex)
+            in(i, dims) && push!(shape, 1)
+            push!(shape, d)
+        end
+    end
+    return reshape(x, ntuple(i -> shape[i], length(shape)))
 end
