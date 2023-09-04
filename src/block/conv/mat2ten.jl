@@ -287,7 +287,7 @@ function mat2ten(xmat     :: Variable{Array{T}},
         batchsize = zsize[N]
         rows = size(xmat, 1)
         xten.backward = function ∇mat2ten()
-            if need2computeδ!(xmat)
+            if needgrad(xmat)
                 zerodelta(xmat)
                 Threads.@threads for (m, t) in FwdIter
                     @inbounds xmat.delta[m] .= reshape(xten.delta[t], rows, batchsize)

@@ -136,7 +136,7 @@ function catchannel(xs::Vector{Variable{T}}) where T
 
     if y.backprop
         y.backward = function ∇catchannel()
-            if need2computeδ!(x)
+            if needgrad(x)
                 Threads.@threads for i in 1:G
                     offset = (i-1) * C
                     preidx = 1 + offset : C + offset

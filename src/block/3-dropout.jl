@@ -21,7 +21,7 @@ function dropout(x::Variable{Array{T}}; p::Real=0.1f0) where T
     y = Variable{Array{T}}(ᵛ(x) .* m, x.backprop)
     if y.backprop
         y.backward = function ∇dropout()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
@@ -50,7 +50,7 @@ function dropout!(x::Variable{Array{T}}; p::Real=0.1f0) where T
     y = Variable{Array{T}}(dotmul!(ᵛ(x), m), x.backprop)
     if y.backprop
         y.backward = function ∇dropout!()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
@@ -79,7 +79,7 @@ function xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims{D}=1) wh
     y = Variable{Array{T}}(ᵛ(x) .* m, x.backprop)
     if x.backprop
         y.backward = function ∇xdropout()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
@@ -108,7 +108,7 @@ function xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims{D}=1) wh
     y = Variable{Array{T}}(dotmul!(ᵛ(x), m), x.backprop)
     if y.backprop
         y.backward = function ∇xdropout!()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y);

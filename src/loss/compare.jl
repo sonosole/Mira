@@ -18,7 +18,7 @@ function require_great_than_zero(x::Variable{T}) where T
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_great_than_zero()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (-m)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -42,7 +42,7 @@ function require_great_equal_than_zero(x::Variable{T}) where T
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_great_equal_than_zero()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (-m)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -68,7 +68,7 @@ function require_less_than_zero(x::Variable{T}) where T
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_less_than_zero()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)
@@ -92,7 +92,7 @@ function require_less_equal_than_zero(x::Variable{T}) where T
     y = Variable{T}(m, x.backprop)
     if y.backprop
         y.backward = function ∇require_less_equal_than_zero()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* m
             end
             ifNotKeepδThenFreeδ!(y)

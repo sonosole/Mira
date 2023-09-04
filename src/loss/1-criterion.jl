@@ -7,7 +7,7 @@ function _sum(x::Variable{T}) where T
     y = Variable{T}([sum(ᵛ(x))], x.backprop)
     if y.backprop
         y.backward = function _sumBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -24,7 +24,7 @@ function _mean(x::Variable{T}) where T
     μ = Variable{T}([sum(ᵛ(x)) * n], x.backprop)
     if μ.backprop
         μ.backward = function _meanBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(μ) .* n .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(μ);

@@ -20,7 +20,7 @@ function Base.permutedims(x::Variable{T}, d::Vector{Int}) where T
 
     if y.backprop
         y.backward = function ∇permutedims()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← permutedims(δ(y), invpermdims(d))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -36,7 +36,7 @@ function Base.permutedims(x::Variable{T}, d::NTuple{D, Int}) where {T,D}
 
     if y.backprop
         y.backward = function ∇permutedims()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← permutedims(δ(y), invpermdims(d))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -51,7 +51,7 @@ function Base.adjoint(x::Variable{T}) where T
     y = Variable{T}(ᵛ(x)', x.backprop)
     if y.backprop
         y.backward = function ∇adjoint()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)'
             end
             ifNotKeepδThenFreeδ!(y)
@@ -66,7 +66,7 @@ function Base.transpose(x::Variable{T}) where T
     y = Variable{T}(transpose(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇transpose()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← transpose(ᵟ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -81,7 +81,7 @@ function Base.reshape(x::Variable{T}, newsize::Dims{N}) where {T,N}
     y = Variable{T}( reshape(ᵛ(x), newsize), x.backprop )
     if y.backprop
         y.backward = function ∇reshape()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← reshape(δ(y), x.shape)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -95,7 +95,7 @@ function Base.reshape(x::Variable{T}, shape::Int...) where T
     y = Variable{T}( reshape(ᵛ(x), shape), x.backprop )
     if y.backprop
         y.backward = function ∇reshape()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← reshape(δ(y), x.shape)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -109,7 +109,7 @@ function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int) where T
     y = Variable{T}( reshape(ᵛ(x), s₁, s₂), x.backprop )
     if y.backprop
         y.backward = function ∇reshape()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← reshape(δ(y), x.shape)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -123,7 +123,7 @@ function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int, s₃::Int) where T
     y = Variable{T}( reshape(ᵛ(x), s₁, s₂, s₃), x.backprop )
     if y.backprop
         y.backward = function ∇reshape()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← reshape(δ(y), x.shape)
             end
             ifNotKeepδThenFreeδ!(y)

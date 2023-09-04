@@ -64,10 +64,10 @@ function forward(m::SwitchPath, x::Variable{T}) where T
 
     if y.backprop
         y.backward = function ∇SwitchPath()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* G
             end
-            if need2computeδ!(a)
+            if needgrad(a)
                 a ← sum(δ(y) .* k .* (1 .- G) .* ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y);

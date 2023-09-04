@@ -181,7 +181,7 @@ function CRNNSoftmaxTDC(x::Variable{T},
 
     if y.backprop
         y.backward = function CRNNSoftmaxTDCBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)

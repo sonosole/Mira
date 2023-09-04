@@ -22,7 +22,7 @@ function meannorm(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     if y.backprop
         m⁻¹ = eltype(x)(1 / prod(size(x, i) for i in dims))
         y.backward = function ∇meannorm()
-            if need2computeδ!(x)
+            if needgrad(x)
                 ∂l∂y = δ(y)
                 x ← ∂l∂y .- sum(∂l∂y; dims) .* m⁻¹
             end

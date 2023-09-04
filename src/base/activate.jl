@@ -36,7 +36,7 @@ function min2max!(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
     y = Variable{S}(min2max(ᵛ(x), lower=lower, upper=upper), x.backprop)
     if y.backprop
         y.backward = function ∇min2max()
-            if need2computeδ!(x)
+            if needgrad(x)
                 T = eltype(S)
                 L = T(lower)
                 U = T(upper)
@@ -59,7 +59,7 @@ function min2max(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
     y = Variable{S}(min2max(ᵛ(x), lower=lower, upper=upper), x.backprop)
     if x.backprop
         y.backward = function ∇min2max()
-            if need2computeδ!(x)
+            if needgrad(x)
                 T = eltype(S)
                 L = T(lower)
                 U = T(upper)
@@ -93,7 +93,7 @@ function sigmoid!(x::Variable{T}) where T
     if y.backprop
         l = eltype(x)(1.0f0)
         y.backward = function ∇sigmoid()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -108,7 +108,7 @@ function sigmoid(x::Variable{T}) where T
     if y.backprop
         l = eltype(x)(1.0f0)
         y.backward = function ∇sigmoid()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -179,7 +179,7 @@ function hardswish(x::Variable{T}, α::Real=1.0f0) where T
     y = Variable{T}(hardswish(ᵛ(x), α), x.backprop)
     if y.backprop
         y.backward = function ∇hardswish()
-            if need2computeδ!(x)
+            if needgrad(x)
                 D = eltype(x)
                 inv3 = D(0.3333333333333333)
                 inv2 = D(0.50000000000000f0)
@@ -196,7 +196,7 @@ function hardswish!(x::Variable{T}, α::Real=1.0f0) where T
     y = Variable{T}(hardswish(ᵛ(x), α), x.backprop)
     if y.backprop
         y.backward = function ∇hardswish()
-            if need2computeδ!(x)
+            if needgrad(x)
                 D = eltype(x)
                 inv3 = D(0.3333333333333333)
                 inv2 = D(0.50000000000000f0)
@@ -245,7 +245,7 @@ function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
     y = Variable{T}(softmax(ᵛ(x); dims=dims), x.backprop)
     if y.backprop
         y.backward = function ∇softmax()
-            if need2computeδ!(x)
+            if needgrad(x)
                 ẏy = δ(y) .* ᵛ(y)
                 x ← ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)
             end
@@ -272,7 +272,7 @@ function softplus!(x::Variable{T}) where T
     if y.backprop
         l = eltype(x)(1.0f0)
         y.backward = function ∇softplus()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (l .+ exp.( - ᵛ(x) ))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -287,7 +287,7 @@ function softplus(x::Variable{T}) where T
     if y.backprop
         l = eltype(x)(1.0f0)
         y.backward = function ∇softplus()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (l .+ exp.( - ᵛ(x) ))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -306,7 +306,7 @@ function exp!(x::Variable{T}) where T
     y = Variable{T}(exp!(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇exp()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -320,7 +320,7 @@ function Base.exp(x::Variable{T}) where T
     y = Variable{T}(exp(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇exp()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -344,7 +344,7 @@ function exp2!(x::Variable{T}) where T
     if x.backprop
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇exp2()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* log(𝟚) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -360,7 +360,7 @@ function Base.exp2(x::Variable{T}) where T
     if x.backprop
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇exp2()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* log(𝟚) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -384,7 +384,7 @@ function exp10!(x::Variable{T}) where T
     if x.backprop
         lO = eltype(x)(10.0f0)
         y.backward = function ∇exp10()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* log(lO) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -400,7 +400,7 @@ function Base.exp10(x::Variable{T}) where T
     if x.backprop
         lO = eltype(x)(10.0f0)
         y.backward = function ∇exp10()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* log(lO) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -426,7 +426,7 @@ function abs!(x::Variable{T}) where T
     y = Variable{T}(abs(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇abs()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -440,7 +440,7 @@ function Base.abs(x::Variable{T}) where T
     y = Variable{T}(abs(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇abs()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -457,7 +457,7 @@ function sqrt!(x::Variable{T}) where T
         S = eltype(x)
         𝟚 = S(2.0f0)
         y.backward = function ∇sqrt()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (𝟚 .* ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -473,7 +473,7 @@ function Base.sqrt(x::Variable{T}) where T
         S = eltype(x)
         𝟚 = S(2.0f0)
         y.backward = function ∇sqrt()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (𝟚 .* ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -488,7 +488,7 @@ function inv!(x::Variable{T}) where T
     y = Variable{T}(inv!(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇inv()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y) .* ᵛ(y) .* ᵛ(y);
             end
             ifNotKeepδThenFreeδ!(y)
@@ -502,7 +502,7 @@ function Base.inv(x::Variable{T}) where T
     y = Variable{T}(inv(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇inv()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y) .* ᵛ(y) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -517,7 +517,7 @@ function Base.:/(constant::Real, x::Variable{T}) where T
     y = Variable{T}(c .* inv(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇inv()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y) .* ᵛ(y) .* ᵛ(y) .* (1/c)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -535,7 +535,7 @@ function log!(x::Variable{T}) where T
     y = Variable{T}(log(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇log()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ ᵛ(x)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -549,7 +549,7 @@ function Base.log(x::Variable{T}) where T
     y = Variable{T}(log(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇log()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ ᵛ(x)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -573,7 +573,7 @@ function log2!(x::Variable{T}) where T
     if x.backprop
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇log2()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (log(𝟚) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -588,7 +588,7 @@ function Base.log2(x::Variable{T}) where T
     if x.backprop
         𝟚 = eltype(x)(2.0f0)
         y.backward = function ∇log2()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (log(𝟚) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -612,7 +612,7 @@ function log10!(x::Variable{T}) where T
     if x.backprop
         lO = eltype(x)(10.0f0)
         y.backward = function ∇log10()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (log(lO) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -627,7 +627,7 @@ function Base.log10(x::Variable{T}) where T
     if x.backprop
         lO = eltype(x)(10.0f0)
         y.backward = function ∇log10()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) ./ (log(lO) .* ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -643,7 +643,7 @@ function sec!(x::Variable{T}) where T
     y = Variable{T}(sec(ᵛ(x)), x.backprop)
     if x.backprop
         y.backward = function ∇sec()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -658,7 +658,7 @@ function Base.sec(x::Variable{T}) where T
     y = Variable{T}(sec(ᵛ(x)), x.backprop)
     if x.backprop
         y.backward = function ∇sec()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -683,7 +683,7 @@ function tan!(x::Variable{T}) where T
         𝟙 = S(1.0)
         𝟚 = S(2.0)
         y.backward = function ∇tan()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (𝟙 .+ ᵛ(y) .^ 𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -700,7 +700,7 @@ function Base.tan(x::Variable{T}) where T
         𝟙 = S(1.0)
         𝟚 = S(2.0)
         y.backward = function ∇tan()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -731,7 +731,7 @@ function hardtanh!(x::Variable{T}) where T
     y = Variable{T}(hardtanh(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇hardtanh()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -745,7 +745,7 @@ function hardtanh(x::Variable{T}) where T
     y = Variable{T}(hardtanh(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇hardtanh()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -771,7 +771,7 @@ function tand!(x::Variable{T}) where T
         𝟙 = TOO(1.0)
         𝟚 = TOO(2.0)
         y.backward = function ∇tand()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -789,7 +789,7 @@ function Base.tand(x::Variable{T}) where T
         𝟙 = TOO(1.0)
         𝟚 = TOO(2.0)
         y.backward = function ∇tand()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -807,7 +807,7 @@ function tanh!(x::Variable{T}) where T
         𝟙 = S(1.0f0)
         𝟚 = S(2.0f0)
         y.backward = function ∇tanh()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -824,7 +824,7 @@ function Base.tanh(x::Variable{T}) where T
         𝟙 = S(1.0f0)
         𝟚 = S(2.0f0)
         y.backward = function ∇tanh()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -862,7 +862,7 @@ function sin!(x::Variable{T}) where T
     y = Variable{T}(sin(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇sin()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* cos.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -876,7 +876,7 @@ function Base.sin(x::Variable{T}) where T
     y = Variable{T}(sin(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇sin()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* cos.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -900,7 +900,7 @@ function sinc!(x::Variable{T}) where T
     y = Variable{T}(sinc(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇sinc()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* cosc.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -915,7 +915,7 @@ function Base.sinc(x::Variable{T}) where T
     y = Variable{T}(sinc(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇sinc()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* cosc.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -939,7 +939,7 @@ function sind!(x::Variable{T}) where T
     if x.backprop
         DPI = eltype(x)(pi/180)
         y.backward = function ∇sind()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* DPI .* cosd.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -954,7 +954,7 @@ function Base.sind(x::Variable{T}) where T
     if y.backprop
         DPI = eltype(x)(pi/180) # 1 rad⁻¹
         y.backward = function ∇sind()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* DPI .* cosd.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -978,7 +978,7 @@ function sinpi!(x::Variable{T}) where T
     if y.backprop
         𝝅 = eltype(x)(pi)
         y.backward = function ∇sinpi()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* 𝝅 .* cospi.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -993,7 +993,7 @@ function Base.sinpi(x::Variable{T}) where T
     if y.backprop
         𝝅 = eltype(x)(pi)
         y.backward = function ∇sinpi()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* 𝝅 .* cospi.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1026,7 +1026,7 @@ function cos!(x::Variable{T}) where T
     y = Variable{T}(cos(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇cos()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y) .* sin.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1040,7 +1040,7 @@ function Base.cos(x::Variable{T}) where T
     y = Variable{T}(cos(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇cos()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y) .* sin.(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1071,7 +1071,7 @@ function polymax(x::Variable{T}, n::Int; dims::Union{Int,NTuple{N,Int}}=1) where
         S = eltype(ᵛ(x))
         k = S(n)
         y.backward = function ∇softmax()
-            if need2computeδ!(x)
+            if needgrad(x)
                 ẏy = δ(y) .* ᵛ(y)
                 x ← (ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)) .* k ./ ᵛ(x)
             end
@@ -1109,7 +1109,7 @@ function relu!(x::Variable{T}) where T
     y = Variable{T}(relu(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇relu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (ᵛ(x) .> 0.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1123,7 +1123,7 @@ function relu(x::Variable{T}) where T
     y = Variable{T}(relu(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇relu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (ᵛ(x) .> 0.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1158,7 +1158,7 @@ function leakyrelu!(x::Variable{T}, k::Real=0.01f0) where T
     y = Variable{T}(leakyrelu(ᵛ(x), k), x.backprop)
     if y.backprop
         y.backward = function ∇leakyrelu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 S = eltype(x)
                 x ← δ(y) .* ∂leakyrelu.(ᵛ(x), S(k), S(0), S(1))
             end
@@ -1174,7 +1174,7 @@ function leakyrelu(x::Variable{T}, k::Real=0.01f0) where T
     y = Variable{T}(leakyrelu(ᵛ(x), k), x.backprop)
     if y.backprop
         y.backward = function ∇leakyrelu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 S = eltype(x)
                 x ← δ(y) .* ∂leakyrelu.(ᵛ(x), S(k), S(0), S(1))
             end
@@ -1201,7 +1201,7 @@ function relu1!(x::Variable{T}) where T
     y = Variable{T}(relu1(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇relu1()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1215,7 +1215,7 @@ function relu1(x::Variable{T}) where T
     y = Variable{T}(relu1(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇relu1()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1241,7 +1241,7 @@ function relu6!(x::Variable{T}) where T
     y = Variable{T}(relu6(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇relu6()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1255,7 +1255,7 @@ function relu6(x::Variable{T}) where T
     y = Variable{T}(relu6(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇relu6()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1291,7 +1291,7 @@ function elu(x::Variable{T}, α::Real=1.0f0) where T
     y = Variable{T}(elu(ᵛ(x), α), x.backprop)
     if y.backprop
         y.backward = function ∇elu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 S = eltype(x)
                 x ← δ(y) .* ∂elu.(ᵛ(x), ᵛ(y), S(α), S(0), S(1))
             end
@@ -1306,7 +1306,7 @@ function elu!(x::Variable{T}, α::Real=1.0f0) where T
     y = Variable{T}(elu(ᵛ(x), α), x.backprop)
     if y.backprop
         y.backward = function ∇elu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 S = eltype(x)
                 x ← δ(y) .* ∂elu.(ᵛ(x), ᵛ(y), S(α), S(0), S(1))
             end
@@ -1357,7 +1357,7 @@ function selu(x::Variable{T}) where T
     y = Variable{T}(selu(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇selu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 S = eltype(x)
                 λ = S(1.0507009873554804934193349852946)
                 α = S(1.6732632423543772848170429916717)
@@ -1374,7 +1374,7 @@ function selu!(x::Variable{T}) where T
     y = Variable{T}(selu(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇selu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 S = eltype(x)
                 λ = S(1.0507009873554804934193349852946)
                 α = S(1.6732632423543772848170429916717)
@@ -1436,7 +1436,7 @@ function gelu(x::Variable{T}) where T
     y = Variable{T}(gelu(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇gelu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ∂gelu(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1450,7 +1450,7 @@ function gelu!(x::Variable{T}) where T
     y = Variable{T}(gelu(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇gelu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* ∂gelu(ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -1493,7 +1493,7 @@ function celu(x::Variable{T}, α::Real=1.0f0) where T
     y = Variable{T}(celu(ᵛ(x), α), x.backprop)
     if y.backprop
         y.backward = function ∇celu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 D = eltype(x)
                 x ← δ(y) .* ∂celu.(ᵛ(x), ᵛ(y), D(α), D(0), D(1))
             end
@@ -1508,7 +1508,7 @@ function celu!(x::Variable{T}, α::Real=1.0f0) where T
     y = Variable{T}(celu(ᵛ(x), α), x.backprop)
     if y.backprop
         y.backward = function ∇celu()
-            if need2computeδ!(x)
+            if needgrad(x)
                 D = eltype(x)
                 x ← δ(y) .* ∂celu.(ᵛ(x), ᵛ(y), D(α), D(0), D(1))
             end

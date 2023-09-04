@@ -16,7 +16,7 @@ function Base.:+(x::Variable{T}, constant::Real) where T
     y = Variable{T}(ᵛ(x) .+ C, x.backprop)
     if y.backprop
         y.backward = function ∇matAddScalar()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -38,7 +38,7 @@ function Base.:-(x::Variable{T}, constant::Real) where T
     y = Variable{T}(ᵛ(x) .- C, x.backprop)
     if y.backprop
         y.backward = function ∇matMinusScalar()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -55,7 +55,7 @@ function Base.:-(constant::Real, x::Variable{T}) where T
     y = Variable{T}(C .- ᵛ(x), x.backprop)
     if y.backprop
         y.backward = function ∇scalarMinusMat()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -71,7 +71,7 @@ function Base.:-(x::Variable{T}) where T
     y = Variable{T}(- ᵛ(x), x.backprop)
     if y.backprop
         y.backward = function ∇setNegative()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← - δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -88,7 +88,7 @@ function Base.:*(x::Variable{T}, constant::Real) where T
     y = Variable{T}(ᵛ(x) .* C, x.backprop)
     if y.backprop
         y.backward = function ∇matMulScalar()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* C
             end
             ifNotKeepδThenFreeδ!(y)
@@ -114,7 +114,7 @@ function Base.:^(x::Variable{T}, n::Real) where T
     y = Variable{T}(ᵛ(x) .^ n, x.backprop)
     if y.backprop
         y.backward = function ∇power()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← n .* ᵛ(y) ./ ᵛ(x) .* δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -132,8 +132,8 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
     if backprop
         z.backward = function ∇add2var()
-            need2computeδ!(x) && (x ← δ(z))
-            need2computeδ!(y) && (y ← δ(z))
+            needgrad(x) && (x ← δ(z))
+            needgrad(y) && (y ← δ(z))
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -148,7 +148,7 @@ function Base.:+(x::Variable{T}, y::AbstractArray) where T
     z = Variable{T}(ᵛ(x) + y, x.backprop)
     if z.backprop
         z.backward = function ∇minus2var()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(z)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -163,7 +163,7 @@ function Base.:+(x::AbstractArray, y::Variable{T}) where T
     z = Variable{T}(x + ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇minus2var()
-            if need2computeδ!(y)
+            if needgrad(y)
                 y ← δ(z)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -181,8 +181,8 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
     if backprop
         z.backward = function ∇minus2var()
-            need2computeδ!(x) && (x ←  δ(z))
-            need2computeδ!(y) && (y ← -δ(z))
+            needgrad(x) && (x ←  δ(z))
+            needgrad(y) && (y ← -δ(z))
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -197,7 +197,7 @@ function Base.:-(x::Variable{T}, y::AbstractArray) where T
     z = Variable{T}(ᵛ(x) - y, x.backprop)
     if z.backprop
         z.backward = function ∇minus2var()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(z)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -212,7 +212,7 @@ function Base.:-(x::AbstractArray, y::Variable{T}) where T
     z = Variable{T}(x - ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇minus2var()
-            if need2computeδ!(y)
+            if needgrad(y)
                 y ← - δ(z)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -234,8 +234,8 @@ function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
         z.backward = function ∇dotMul()
-            need2computeδ!(x) && (x ← δ(z) .* ᵛ(y))
-            need2computeδ!(y) && (y ← δ(z) .* ᵛ(x))
+            needgrad(x) && (x ← δ(z) .* ᵛ(y))
+            needgrad(y) && (y ← δ(z) .* ᵛ(x))
             ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
@@ -254,7 +254,7 @@ function dotMul(x::Variable{T}, y::AbstractArray) where T
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if backprop
         z.backward = function ∇dotMul()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(z) .* ᵛ(y)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -274,7 +274,7 @@ function dotMul(x::AbstractArray, y::Variable{T}) where T
     z = Variable{T}(x .* ᵛ(y), x.backprop)
     if backprop
         z.backward = function ∇dotMul()
-            if need2computeδ!(y)
+            if needgrad(y)
                 y ← δ(z) .* ᵛ(x)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -292,10 +292,10 @@ function dotdiv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     if z.backprop
         z.backward = function ∇dotdiv()
             δx = δ(z) ./ ᵛ(y)
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δx
             end
-            if need2computeδ!(y)
+            if needgrad(y)
                 y ← - δx .* ᵛ(z)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -312,7 +312,7 @@ function dotdiv(x::Variable{T}, y::AbstractArray) where T
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
         z.backward = function ∇dotdiv()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(z) ./ y
             end
             ifNotKeepδThenFreeδ!(z)
@@ -327,7 +327,7 @@ function dotdiv(x::AbstractArray, y::Variable{T}) where T
     z = Variable{T}(x ./ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function ∇dotdiv()
-            if need2computeδ!(y)
+            if needgrad(y)
                 y ← - δ(z) ./ ᵛ(y) .* ᵛ(z)
             end
             ifNotKeepδThenFreeδ!(z)
@@ -348,8 +348,8 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
     Y = Variable{T}(ᵛ(W) * ᵛ(X), backprop)
     if backprop
         Y.backward = function ∇matMul()
-            need2computeδ!(W) && (W ← δ(Y)  * ᵛ(X)')
-            need2computeδ!(X) && (X ← ᵛ(W)' * δ(Y) )
+            needgrad(W) && (W ← δ(Y)  * ᵛ(X)')
+            needgrad(X) && (X ← ᵛ(W)' * δ(Y) )
             ifNotKeepδThenFreeδ!(Y)
         end
         addchild(Y, W)
@@ -363,7 +363,7 @@ function Base.:*(W::Variable{T}, X::AbstractArray) where T
     Y = Variable{T}(ᵛ(W) * X, W.backprop)
     if Y.backprop
         Y.backward = function ∇matMul()
-            if need2computeδ!(W)
+            if needgrad(W)
                 W ← δ(Y) * X'
             end
             ifNotKeepδThenFreeδ!(Y)
@@ -378,7 +378,7 @@ function Base.:*(W::AbstractArray, X::Variable{T}) where T
     Y = Variable{T}(W * ᵛ(X), X.backprop)
     if Y.backprop
         Y.backward = function ∇matMul()
-            if need2computeδ!(X)
+            if needgrad(X)
                 X ← W' * δ(Y)
             end
             ifNotKeepδThenFreeδ!(Y)
@@ -403,8 +403,8 @@ function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
     if backprop
         Z.backward = function ∇matAddVec()
-            need2computeδ!(M) && (M ← δ(Z))
-            need2computeδ!(V) && (V ← sum(δ(Z), dims=2))
+            needgrad(M) && (M ← δ(Z))
+            needgrad(V) && (V ← sum(δ(Z), dims=2))
             ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
@@ -428,8 +428,8 @@ function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)
     if backprop
         Z.backward = function ∇matMulVec()
-            need2computeδ!(M) && (M ←     δ(Z) .* ᵛ(V))
-            need2computeδ!(V) && (V ← sum(δ(Z) .* ᵛ(M), dims=2))
+            needgrad(M) && (M ←     δ(Z) .* ᵛ(V))
+            needgrad(V) && (V ← sum(δ(Z) .* ᵛ(M), dims=2))
             ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
@@ -452,7 +452,7 @@ function Base.:*(x::Variable{T}, constant::GradScalar) where T
     y = Variable{T}(ᵛ(x), x.backprop)
     if y.backprop
         y.backward = function ∇matMulScalar()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* C
             end
             ifNotKeepδThenFreeδ!(y)

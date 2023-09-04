@@ -72,7 +72,7 @@ function padsymmetric(x::Variable{T}, pads::Pads{D}) where {T,D}
 
     if y.backprop
         y.backward = function ∇padsymmetric()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 for d = 1:D
                     padleft  = pads[d][1]≠0

@@ -55,11 +55,11 @@ function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     z = Variable{T}(ᵛ(x) .+ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function ∇DotAdd()
-            if need2computeδ!(x)
+            if needgrad(x)
                 δx = δ(z)
                 x ← unbcast(δx, ᵛ(x))
             end
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = δ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
@@ -78,7 +78,7 @@ function broadcasted(::typeof(+), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .+ y, x.backprop)
     if z.backprop
         z.backward = function ∇DotAdd()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← unbcast(δ(z), ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
@@ -95,7 +95,7 @@ function broadcasted(::typeof(+), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .+ ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotAdd()
-            if need2computeδ!(y)
+            if needgrad(y)
                 y ← unbcast(δ(z), ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(z)
@@ -114,11 +114,11 @@ function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     z = Variable{T}(ᵛ(x) .- ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function ∇DotMinus()
-            if need2computeδ!(x)
+            if needgrad(x)
                 δx = δ(z)
                 x ← unbcast(δx, ᵛ(x))
             end
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = - δ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
@@ -137,7 +137,7 @@ function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .- y, x.backprop)
     if z.backprop
         z.backward = function ∇DotMinus()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← unbcast(δ(z), ᵛ(x))
             end
             ifNotKeepδThenFreeδ!(z)
@@ -154,7 +154,7 @@ function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .- ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotMinus()
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = - δ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
@@ -174,11 +174,11 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     z = Variable{T}(ᵛ(x) .* ᵛ(y), x.backprop || y.backprop)
     if z.backprop
         z.backward = function ∇DotMul()
-            if need2computeδ!(x)
+            if needgrad(x)
                 δx = δ(z) .* ᵛ(y)
                 x ← unbcast(δx, ᵛ(x))
             end
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = δ(z) .* ᵛ(x)
                 y ← unbcast(δy, ᵛ(y))
             end
@@ -197,7 +197,7 @@ function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if z.backprop
         z.backward = function ∇DotMul()
-            if need2computeδ!(x)
+            if needgrad(x)
                 δx = δ(z) .* y
                 x ← unbcast(δx, ᵛ(x))
             end
@@ -215,7 +215,7 @@ function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x .* ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotMul()
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = δ(z) .* x
                 y ← unbcast(δy, ᵛ(y))
             end
@@ -236,10 +236,10 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2
     if z.backprop
         z.backward = function ∇DotDiv()
             δx = δ(z) ./ ᵛ(y)
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← unbcast(δx, ᵛ(x))
             end
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = - δx .* ᵛ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
@@ -258,7 +258,7 @@ function broadcasted(::typeof(/), x::Variable{T}, y::TensorOrReal) where T
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
         z.backward = function ∇DotDiv()
-            if need2computeδ!(x)
+            if needgrad(x)
                 δx = δ(z) ./ y
                 x ← unbcast(δx, ᵛ(x))
             end
@@ -276,7 +276,7 @@ function broadcasted(::typeof(/), x::TensorOrReal, y::Variable{T}) where T
     z = Variable{T}(x ./ ᵛ(y), y.backprop)
     if z.backprop
         z.backward = function ∇DotDiv()
-            if need2computeδ!(y)
+            if needgrad(y)
                 δy = - δ(z) ./ ᵛ(y) .* ᵛ(z)
                 y ← unbcast(δy, ᵛ(y))
             end

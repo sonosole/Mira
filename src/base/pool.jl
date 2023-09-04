@@ -12,7 +12,7 @@ function Base.maximum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(v, x.backprop)
     if y.backprop
         y.backward = function ∇maximum()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 ᵟ(x)[i] .+= δ(y)
             end
@@ -28,7 +28,7 @@ function Base.minimum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(v, x.backprop)
     if y.backprop
         y.backward = function ∇minimum()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 ᵟ(x)[i] .+= δ(y)
             end
@@ -43,7 +43,7 @@ function Base.sum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(sum(ᵛ(x); dims), x.backprop)
     if y.backprop
         y.backward = function ∇sum()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -59,7 +59,7 @@ function mean(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     μ   = Variable{T}(sum(ᵛ(x); dims) .* m⁻¹, x.backprop)
     if μ.backprop
         μ.backward = function ∇mean()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(μ) .* m⁻¹ .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(μ)
@@ -91,7 +91,7 @@ function var(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     if σ².backprop
         𝟐𝐦⁻¹ = eltype(x)(2 / prod(size(x, i) for i in dims))
         σ².backward = function ∇mean()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(σ²) .* (ᵛ(x) .- μ) .* 𝟐𝐦⁻¹
             end
             ifNotKeepδThenFreeδ!(σ²)
@@ -135,7 +135,7 @@ function linearpool(x::Variable{T}; dims::IntOrDims{N}=2) where {T,N}
     if y.backprop
         𝟚 = eltype(x)(2)
         y.backward = function ∇linearpool()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← (𝟚 .* ᵛ(x) .- ᵛ(y)) ./ Σxᵢ .* δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -169,7 +169,7 @@ function exppool(x::Variable{T}; dims::IntOrDims{N}=2) where {T,N}
     if y.backprop
         l = eltype(x)(1)
         y.backward = function ∇exppool()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← eˣ ./ Σeˣⁱ .* (l .+ ᵛ(x) .- ᵛ(y)) .* δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -205,7 +205,7 @@ function powerpool(x::Variable{T}, n::Real=3; dims::IntOrDims{N}=2) where {T,N}
         l = eltype(x)(1.0f0)
         xᵢⁿ⁻¹ = ᵛ(x) .^ (n-1)
         y.backward = function ∇powerpool()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← ((n+l) .* xᵢⁿ .- n .* xᵢⁿ⁻¹ .* ᵛ(y)) ./ Σxᵢⁿ .* δ(y) .+ zero(x)
             end
             ifNotKeepδThenFreeδ!(y)

@@ -2,7 +2,7 @@ function Base.floor(x::Variable{T}; digits::Int=0) where T
     y = Variable{T}(floor.(ᵛ(x); digits), x.backprop)
     if y.backprop
         y.backward = function ∇floor()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -17,7 +17,7 @@ function Base.ceil(x::Variable{T}; digits::Int=0) where T
     y = Variable{T}(ceil.(ᵛ(x); digits), x.backprop)
     if y.backprop
         y.backward = function ∇ceil()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -32,7 +32,7 @@ function Base.round(x::Variable{T}; digits::Int=0) where T
     y = Variable{T}(round.(ᵛ(x); digits), x.backprop)
     if y.backprop
         y.backward = function ∇round()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -47,7 +47,7 @@ function Base.trunc(x::Variable{T}; digits::Int=0) where T
     y = Variable{T}(trunc.(ᵛ(x); digits), x.backprop)
     if y.backprop
         y.backward = function ∇trunc()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)
             end
             ifNotKeepδThenFreeδ!(y)

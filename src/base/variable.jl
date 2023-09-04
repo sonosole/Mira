@@ -1,6 +1,6 @@
 export zerodelta
 export clone
-export need2computeδ!
+export needgrad
 export ifNotKeepδThenFreeδ!
 export elsizeof
 export value, delta, ᵛ, ᵟ, δ
@@ -162,7 +162,7 @@ function filldelta(x::Variable{T}, g::Union{Real,T}) where T
     return nothing
 end
 
-function need2computeδ!(x::Variable)
+function needgrad(x::Variable)
     # 1. 不需要学习的叶子参数不需要初始化，其他情况都要。
     # 2. 当某叶子节点的 keepsgrad==false 时，则此叶子节
     #   点不参与反向传播的计算，也即达到了冻结参数的目的
@@ -201,7 +201,7 @@ function Base.getindex(x::Variable{T}, k...) where T
     y = Variable{T}(x.value[k...], x.backprop)
     if y.backprop
         y.backward = function ∇getindex()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 x.delta[k...] += y.delta
             end
@@ -218,7 +218,7 @@ function Base.getindex(x::Variable{T}, k::Int) where T
     y = Variable{T}(x.value[k:k], x.backprop)
     if y.backprop
         y.backward = function ∇getindex()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 x.delta[k:k] += y.delta
             end
@@ -235,7 +235,7 @@ function Base.getindex(x::Variable{T}, k::CartesianIndices) where T
     y = Variable{T}(x.value[k], x.backprop)
     if y.backprop
         y.backward = function ∇getindex()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 x.delta[k] += y.delta
             end
@@ -358,7 +358,7 @@ function totype(type::Type, x::Variable{T}) where T
     y = Variable{type}(type(ᵛ(x)), x.backprop)
     if y.backprop
         y.backward = function ∇convertprecision()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← T(δ(y))
             end
             ifNotKeepδThenFreeδ!(y)

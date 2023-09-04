@@ -121,7 +121,7 @@ function seqforward(chain::Block, x::Variable{S}; keepstate=false) where S
     if y.backprop
         y.backward = function ∇PackSeqSlices()
             Threads.@threads for t = 1:T
-                if need2computeδ!(v[t])
+                if needgrad(v[t])
                     v[t] ← y.delta[:,t,:]
                 end
             end

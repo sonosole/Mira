@@ -104,7 +104,7 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
 
     if y.backprop
         y.backward = function ∇depthConv1d()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 δx = δ(x)
                 δy = δ(y)
@@ -119,7 +119,7 @@ function forward(block::PlainDepthConv1d, x::Variable{T}) where T
                     end
                 end
             end
-            if need2computeδ!(w)
+            if needgrad(w)
                 zerodelta(w)
                 δw = δ(w)
                 δy = δ(y)

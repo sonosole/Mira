@@ -39,7 +39,7 @@ function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1) w
 
     if y.backprop
         y.backward = function ∇DNNSoftmaxCTCLossSingleSeq()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -93,7 +93,7 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FNNSoftmaxCTCLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -149,7 +149,7 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇RNNSoftmaxCTCLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -202,7 +202,7 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNSoftmaxCTCLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -241,7 +241,7 @@ function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNSoftmaxFocalCTCLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* 𝒌 .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -278,7 +278,7 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1)
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNSoftmaxCTCProbs()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(𝒑) .* ᵛ(𝒑) .*  Δ
             end
             ifNotKeepδThenFreeδ!(𝒑)

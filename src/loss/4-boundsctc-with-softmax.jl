@@ -22,7 +22,7 @@ function CRNN_BoundsCTC_With_Softmax(x::Variable{Array{T}},
 
     if y.backprop
         y.backward = function ∇CRNN_BoundsCTC_With_Softmax()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)

@@ -173,7 +173,7 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNSoftmaxFastCTCLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 if weight==1.0
                     x ← δ(y) .* Δ
                 else
@@ -208,7 +208,7 @@ function FRNNFastCTCLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNFastCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 if weight==1.0
                     p ← - δ(y) .* r ./ ᵛ(p)
                 else
@@ -252,7 +252,7 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNSoftmaxFocalFastCTCLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 if weight==1.0
                     x ← δ(y) .* 𝒌 .* Δ
                 else
@@ -294,7 +294,7 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNFocalFastCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 if weight==1.0
                     p ← δ(y) .* 𝒌 .* r ./ ᵛ(p)
                 else
@@ -322,7 +322,7 @@ function FRNNFastCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) wh
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNFastCTCProbs()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - δ(𝒑) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(𝒑)
@@ -348,7 +348,7 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNSoftmaxFastCTCProbs()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(𝒑) .* Δ
             end
             ifNotKeepδThenFreeδ!(𝒑)

@@ -233,7 +233,7 @@ function padconst(x::Variable{T}, pads::Pads{D}, val::Real=0) where {T,D}
     y = Variable{T}(t, x.backprop)
     if y.backprop
         y.backward = function ∇padconst()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)[xrange]
             end
             ifNotKeepδThenFreeδ!(y)
@@ -253,7 +253,7 @@ function padconst(x::Variable{T}, pads::Vector{Dims2}, val::Real=0) where T
     y = Variable{T}(t, x.backprop)
     if y.backprop
         y.backward = function ∇padconst()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)[xrange]
             end
             ifNotKeepδThenFreeδ!(y)
@@ -273,7 +273,7 @@ function padconst(x::Variable{T}, pads::Vector{Pair{Int,Dims2}}, val::Real=0) wh
     y = Variable{T}(t, x.backprop)
     if y.backprop
         y.backward = function ∇padconst()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y)[xrange]
             end
             ifNotKeepδThenFreeδ!(y)

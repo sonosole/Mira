@@ -44,8 +44,8 @@ function Base.cat(x₁::Variable{T}, x₂::Variable{T}; dims::Int=1) where T
     if x.backprop
         x.backward = function ∇vcat()
             @sync begin
-                Threads.@spawn (need2computeδ!(x₁) && (x₁ ← δ(x)[c₁...]))
-                Threads.@spawn (need2computeδ!(x₂) && (x₂ ← δ(x)[c₂...]))
+                Threads.@spawn (needgrad(x₁) && (x₁ ← δ(x)[c₁...]))
+                Threads.@spawn (needgrad(x₂) && (x₂ ← δ(x)[c₂...]))
             end
             ifNotKeepδThenFreeδ!(x)
         end
@@ -111,9 +111,9 @@ function Base.cat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}; dims:
     if x.backprop
         x.backward = function ∇vcat()
             @sync begin
-                Threads.@spawn (need2computeδ!(x₁) && (x₁ ← δ(x)[c₁...]))
-                Threads.@spawn (need2computeδ!(x₂) && (x₂ ← δ(x)[c₂...]))
-                Threads.@spawn (need2computeδ!(x₃) && (x₃ ← δ(x)[c₃...]))
+                Threads.@spawn (needgrad(x₁) && (x₁ ← δ(x)[c₁...]))
+                Threads.@spawn (needgrad(x₂) && (x₂ ← δ(x)[c₂...]))
+                Threads.@spawn (needgrad(x₃) && (x₃ ← δ(x)[c₃...]))
             end
             ifNotKeepδThenFreeδ!(x)
         end
@@ -191,7 +191,7 @@ function Base.cat(xs::Vector{Variable{T}}; dims=1) where T
         x.backward = function ∇vcat()
             @sync begin
                 Threads.@threads for n in 1:N
-                    (need2computeδ!(xs[n]) && (xs[n] ← δ(x)[cs[n]]))
+                    (needgrad(xs[n]) && (xs[n] ← δ(x)[cs[n]]))
                 end
             end
             ifNotKeepδThenFreeδ!(x)

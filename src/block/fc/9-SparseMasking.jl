@@ -37,7 +37,7 @@ function sparseLoss(s::SparseMasking)
 
     if y.backprop
         y.backward = function ∇sparseLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 δ₁ =  (𝟙 - 𝜌) ./ (𝟙 .- ᵛ(p) .+ ϵ)
                 δ₂ =       𝜌  ./ (     ᵛ(p) .+ ϵ)
                 p ← δ(y) .* (δ₁ - δ₂)

@@ -23,7 +23,7 @@ function MAE(x::Variable{T}, label::Variable{T}) where T
     y = Variable{T}(abs.(ᵛ(x) - ᵛ(label)), backprop)
     if backprop
         y.backward = function maeBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -45,7 +45,7 @@ function MAE(x::Variable{T}, label::AbstractArray) where T
     y = Variable{T}(abs.(ᵛ(x) - label), x.backprop)
     if y.backprop
         y.backward = function maeBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(y))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -81,7 +81,7 @@ function MSE(x::Variable{T}, label::Variable{T}) where T
     y = Variable{T}((ᵛ(x) - ᵛ(label)) .^ 𝟐, backprop)
     if backprop
         y.backward = function mseBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* 𝟐 .* (ᵛ(x) - ᵛ(label))
             end
             ifNotKeepδThenFreeδ!(y)
@@ -98,7 +98,7 @@ function MSE(x::Variable{T}, label::AbstractArray) where T
     y = Variable{T}((ᵛ(x) - label) .^ 𝟐, x.backprop)
     if y.backprop
         y.backward = function mseBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* 𝟐 .* (ᵛ(x) - label)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -129,7 +129,7 @@ function Lp(x::Variable{T}, label::Variable{T}; p=3) where T
     y = Variable{T}(Δ .^ p, backprop)
     if backprop
         y.backward = function LpBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 # i = (Δ .!= eltype(T)(0.0))
                 # x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
                 x ← δ(y) .* ᵛ(y) ./ Δ .* p
@@ -148,7 +148,7 @@ function Lp(x::Variable{T}, label::AbstractArray; p=3) where T
     y = Variable{T}(Δ .^ p, x.backprop)
     if y.backprop
         y.backward = function LpBackward()
-            if need2computeδ!(x)
+            if needgrad(x)
                 # i = (Δ .!= eltype(T)(0))
                 # x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
                 x ← δ(y) .* ᵛ(y) ./ Δ .* p

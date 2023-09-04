@@ -55,7 +55,7 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FNNSoftmaxTCSLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -123,7 +123,7 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇RNNSoftmaxTCSLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -184,7 +184,7 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNSoftmaxTCSLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* Δ
             end
             ifNotKeepδThenFreeδ!(y)
@@ -213,7 +213,7 @@ function FRNNSoftmaxTCSProbs(x::Variable{T},
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNSoftmaxCTCProbs()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(𝒑)  .* ᵛ(𝒑) .* Δ
             end
             ifNotKeepδThenFreeδ!(𝒑)
@@ -252,7 +252,7 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNSoftmaxFocalTCSLoss()
-            if need2computeδ!(x)
+            if needgrad(x)
                 x ← δ(y) .* 𝒌 .* Δ
             end
             ifNotKeepδThenFreeδ!(y)

@@ -55,7 +55,7 @@ function znorm(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) where {T,N
     if y.backprop
         ∑(a::AbstractArray) = sum(a; dims=dims)
         y.backward = function ∇znorm()
-            if need2computeδ!(x)
+            if needgrad(x)
                 ∂l∂y = δ(y)
                 x ← (σ¯¹ .* m¯¹) .* (m .* ∂l∂y .- ∑(∂l∂y) .- x̌ .* ∑(∂l∂y .* x̌))
             end
@@ -83,7 +83,7 @@ function znorm_mean_var(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) w
     if y.backprop
         ∑(a::AbstractArray) = sum(a; dims=dims)
         y.backward = function ∇znorm()
-            if need2computeδ!(x)
+            if needgrad(x)
                 ∂l∂y = δ(y)
                 x ← (σ¯¹ .* m¯¹) .* (m .* ∂l∂y .- ∑(∂l∂y) .- x̌ .* ∑(∂l∂y .* x̌))
             end

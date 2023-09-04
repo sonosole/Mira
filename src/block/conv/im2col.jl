@@ -264,7 +264,7 @@ function im2col(x        :: Variable{Array{T}},
         parallizable = YXIndices.ekernel .≤ stride
 
         y.backward = function ∇im2col()
-            if need2computeδ!(px)
+            if needgrad(px)
                 zerodelta(px)
                 if !all(parallizable)
                     BwdIter = Im2colBwdIter(YXIndices.zsize, parallizable, size(x, ndims(x)))

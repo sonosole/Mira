@@ -34,7 +34,7 @@ function DNNCTCLoss(p::Variable{T}, seq::VecInt; blank::Int=1) where T
 
     if y.backprop
         y.backward = function ∇DNNCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - δ(y) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -82,7 +82,7 @@ function FNNCTCLoss(p::Variable{T}, seqlabels::VecVecInt, inputlens::VecInt; bla
 
     if y.backprop
         y.backward = function ∇FNNCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - δ(y) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -136,7 +136,7 @@ function RNNCTCLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇RNNCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - δ(y) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -189,7 +189,7 @@ function FRNNCTCLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - δ(y) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -246,7 +246,7 @@ function FRNNFocalCTCLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNFocalCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← δ(y) .* 𝒌 .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -281,7 +281,7 @@ function FRNNFocalCTCLoss_Naive(p::Variable{T},
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNFocalCTCLoss_Naive()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(𝒑)
@@ -315,7 +315,7 @@ function FRNNCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) where 
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNCTCProbs()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(𝒑)

@@ -254,7 +254,7 @@ function ten2mat(x        :: Variable{Array{T}},
         parallizable = ntuple(i -> dilation[i] * (kernel[i] - 1) + 1, D) .≤ stride
 
         xmat.backward = function ∇ten2mat()
-            if need2computeδ!(xten)
+            if needgrad(xten)
                 zerodelta(xten)
                 if !all(parallizable)
                     BwdIter = Ten2matBwdIter(FwdIter.zwidth, parallizable)

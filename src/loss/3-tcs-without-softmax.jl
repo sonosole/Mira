@@ -55,7 +55,7 @@ function FNNTCSLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FNNTCSLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -121,7 +121,7 @@ function RNNTCSLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇RNNTCSLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -182,7 +182,7 @@ function FRNNTCSLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNTCSLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← - r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -220,7 +220,7 @@ function FRNNFocalTCSLoss(p::Variable{T},
 
     if y.backprop
         y.backward = function ∇FRNNFocalCTCLoss()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← δ(y) .* 𝒌 .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(y)
@@ -245,7 +245,7 @@ function FRNNTCSProbs(p::Variable{T}, seqlabels::VecVecInt; background::Int=1, f
 
     if 𝒑.backprop
         𝒑.backward = function ∇FRNNTCSProbs()
-            if need2computeδ!(p)
+            if needgrad(p)
                 p ← δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end
             ifNotKeepδThenFreeδ!(𝒑)

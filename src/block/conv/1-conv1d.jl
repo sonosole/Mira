@@ -203,7 +203,7 @@ function in2col(x::Variable{Array{T}}, kernel::Int, stride::Int) where T
 
     if y.backprop
         y.backward = function ∇in2col()
-            if need2computeδ!(x)
+            if needgrad(x)
                 zerodelta(x)
                 Threads.@threads for b = 1:batchsize
                     index = 1 + (b-1)*step
