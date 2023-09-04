@@ -84,7 +84,7 @@ end
     # display(x.value)
     for _ in 1:20
         y = Loss(1 ≤ x) + Loss(x ≤ 2)
-        println(cost(y))
+        # println(cost(y))
         if cost(y) == 0
             @test true
             # display(x.value)
