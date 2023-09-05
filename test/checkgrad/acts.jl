@@ -40,6 +40,8 @@
     @test checkgrad(sec!, Variable(rand(2, 8), type=T))
 
     @test checkgrad(tan, Variable(randn(2, 8), type=T))
+    @test checkgrad(atan, Variable(randn(2, 8), type=T))
+    @test checkgrad(atan!, Variable(randn(2, 8), type=T))
     @test checkgrad(tan!∘sin, Variable(randn(2, 8), type=T))
     @test checkgrad(tand, Variable(randn(2, 8), type=T))
     @test checkgrad(tand!∘sin, Variable(randn(2, 8), type=T))
@@ -50,8 +52,14 @@
     @test checkgrad(tanhshrink, Variable(rand(2, 8), type=T))
     @test checkgrad(tanhshrink!, Variable(rand(2, 8), type=T))
 
+    @test checkgrad(asin, Variable(uniform(Float64, (2,4), from=-0.9, to=-0.9), type=T))
+    @test checkgrad(asin!, Variable(uniform(Float64, (2,4), from=-0.9, to=-0.9), type=T))
     @test checkgrad(sin, Variable(randn(2, 8), type=T))
     @test checkgrad(sin!, Variable(randn(2, 8), type=T))
+    @test checkgrad(sinh, Variable(randn(2, 8), type=T))
+    @test checkgrad(sinh!, Variable(randn(2, 8), type=T))
+    @test checkgrad(asinh, Variable(randn(2, 8), type=T))
+    @test checkgrad(asinh!, Variable(randn(2, 8), type=T))
     @test checkgrad(sinc, Variable(randn(2, 8), type=T))
     @test checkgrad(sinc!, Variable(randn(2, 8), type=T))
     @test checkgrad(sind, Variable(randn(2, 8), type=T))
@@ -63,6 +71,12 @@
 
     @test checkgrad(cos, Variable(randn(2, 8), type=T))
     @test checkgrad(cos!, Variable(randn(2, 8), type=T))
+    @test checkgrad(cosh, Variable(randn(2, 8), type=T))
+    @test checkgrad(cosh!, Variable(randn(2, 8), type=T))
+    @test checkgrad(acos, Variable(uniform(Float64, (2,4), from=-0.9, to=-0.9), type=T))
+    @test checkgrad(acos!, Variable(uniform(Float64, (2,4), from=-0.9, to=-0.9), type=T))
+    @test checkgrad(acosh, Variable(rand(2, 8) .+ 1.2, type=T))
+    @test checkgrad(acosh!, Variable(rand(2, 8) .+ 1.2, type=T))
 
     @test checkgrad(relu, Variable(randn(2, 8), type=T))
     @test checkgrad(relu!, Variable(randn(2, 8), type=T))

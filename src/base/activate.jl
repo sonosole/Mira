@@ -119,7 +119,7 @@ function sigmoid(x::Variable{T}) where T
 end
 
 
-export swish, swish!
+export swish, swish!, silu, silu!
 export hardswish, hardswish!
 export mish, mish!
 
@@ -142,6 +142,7 @@ function swish(x::Variable)
 end
 
 silu(x) = swish(x)
+silu!(x) = swish!(x)
 
 function hardswish(x::T, o::T, 𝟑::T, _3::T, inv6::T) where T <: AbstractFloat
     x ≥ 𝟑 && return x
@@ -233,15 +234,15 @@ function mish(x::Variable)
 end
 
 
-export softmax
+export softmax, softmin
 ## -------------------------------------------------------- softmax
-function softmax(x::AbstractArray; dims::Union{Int,NTuple{N,Int}}=1) where N
+function softmax(x::AbstractArray; dims::IntOrDims{N}=1) where N
     y = exp.(x .- maximum(x, dims=dims))
     Σ = eltype(x)(1.0f0) ./ sum(y, dims=dims)
     return y .* Σ
 end
 
-function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
+function softmax(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
     y = Variable{T}(softmax(ᵛ(x); dims=dims), x.backprop)
     if y.backprop
         y.backward = function ∇softmax()
@@ -254,6 +255,10 @@ function softmax(x::Variable{T}; dims::Union{Int,NTuple{N,Int}}=1) where {T,N}
         addchild(y, x)
     end
     return y
+end
+
+function softmin(x::Union{AbstractArray,Variable}; dims::IntOrDims{N}=1) where N
+    return softmax(-x; dims)
 end
 
 
@@ -671,6 +676,7 @@ end
 
 ## -- tan serials --
 export tan!
+export atan!
 export tand!
 export tanh!
 export tanhshrink, tanhshrink!
@@ -702,6 +708,35 @@ function Base.tan(x::Variable{T}) where T
         y.backward = function ∇tan()
             if needgrad(x)
                 x ← δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function atan!(x::Variable{T}) where T
+    y = Variable{T}(atan.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇atan()
+            if needgrad(x)
+                x ← δ(y) ./ (1 .+ ᵛ(x) .^ 2)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.atan(x::Variable{T}) where T
+    y = Variable{T}(atan.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇atan()
+            if needgrad(x)
+                x ← δ(y) ./ (1 .+ ᵛ(x) .^ 2)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -853,8 +888,11 @@ end
 
 ## -- sin serials --
 export sin!
+export asin!
+export asinh!
 export sinc!
 export sind!
+export sinh!
 export sinpi!
 export linearsin,linearsin!
 
@@ -886,6 +924,62 @@ function Base.sin(x::Variable{T}) where T
     return y
 end
 
+
+function asin!(x::Variable{T}) where T
+    y = Variable{T}(asin.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇asin()
+            if needgrad(x)
+                x ← δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.asin(x::Variable{T}) where T
+    y = Variable{T}(asin.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇asin()
+            if needgrad(x)
+                x ← δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function asinh!(x::Variable{T}) where T
+    y = Variable{T}(asinh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇asinh()
+            if needgrad(x)
+                x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .+ 1)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.asinh(x::Variable{T}) where T
+    y = Variable{T}(asinh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇asinh()
+            if needgrad(x)
+                x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .+ 1)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
 ##
 function sinc!(x::AbstractArray)
     @. x = sinc(x)
@@ -1003,6 +1097,34 @@ function Base.sinpi(x::Variable{T}) where T
     return y
 end
 
+function sinh!(x::Variable{T}) where T
+    y = Variable{T}(sinh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇sinh()
+            if needgrad(x)
+                x ← δ(y) .* cosh.(ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.sinh(x::Variable{T}) where T
+    y = Variable{T}(sinh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇sinh()
+            if needgrad(x)
+                x ← δ(y) .* cosh.(ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
 ##
 function linearsin!(x::AbstractArray)
     @. x = sin(x) + x
@@ -1022,6 +1144,10 @@ end
 
 ##
 export cos!
+export cosh!
+export acosh!
+export acos!
+
 function cos!(x::Variable{T}) where T
     y = Variable{T}(cos(ᵛ(x)), x.backprop)
     if y.backprop
@@ -1042,6 +1168,93 @@ function Base.cos(x::Variable{T}) where T
         y.backward = function ∇cos()
             if needgrad(x)
                 x ← - δ(y) .* sin.(ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function acos!(x::Variable{T}) where T
+    y = Variable{T}(acos.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇acos()
+            if needgrad(x)
+                x ← - δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.acos(x::Variable{T}) where T
+    y = Variable{T}(acos.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇acos()
+            if needgrad(x)
+                x ← - δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function cosh!(x::Variable{T}) where T
+    y = Variable{T}(cosh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇cosh()
+            if needgrad(x)
+                x ← δ(y) .* sinh.(ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.cosh(x::Variable{T}) where T
+    y = Variable{T}(cosh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇cosh()
+            if needgrad(x)
+                x ← δ(y) .* sinh.(ᵛ(x))
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+
+function acosh!(x::Variable{T}) where T
+    y = Variable{T}(acosh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇acosh()
+            if needgrad(x)
+                x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .- 1)
+            end
+            ifNotKeepδThenFreeδ!(y)
+        end
+        addchild(y, x)
+    end
+    return y
+end
+
+function Base.acosh(x::Variable{T}) where T
+    y = Variable{T}(acosh.(ᵛ(x)), x.backprop)
+    if y.backprop
+        y.backward = function ∇acosh()
+            if needgrad(x)
+                x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .- 1)
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -1389,7 +1602,7 @@ end
 
 
 """
-y = 0.5 ∗ x ∗ (1 + tanh( sqrt(2/π) * (x + 0.044715 * x^3)) )
+y = 0.5 ∗ x ∗ (1 + tanh( sqrt(2/π) * (x + 0.044715 * x³)) )\n
      a                         b              c
 """
 function gelu(x::AbstractArray)
@@ -1430,7 +1643,7 @@ function ∂gelu(x::AbstractArray)
 end
 
 """
-    gelu(x) = 0.5 ∗ x ∗ (1 + tanh( sqrt(2/π) * (x + 0.044715 * x^3)) )
+    gelu(x) = 0.5 ∗ x ∗ (1 + tanh( sqrt(2/π) * (x + 0.044715 * x³)) )
 """
 function gelu(x::Variable{T}) where T
     y = Variable{T}(gelu(ᵛ(x)), x.backprop)
@@ -1472,7 +1685,7 @@ function ∂celu(x::T, y::T, α::T, o::T, l::T) where T <: AbstractFloat
 end
 
 """
-    celu(x) = if x > 0
+    celu(x, α) = if x > 0
         x
     else
         α(exp(x/α) - 1)
