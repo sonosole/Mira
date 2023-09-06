@@ -183,13 +183,13 @@ function flatten(x::Variable; from::Int=2, to::Int=ndims(x))
 
     xshape = size(x)
     merged = prod(xshape[i] for i in from:to)
-    newndim = D - Δ
-    newsize = ntuple(newndim) do i
+    newndims = D - Δ
+    newsizex = ntuple(newndims) do i
         i  < from && return xshape[i]
         i == from && return merged
         return xshape[i+Δ]
     end
-    return reshape(x, newsize)
+    return reshape(x, newsizex)
 end
 
 """
@@ -236,13 +236,13 @@ function flatten(x::AbstractArray; from::Int=2, to::Int=ndims(x))
 
     xshape = size(x)
     merged = prod(xshape[i] for i in from:to)
-    newndim = D - Δ
-    newsize = ntuple(newndim) do i
+    newndims = D - Δ
+    newsizex = ntuple(newndims) do i
         i  < from && return xshape[i]
         i == from && return merged
         return xshape[i+Δ]
     end
-    return reshape(x, newsize)
+    return reshape(x, newsizex)
 end
 
 
@@ -351,17 +351,16 @@ function chunk(x::AbstractArray, nchunks::Int; dim::Int=1)
     W = xsize[dim]       # width at dim-th dimension
     C = div(W, nchunks)  # chunk width at dim-th dimension
 
-    X = Vector{AbstractArray}(undef, nchunks)
+    xs = Vector{AbstractArray}(undef, nchunks)
     Threads.@threads for i in 1:nchunks
         coords = ntuple(D) do k
             !isequal(k, dim) && return 1:xsize[k]
             offset = (i-1) * C
             return 1 + offset : C + offset
         end
-        X[i] = x[CartesianIndices(coords)]
+        xs[i] = x[CartesianIndices(coords)]
     end
-
-    return X
+    return xs
 end
 
 
@@ -403,15 +402,86 @@ function chunk(x::Variable{T}, nchunks::Int; dim::Int=1) where T
     W = xsize[dim]       # width at dim-th dimension
     C = div(W, nchunks)  # chunk width at dim-th dimension
 
-    X = Vector{Variable{T}}(undef, nchunks)
+    xs = Vector{Variable{T}}(undef, nchunks)
     Threads.@threads for i in 1:nchunks
         coords = ntuple(D) do k
             !isequal(k, dim) && return 1:xsize[k]
             offset = (i-1) * C
             return 1 + offset : C + offset
         end
-        X[i] = x[CartesianIndices(coords)]
+        xs[i] = x[CartesianIndices(coords)]
     end
+    return xs
+end
 
-    return X
+
+"""
+    chunk(x::AbstractArray; dim::Int=1)
+Split `x` into size(`x`,`dim`) slices at dimention `dim`.
+`NOTE`: `dim`-th dimention is squeezed.
+# Example
+```
+julia> x=reshape(collect(1:2*3*2),2,3,2)
+2×3×2 Array{Int64, 3}:
+[:, :, 1] =
+ 1  3  5
+ 2  4  6
+[:, :, 2] =
+ 7   9  11
+ 8  10  12
+
+julia> foreach(display, chunk(x, dim=3))
+2×3 Matrix{Int64}:
+ 1  3  5
+ 2  4  6
+2×3 Matrix{Int64}:
+ 7   9  11
+ 8  10  12
+```
+"""
+function chunk(x::AbstractArray; dim::Int=1)
+    xsize = size(x)
+    D  = ndims(x)
+    W  = xsize[dim]
+    xs = Vector{AbstractArray}(undef, W)
+    Threads.@threads for i in 1:W
+        coords = ntuple(D) do k
+            !isequal(k, dim) && return 1:xsize[k]
+            return i
+        end
+        xs[i] = x[coords...]
+    end
+    return xs
+end
+
+
+"""
+    chunk(x::Variable; dim::Int=1)
+Split `x` into size(`x`,`dim`) slices at dimention `dim`.
+`NOTE`: `dim`-th dimention is squeezed.
+# Example
+```
+julia> x=Variable(reshape(collect(1:2*3*2),2,3,2));
+julia> foreach(display, chunk(x, dim=3))
+ None Leaf's value is 2×3 Matrix{Float32}:
+ 1.0  3.0  5.0
+ 2.0  4.0  6.0
+ None Leaf's value is 2×3 Matrix{Float32}:
+ 7.0   9.0  11.0
+ 8.0  10.0  12.0
+```
+"""
+function chunk(x::Variable{T}; dim::Int=1) where T
+    xsize = size(x)
+    D  = ndims(x)
+    W  = xsize[dim]
+    xs = Vector{Variable{T}}(undef, W)
+    Threads.@threads for i in 1:W
+        coords = ntuple(D) do k
+            !isequal(k, dim) && return 1:xsize[k]
+            return i
+        end
+        xs[i] = x[coords...]
+    end
+    return xs
 end
