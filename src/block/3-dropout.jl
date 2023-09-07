@@ -15,6 +15,7 @@ mean of data augmentation.
 """
 function dropout(x::Variable{Array{T}}; p::Real=0.1f0) where T
     @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
     l = T(1)
     p = T(p)
     m = (rand(T, x.shape) .< (l - p)) .* (l/(l - p)) # weighted mask
@@ -44,6 +45,7 @@ mean of data augmentation.
 """
 function dropout!(x::Variable{Array{T}}; p::Real=0.1f0) where T
     @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
     l = T(1)
     p = T(p)
     m = (rand(T, x.shape) .< (l - p)) .* (l/(l - p)) # weighted mask
@@ -72,6 +74,7 @@ mean of data augmentation.
 """
 function xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims{D}=1) where {T,D}
     @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
     l = T(1)
     p = T(p)
     S = dimsfilter(size(x), dims)
@@ -101,6 +104,7 @@ mean of data augmentation.
 """
 function xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims{D}=1) where {T,D}
     @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
     l = T(1)
     p = T(p)
     S = dimsfilter(size(x), dims)
