@@ -126,7 +126,7 @@ end
 
 
 """
-    cat(xs::Vector{Variable{T}}; dims=1) where T
+    cat(xs::Vector{Variable{T}}; dims::Int=1) where T
 Concatenate along dimension `dims`.
 # Example
 ```
@@ -140,7 +140,7 @@ julia> x1234 = cat([x1,x2,x3,x4];dims=2)
  1.0  2.0  2.0  3.0  3.0  3.0  4.0  4.0  4.0  4.0
 ```
 """
-function Base.cat(xs::Vector{Variable{T}}; dims=1) where T
+function Base.cat(xs::Vector{Variable{T}}; dims::Int=1) where T
     N = length(xs)
     isequal(N, 1) && return first(xs)
     D = ndims(first(xs))
