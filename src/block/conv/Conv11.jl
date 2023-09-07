@@ -68,8 +68,8 @@ function forward(m::Conv1x1, x::Variable)
     # -----------------------------------------------------
     D  = ndims(x)           # total dims of input/output
     L  = prod(xsize[2:D])   # total numbers of input/output
-    Cᵢ = xsize[1]           # input  channels
-    Cₒ = size(w,1)          # output channels
+    Cᵢ = first(xsize)       # input  channels
+    Cₒ = size(w, 1)         # output channels
     # -----------------------------------------------------
     ysize = ntuple(i -> i>1 ? xsize[i] : Cₒ, D)
 
@@ -90,8 +90,8 @@ function predict(m::Conv1x1, x::AbstractArray)
     # -----------------------------------------------------
     D  = ndims(x)           # total dims of input/output
     L  = prod(xsize[2:D])   # total numbers of input/output
-    Cᵢ = xsize[1]           # input  channels
-    Cₒ = size(w,1)          # output channels
+    Cᵢ = first(xsize)       # input  channels
+    Cₒ = size(w, 1)         # output channels
     # -----------------------------------------------------
     ysize = ntuple(i -> i>1 ? xsize[i] : Cₒ, D)
 
