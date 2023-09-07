@@ -71,6 +71,11 @@ const VarOrReal  = Union{Variable, Real}
 const Variables  = Vector{Variable}
 const XVariables = Vector{XVariable}
 
+function Base.show(io::IO, ::MIME"text/plain", xs::Vector{Variable{T}}) where T
+    L = length(xs)
+    print("$L-element Vector{Variable{$T}}")
+end
+
 # pretty printing
 function Base.show(io::IO, ::MIME"text/plain", x::Variable)
     if isleaf(x)
