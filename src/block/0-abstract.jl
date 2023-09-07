@@ -13,15 +13,23 @@ function (block::Block)(x::Variable, args...; kwargs...)
     return forward(block, x, args...; kwargs...)
 end
 
+function (block::Block)(x::Vector{Variable}, args...; kwargs...)
+    return forward(block, x, args...; kwargs...)
+end
+
+
 function (block::Block)(x::AbstractArray, args...; kwargs...)
     return predict(block, x, args...; kwargs...)
 end
 
+function (block::Block)(x::Vector{AbstractArray}, args...; kwargs...)
+    return predict(block, x, args...; kwargs...)
+end
 
-function forward(f::Function, x::Variable, args...; kwargs...)
+function forward(f::Function, x, args...; kwargs...)
     return f(x, args...; kwargs...)
 end
 
-function predict(f::Function, x::AbstractArray, args...; kwargs...)
+function predict(f::Function, x, args...; kwargs...)
     return f(x, args...; kwargs...)
 end
