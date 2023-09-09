@@ -297,3 +297,61 @@ Concatenate along dimension 2.
 function Base.hcat(xs::Vector{Variable{T}}) where T
     return cat(xs; dims=2)
 end
+
+
+
+function Base.cat(xs::Vector{T}; dims::Int=1) where T <: AbstractArray
+    N = length(xs)
+    isequal(N, 1) && return first(xs)
+    D = ndims(first(xs))
+
+    sizexs = Vector{Dims{D}}(undef, N)
+    sizexs[1] = size(first(xs))
+    for n in 2:N
+        sizexs[n] = size(xs[n])
+        for d in 1:D
+            isequal(d, dims) && continue
+            if sizexs[n][d] ≠ sizexs[n-1][d]
+                error("Dimention mismatch at $d-dim")
+            end
+        end
+    end
+
+    cs = Vector{CartesianIndices}(undef, N)
+    for n in 1:N
+        cⁿ = ntuple(D) do i
+            i ≠ dims && return 1:sizexs[n][i]
+            offset = 0
+            for k in 1:n-1
+                offset += sizexs[k][i]
+            end
+            return (1 + offset):(sizexs[n][i] + offset)
+        end
+        cs[n] = CartesianIndices(cⁿ)
+    end
+
+    sizex = ntuple(D) do i
+        i ≠ dims && return sizexs[1][i]
+        d = 0
+        for n in 1:N
+            d += sizexs[n][i]
+        end
+        return d
+    end
+
+    x = similar(first(xs), sizex)
+    @sync begin
+        Threads.@threads for n in 1:N
+            x[cs[n]] .= xs[n]
+        end
+    end
+    return x
+end
+
+function Base.vcat(xs::Vector{T}) where T <: AbstractArray
+    return cat(xs; dims=1)
+end
+
+function Base.hcat(xs::Vector{T}) where T <: AbstractArray
+    return cat(xs; dims=2)
+end
