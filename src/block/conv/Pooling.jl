@@ -10,9 +10,9 @@ export Pool5d
 Applies a `D`-dim pooling over an `(D+2)`-dim input tensor of shape (ichannels, w1, w2, ..., wn, batchsize)\n
 # Constructor
     Pool{D}(poolingf :: Function;
-            kernel   :: Dims{D} = ntuple(i -> 3, D),
+            kernel   :: Dims{D} = ntuple(i -> 2, D),
             dilation :: Dims{D} = ntuple(i -> 1, D),
-            stride   :: Dims{D} = ntuple(i -> 1, D),
+            stride   :: Dims{D} = ntuple(i -> 2, D),
             padval   :: Real = 0f0,
             padmode  :: String  = "zeros",
             padding  :: PadsDOrStr = "valid") where D
@@ -29,9 +29,9 @@ mutable struct Pool{D} <: Block
     padmode  :: Function
     padval   :: Float32
     function Pool{D}(poolingf :: Function;
-                     kernel   :: Dims{D} = ntuple(i -> 3, D),
+                     kernel   :: Dims{D} = ntuple(i -> 2, D),
                      dilation :: Dims{D} = ntuple(i -> 1, D),
-                     stride   :: Dims{D} = ntuple(i -> 1, D),
+                     stride   :: Dims{D} = ntuple(i -> 2, D),
                      padval   :: Real = 0f0,
                      padmode  :: String  = "zeros",
                      padding  :: PadsDOrStr = "valid") where D
@@ -59,9 +59,9 @@ mutable struct Pool{D} <: Block
     function Pool{D}() where D
         O = (0, 0)
         new{D}(nothing,
-               ntuple(i -> 3, D),
+               ntuple(i -> 2, D),
                ntuple(i -> 1, D),
-               ntuple(i -> 1, D),
+               ntuple(i -> 2, D),
                ntuple(i -> O, D), padconst, 0f0)
     end
 end
@@ -168,9 +168,9 @@ Applies a `1`-D pooling over an `3`-D input tensor of shape (ichannels, `steps`,
 
 # Constructor
     Pool1d(poolingf :: Function;
-           kernel   :: Int = 3,
+           kernel   :: Int = 2,
            dilation :: Int = 1,
-           stride   :: Int = 1,
+           stride   :: Int = 2,
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Dims2OrStr = "valid")
@@ -179,9 +179,9 @@ Applies a `1`-D pooling over an `3`-D input tensor of shape (ichannels, `steps`,
 + `padding` can be \"valid\", \"same\", or type `Dims{2}`
 """
 function Pool1d(poolingf :: Function;
-                kernel   :: Int = 3,
+                kernel   :: Int = 2,
                 dilation :: Int = 1,
-                stride   :: Int = 1,
+                stride   :: Int = 2,
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
                 padding  :: Pads1OrStr = "valid")
@@ -205,9 +205,9 @@ Applies a `2`-D pooling over an `4`-D input tensor of shape (ichannels, `hight`,
 
 # Constructor
     Pool2d(poolingf :: Function;
-           kernel   :: Dims{2} = (3,3),
+           kernel   :: Dims{2} = (2,2),
            dilation :: Dims{2} = (1,1),
-           stride   :: Dims{2} = (1,1),
+           stride   :: Dims{2} = (2,2),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads2OrStr = "valid")
@@ -216,9 +216,9 @@ Applies a `2`-D pooling over an `4`-D input tensor of shape (ichannels, `hight`,
 + `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
 """
 function Pool2d(poolingf :: Function;
-                kernel   :: Dims{2} = (3,3),
+                kernel   :: Dims{2} = (2,2),
                 dilation :: Dims{2} = (1,1),
-                stride   :: Dims{2} = (1,1),
+                stride   :: Dims{2} = (2,2),
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
                 padding  :: Pads2OrStr = "valid")
@@ -235,9 +235,9 @@ Applies a `3`-D pooling over an `5`-D input tensor of shape (ichannels, `hight`,
 
 # Constructor
     Pool3d(poolingf :: Function;
-           kernel   :: Dims{3} = (3,3,3),
+           kernel   :: Dims{3} = (2,2,2),
            dilation :: Dims{3} = (1,1,1),
-           stride   :: Dims{3} = (1,1,1),
+           stride   :: Dims{3} = (2,2,2),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads3OrStr = "valid")
@@ -246,9 +246,9 @@ Applies a `3`-D pooling over an `5`-D input tensor of shape (ichannels, `hight`,
 + `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
 """
 function Pool3d(poolingf :: Function;
-                kernel   :: Dims{3} = (3,3,3),
+                kernel   :: Dims{3} = (2,2,2),
                 dilation :: Dims{3} = (1,1,1),
-                stride   :: Dims{3} = (1,1,1),
+                stride   :: Dims{3} = (2,2,2),
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
                 padding  :: Pads3OrStr = "valid")
@@ -265,9 +265,9 @@ Applies a `4`-D pooling over an `6`-D input tensor of shape (ichannels, `w1`,`w2
 
 # Constructor
     Pool4d(poolingf :: Function;
-           kernel   :: Dims{4} = (3,3,3,3),
+           kernel   :: Dims{4} = (2,2,2,2),
            dilation :: Dims{4} = (1,1,1,1),
-           stride   :: Dims{4} = (1,1,1,1),
+           stride   :: Dims{4} = (2,2,2,2),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads4OrStr = "valid")
@@ -276,9 +276,9 @@ Applies a `4`-D pooling over an `6`-D input tensor of shape (ichannels, `w1`,`w2
 + `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
 """
 function Pool4d(poolingf :: Function;
-                kernel   :: Dims{4} = (3,3,3,3),
+                kernel   :: Dims{4} = (2,2,2,2),
                 dilation :: Dims{4} = (1,1,1,1),
-                stride   :: Dims{4} = (1,1,1,1),
+                stride   :: Dims{4} = (2,2,2,2),
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
                 padding  :: Pads4OrStr = "valid")
@@ -294,9 +294,9 @@ Applies a `5`-D pooling over an `7`-D input tensor of shape (ichannels, `w1`,`w2
 
 # Constructor
     Pool5d(poolingf :: Function;
-           kernel   :: Dims{5} = (3,3,3,3,3),
+           kernel   :: Dims{5} = (2,2,2,2,2),
            dilation :: Dims{5} = (1,1,1,1,1),
-           stride   :: Dims{5} = (1,1,1,1,1),
+           stride   :: Dims{5} = (2,2,2,2,2),
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads5OrStr = "valid")
@@ -305,9 +305,9 @@ Applies a `5`-D pooling over an `7`-D input tensor of shape (ichannels, `w1`,`w2
 + `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
 """
 function Pool5d(poolingf :: Function;
-                kernel   :: Dims{5} = (3,3,3,3,3),
+                kernel   :: Dims{5} = (2,2,2,2,2),
                 dilation :: Dims{5} = (1,1,1,1,1),
-                stride   :: Dims{5} = (1,1,1,1,1),
+                stride   :: Dims{5} = (2,2,2,2,2),
                 padval   :: Real = 0f0,
                 padmode  :: String = "repeat",
                 padding  :: Pads5OrStr = "valid")
