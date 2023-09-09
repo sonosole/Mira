@@ -90,7 +90,7 @@ function forward(att::FusedAttention, xs::Vector{Variable{T}}) where T
         isequal(i, D) && return batch
         return sizex[i]
     end
-    return reshape(cat(ys, dims=3), shape), αs
+    return reshape(cat(ys, dims=3), shape)
 end
 
 
@@ -163,5 +163,5 @@ function predict(att::FusedAttention, xs::Vector{AbstractArry})
         isequal(i, D) && return batch
         return sizex[i]
     end
-    return reshape(cat(ys, dims=3), shape), αs
+    return reshape(cat(ys, dims=3), shape)
 end
