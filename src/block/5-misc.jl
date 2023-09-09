@@ -114,10 +114,13 @@ function nparamsof(f::Function)
 end
 
 
-function nops(f::Function, c::Int=1)
-    return (0, 0, 0) .* c
+function nops(::Function, c::Int=1)
+    return (0, 0, 0)
 end
 
+function bytesof(::Function, unit::String="MB")
+    return 0
+end
 
 """
     checkvalues(x::AbstractArray)
