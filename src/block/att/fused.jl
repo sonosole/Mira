@@ -1,18 +1,27 @@
 export FusedAttention
-const QKVChanger = Union{Function, Nothing, Block}
+const Fuser = Union{Function, Nothing, Block}
 
 mutable struct FusedAttention <: Block
     Qf :: ComposedFunction
     Kf :: ComposedFunction
     Vf :: ComposedFunction
-    function FusedAttention(kinner::QKVChanger,
-                            kouter::QKVChanger,
-                            vinner::QKVChanger,
-                            vouter::QKVChanger)
-        Fq = kouter ∘ kinner
+    dropfn :: FunOrNil
+    poolfn :: Function
+    normfn :: Function
+    need_att_mat :: Bool
+    need_att_vec :: Bool
+    function FusedAttention(qinner::Fuser, qouter::Fuser,
+                            kinner::Fuser, kouter::Fuser,
+                            vinner::Fuser, vouter::Fuser;
+                            need_att_mat::Bool=false,
+                            need_att_vec::Bool=false,
+                            dropfn::FunOrNil=nothing,
+                            poolfn::Function=x -> mean(x, dims=2),
+                            normfn::Function=x -> softmax(x, dims=1))
+        Fq = qouter ∘ qinner
         Fk = kouter ∘ kinner
         Fv = vouter ∘ vinner
-        new(Fq, Fk, Fv)
+        new(Fq, Fk, Fv, dropfn, poolfn, normfn, need_att_mat, need_att_vec)
     end
 end
 
@@ -80,12 +89,16 @@ function forward(att::FusedAttention, xs::Vector{Variable{T}}) where T
     K = chunk(cat(Ks, dims=2), dim=3)
     V = chunk(cat(Vs, dims=2), dim=3)
 
-    αs = Vector{Variable{T}}(undef, batch)  # attention matrices
-    ys = Vector{Variable{T}}(undef, batch)  # fused samples
+    normfn = att.normfn
+    dropfn = att.dropfn
+    poolfn = att.poolfn
+    mat = Vector{Variable{T}}(undef, batch)  # attention matrices
+    vec = Vector{Variable{T}}(undef, batch)  # attention vectors
+    ys  = Vector{Variable{T}}(undef, batch)  # fused samples
     Threads.@threads for b in 1:batch
-        score = softmax(K[b]' * Q[b] / sqrt(dᴷ), dims=1)
-        αs[b] = mean(score, dims=2)
-        ys[b] = reshape(V[b] * αs[b], widthv * dⱽ, 1, 1)
+        mat[b] = normfn(K[b]' * Q[b] / sqrt(dᴷ))
+        vec[b] = poolfn(dropfn(mat[b]))
+        ys[b]  = reshape(V[b] * vec[b], widthv * dⱽ, 1, 1)
     end
 
     shape = ntuple(N) do i
@@ -93,7 +106,19 @@ function forward(att::FusedAttention, xs::Vector{Variable{T}}) where T
         isequal(i, D) && return batch
         return S[i]
     end
-    return reshape(cat(ys, dims=3), shape)
+    y = reshape(cat(ys, dims=3), shape)
+
+    needvec = att.need_att_vec
+    needmat = att.need_att_mat
+    if !needvec && !needmat
+        return y
+    elseif needvec && !needmat
+        return y, vec
+    elseif !needvec && needmat
+        return y, mat
+    else
+        return y, vec, mat
+    end
 end
 
 
@@ -153,13 +178,16 @@ function predict(att::FusedAttention, xs::Vector{T}) where T <: AbstractArray
     K = chunk(cat(Ks, dims=2), dim=3)
     V = chunk(cat(Vs, dims=2), dim=3)
 
-    αs = Vector{AbstractArray}(undef, batch)  # attention matrices
-    ys = Vector{AbstractArray}(undef, batch)  # fused samples
-    d⁻¹= eltype(T)(1 / sqrt(dᴷ))
+    normfn = att.normfn
+    poolfn = att.poolfn
+    mat = Vector{AbstractArray}(undef, batch)  # attention matrices
+    vec = Vector{AbstractArray}(undef, batch)  # attention vectors
+    ys  = Vector{AbstractArray}(undef, batch)  # fused samples
+    d⁻¹ = eltype(T)(1 / sqrt(dᴷ))
     Threads.@threads for b in 1:batch
-        score = softmax(K[b]' * Q[b] .* d⁻¹, dims=1)
-        αs[b] = mean(score, dims=2)
-        ys[b] = reshape(V[b] * αs[b], widthv * dⱽ, 1, 1)
+        mat[b] = normfn(K[b]' * Q[b] .* d⁻¹)
+        vec[b] = poolfn(mat[b])
+        ys[b]  = reshape(V[b] * vec[b], widthv * dⱽ, 1, 1)
     end
 
     shape = ntuple(N) do i
@@ -167,7 +195,19 @@ function predict(att::FusedAttention, xs::Vector{T}) where T <: AbstractArray
         isequal(i, D) && return batch
         return S[i]
     end
-    return reshape(cat(ys, dims=3), shape)
+    y = reshape(cat(ys, dims=3), shape)
+
+    needvec = att.need_att_vec
+    needmat = att.need_att_mat
+    if !needvec && !needmat
+        return y
+    elseif needvec && !needmat
+        return y, vec
+    elseif !needvec && needmat
+        return y, mat
+    else
+        return y, vec, mat
+    end
 end
 
 
@@ -191,3 +231,19 @@ function may_reshape_qkv_to_3d(xs::Union{Vector{Variable{T}}, Vector{S}}) where 
     end
     return nothing
 end
+
+
+# function may_reshape_qkv_to_3d(x::Union{Variable{T}, S}) where {T,S <: AbstractArray}
+#     N = ndims(x)
+#     if isequal(N, 1)
+#         # ensure ndims(x) ≥ 3,
+#         # if not, then reshape.
+#         C = size(x, 1)
+#         x = reshape(x[i], C, 1, 1)
+#     elseif isequal(N, 2)
+#         C = size(x, 1)
+#         B = size(x, 2)
+#         x[i] = reshape(x[i], C, 1, B)
+#     end
+#     return nothing
+# end
