@@ -99,28 +99,21 @@ end
 
 
 
-function paramsof(f::Function)
-    return nothing
-end
+paramsof(f::Function) = nothing
+xparamsof(f::Function) = nothing
+nparamsof(f::Function) = 0
+nops(::Function, c::Int=1) = (0, 0, 0)
+bytesof(::Function, unit::String="MB") = 0
+elsizeof(::Function) = nothing
 
 
-function xparamsof(f::Function)
-    return nothing
-end
+paramsof(::Nil)  = nothing
+xparamsof(::Nil) = nothing
+nparamsof(::Nil) = 0
+nops(::Nil, c::Int=1) = (0, 0, 0)
+bytesof(::Nil, unit::String="MB") = 0
+elsizeof(::Nil) = nothing
 
-
-function nparamsof(f::Function)
-    return 0
-end
-
-
-function nops(::Function, c::Int=1)
-    return (0, 0, 0)
-end
-
-function bytesof(::Function, unit::String="MB")
-    return 0
-end
 
 """
     checkvalues(x::AbstractArray)
@@ -186,4 +179,9 @@ end
 
 function clone(f::Function; type::Type=Array{Float32})
     return f
+end
+
+
+function clone(f::ComposedFunction; type::Type=Array{Float32})
+    return ComposedFunction(clone(f.inner; type), clone(f.outer; type))
 end
