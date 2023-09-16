@@ -227,3 +227,8 @@ function powerpool(x::AbstractArray, n::Real=3; dims::IntOrDims{N}=2) where N
     Σxᵢⁿ   = sum(xᵢⁿ,         dims=dims)    # Σxᵢⁿ
     return Σxᵢⁿ⁺¹ ./ Σxᵢⁿ
 end
+
+
+function nilnorm(x; dims::IntOrDims=1)
+    return x
+end
