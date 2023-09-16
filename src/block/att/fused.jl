@@ -5,9 +5,13 @@ mutable struct FusedAttention <: Block
     Qf :: ComposedFunction
     Kf :: ComposedFunction
     Vf :: ComposedFunction
-    dropfn :: FunOrNil
+
     poolfn :: Function
     normfn :: Function
+
+    dropdims :: IntOrDims
+    droprate :: Real
+
     need_att_mat :: Bool
     need_att_vec :: Bool
     function FusedAttention(qinner::Fuser, qouter::Fuser,
@@ -15,21 +19,53 @@ mutable struct FusedAttention <: Block
                             vinner::Fuser, vouter::Fuser;
                             need_att_mat::Bool=false,
                             need_att_vec::Bool=false,
-                            dropfn::FunOrNil=nothing,
-                            poolfn::Function=x -> mean(x, dims=2),
-                            normfn::Function=x -> softmax(x, dims=1))
+                            poolfn::Function=mean,
+                            normfn::Function=softmax,
+                            dropdims::IntOrDims=(1,2),
+                            droprate::Real=0.0)
         Fq = qouter ∘ qinner
         Fk = kouter ∘ kinner
         Fv = vouter ∘ vinner
-        new(Fq, Fk, Fv, dropfn, poolfn, normfn, need_att_mat, need_att_vec)
+        new(Fq, Fk, Fv,
+            poolfn,  normfn,
+            dropdims, droprate,
+            need_att_mat, need_att_vec)
     end
+    function FusedAttention(fq::ComposedFunction,
+                            fk::ComposedFunction,
+                            fv::ComposedFunction,
+                            poolf::Function,
+                            normf::Function,
+                            dropdims::IntOrDims,
+                            droprate::Real,
+                            need_att_mat::Bool,
+                            need_att_vec::Bool)
+        new(fq, fk, fv,
+            poolf, normf,
+            dropdims, droprate,
+            need_att_mat, need_att_vec)
+    end
+end
+
+function clone(this::FusedAttention; type=Array{Float32})
+    Qf = clone(this.Qf; type)
+    Kf = clone(this.Kf; type)
+    Vf = clone(this.Vf; type)
+    cloned = FusedAttention(Qf, Kf, Vf,
+                            this.poolfn, this.normfn,
+                            this.dropdims, this.droprate,
+                            this.need_att_mat, this.need_att_vec)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", f::FusedAttention)
     println("FusedAttention: ")
-    println("   Query Operator: ", f.Qf.outer, " ∘ ",f.Qf.inner)
-    println("   Key   Operator: ", f.Kf.outer, " ∘ ",f.Kf.inner)
-    println("   Value Operator: ", f.Vf.outer, " ∘ ",f.Vf.inner)
+    println(" Qf: ", f.Qf.outer, " ∘ ",f.Qf.inner)
+    println(" Kf: ", f.Kf.outer, " ∘ ",f.Kf.inner)
+    println(" Vf: ", f.Vf.outer, " ∘ ",f.Vf.inner)
+    println(" normfn: ", f.normfn, " at dim 1")
+    println(" poolfn: ", f.poolfn, " at dim 2")
+    println(" need att vec: ", colorbool(f.need_att_vec))
+    println(" need att mat: ", colorbool(f.need_att_mat))
 end
 
 
@@ -90,14 +126,14 @@ function forward(att::FusedAttention, xs::Vector{Variable{T}}) where T
     V = chunk(cat(Vs, dims=2), dim=3)
 
     normfn = att.normfn
-    dropfn = att.dropfn
     poolfn = att.poolfn
     mat = Vector{Variable{T}}(undef, batch)  # attention matrices
     vec = Vector{Variable{T}}(undef, batch)  # attention vectors
     ys  = Vector{Variable{T}}(undef, batch)  # fused samples
     Threads.@threads for b in 1:batch
-        mat[b] = normfn(K[b]' * Q[b] / sqrt(dᴷ))
-        vec[b] = poolfn(dropfn(mat[b]))
+        mat[b] = normfn(K[b]' * Q[b] / sqrt(dᴷ), dims=1)
+        chosen = xdropout(mat[b], p=att.droprate, dims=att.dropdims)
+        vec[b] = poolfn(chosen, dims=2)
         ys[b]  = reshape(V[b] * vec[b], widthv * dⱽ, 1, 1)
     end
 
@@ -185,8 +221,8 @@ function predict(att::FusedAttention, xs::Vector{T}) where T <: AbstractArray
     ys  = Vector{AbstractArray}(undef, batch)  # fused samples
     d⁻¹ = eltype(T)(1 / sqrt(dᴷ))
     Threads.@threads for b in 1:batch
-        mat[b] = normfn(K[b]' * Q[b] .* d⁻¹)
-        vec[b] = poolfn(mat[b])
+        mat[b] = normfn(K[b]' * Q[b] .* d⁻¹, dims=1)
+        vec[b] = poolfn(mat[b], dims=2)
         ys[b]  = reshape(V[b] * vec[b], widthv * dⱽ, 1, 1)
     end
 
@@ -247,3 +283,75 @@ end
 #     end
 #     return nothing
 # end
+
+
+function paramsof(att::FusedAttention)
+    Q = att.Qf
+    K = att.Kf
+    V = att.Vf
+    params = Vector{Variable}()
+    append!(params, paramsof(Q.inner))
+    append!(params, paramsof(Q.outer))
+    append!(params, paramsof(K.inner))
+    append!(params, paramsof(K.outer))
+    append!(params, paramsof(V.inner))
+    append!(params, paramsof(V.outer))
+    return params
+end
+
+
+function xparamsof(att::FusedAttention)
+    Q = att.Qf
+    K = att.Kf
+    V = att.Vf
+    params = Vector{XVariable}()
+    append!(params, xparamsof(Q.inner))
+    append!(params, xparamsof(Q.outer))
+    append!(params, xparamsof(K.inner))
+    append!(params, xparamsof(K.outer))
+    append!(params, xparamsof(V.inner))
+    append!(params, xparamsof(V.outer))
+    return params
+end
+
+function nparamsof(att::FusedAttention)
+    Q = att.Qf
+    K = att.Kf
+    V = att.Vf
+    n = 0
+    n += nparamsof(Q.inner)
+    n += nparamsof(Q.outer)
+    n += nparamsof(K.inner)
+    n += nparamsof(K.outer)
+    n += nparamsof(V.inner)
+    n += nparamsof(V.outer)
+    return n
+end
+
+
+
+function elsizeof(att::FusedAttention)
+    Q = att.Qf
+    K = att.Kf
+    V = att.Vf
+    n = elsizeof(Q.inner)
+    !isnothing(n) && return n
+    n = elsizeof(Q.outer)
+    !isnothing(n) && return n
+    n = elsizeof(K.inner)
+    !isnothing(n) && return n
+    n = elsizeof(K.outer)
+    !isnothing(n) && return n
+    n = elsizeof(V.inner)
+    !isnothing(n) && return n
+    n = elsizeof(V.outer)
+    !isnothing(n) && return n
+    @warn "returning a fake element size 4. You should pay attention"
+    return 4
+end
+
+
+function bytesof(att::FusedAttention, unit::String="MB")
+    n = nparamsof(att) * elsizeof(att)
+    return blocksize(n, uppercase(unit))
+end
