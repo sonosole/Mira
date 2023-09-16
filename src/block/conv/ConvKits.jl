@@ -57,8 +57,8 @@ function inferpadding(padding::String, kernel::Int, stride::Int, dilation::Int)
         if stride ≠ 1
             error("when padding==\"same\", stride should be 1, but only got stride=$stride")
         end
-        leftpad  = div(dilation*(kernel-1)+1, 2, RoundUp)
-        rightpad = div(dilation*(kernel-1)+1, 2, RoundDown)
+        leftpad  = div(dilation*(kernel-1), 2, RoundUp)
+        rightpad = div(dilation*(kernel-1), 2, RoundDown)
     end
     if isequal(padding, "valid")
         leftpad  = 0
@@ -79,8 +79,8 @@ function inferpadding(padding::String, kernel::Dims{D}, stride::Dims{D}, dilatio
             error("when padding==\"same\", stride should be 1, but only got stride=$stride")
         end
         npads = ntuple(D) do i
-            leftpad  = div(dilation[i]*(kernel[i]-1)+1, 2, RoundUp)
-            rightpad = div(dilation[i]*(kernel[i]-1)+1, 2, RoundDown)
+            leftpad  = div(dilation[i]*(kernel[i]-1), 2, RoundUp)
+            rightpad = div(dilation[i]*(kernel[i]-1), 2, RoundDown)
             return (leftpad, rightpad)
         end
     end
