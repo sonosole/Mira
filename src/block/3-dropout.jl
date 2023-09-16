@@ -64,7 +64,7 @@ end
 
 
 """
-    xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims{D}=1) -> y::Variable{Array{T}}
+    xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims=1) -> y::Variable{Array{T}}
 
 Randomly zeros some `slices` of the input tensor `x` with probability `p` using samples
 from a Bernoulli distribution. This is an effective way to regularization and preventing
@@ -72,7 +72,7 @@ the co-adaptation of neurons. The output elements of `y` are scaled by a factor 
 during training. `xdropout` should be removed at evaluation. Dropout is also viewed as a
 mean of data augmentation.
 """
-function xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims{D}=1) where {T,D}
+function xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims=1) where T
     @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
     isequal(p, 0) && return x
     l = T(1)
@@ -94,7 +94,7 @@ end
 
 
 """
-    xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims{D}=1) -> y::Variable{Array{T}}
+    xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims=1) -> y::Variable{Array{T}}
 
 Randomly zeros some `slices` of the input tensor `x` with probability `p` using samples
 from a Bernoulli distribution. This is an effective way to regularization and preventing
@@ -102,7 +102,7 @@ the co-adaptation of neurons. The output elements of `y` are scaled by a factor 
 during training. `xdropout!` should be removed at evaluation. Dropout is also viewed as a
 mean of data augmentation.
 """
-function xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims{D}=1) where {T,D}
+function xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims=1) where T
     @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
     isequal(p, 0) && return x
     l = T(1)
@@ -120,4 +120,45 @@ function xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims{D}=1) wh
         addchild(y, x)
     end
     return y
+end
+
+
+
+function dropout(x::AtArray{T}; p::Real=0.1f0) where T
+    @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
+    l = T(1)
+    p = T(p)
+    m = (rand(T, size(x)) .< (l - p)) .* (l/(l - p)) # weighted mask
+    return x .* m
+end
+
+function dropout!(x::AtArray{T}; p::Real=0.1f0) where T
+    @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
+    l = T(1)
+    p = T(p)
+    m = (rand(T, size(x)) .< (l - p)) .* (l/(l - p)) # weighted mask
+    return dotmul!(x, m)
+end
+
+
+function xdropout(x::AtArray{T}; p::Real=0.1f0, dims::IntOrDims=1) where T
+    @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
+    l = T(1)
+    p = T(p)
+    S = dimsfilter(size(x), dims)
+    m = (rand(T, S) .< (l - p)) .* (l/(l - p))  # weighted mask
+    return x .* m
+end
+
+function xdropout!(x::AtArray{T}; p::Real=0.1f0, dim::IntOrDims=1) where T
+    @assert 0.0≤p<1.0 "p is in [0,1), but got p=$p"
+    isequal(p, 0) && return x
+    l = T(1)
+    p = T(p)
+    S = dimsfilter(size(x), dims)
+    m = (rand(T, S) .< (l - p)) .* (l/(l - p))  # weighted mask
+    return dotmul!(x, m)
 end
