@@ -13,7 +13,7 @@
     x[2,1:3,1:6,1] .= reshape(collect(1:18),3,6) .+ 1
     x[1,1:3,1:6,2] .= reshape(collect(1:18),3,6) .+ 2
     x[2,1:3,1:6,2] .= reshape(collect(1:18),3,6) .+ 3
-    pool2d = Pool2d(maximum, kernel=(2,3), dilation=(2,2))
+    pool2d = Pool2d(maximum, kernel=(2,3), dilation=(2,2), stride=(1, 1))
     y = reshape(predict(pool2d, x), 2,4)
     @test sum(y .== [15 18 17 20;
                      16 19 18 21]) == 8
@@ -35,7 +35,7 @@ end
     x[2,1:3,1:6,1] .= reshape(collect(1:18),3,6) .+ 1
     x[1,1:3,1:6,2] .= reshape(collect(1:18),3,6) .+ 2
     x[2,1:3,1:6,2] .= reshape(collect(1:18),3,6) .+ 3
-    pool2d = Pool2d(mean, kernel=(2,3), dilation=(2,2))
+    pool2d = Pool2d(mean, kernel=(2,3), dilation=(2,2), stride=(1, 1))
     y = reshape(predict(pool2d, x), 2,4)
     @test sum(y .== [8 11 10 13;
                      9 12 11 14]) == 8
