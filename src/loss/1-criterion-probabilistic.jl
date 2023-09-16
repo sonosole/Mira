@@ -17,6 +17,9 @@ export NLogCELoss
 export InvPowerCrossEntropy
 export InvPowerCELoss
 
+export KLDiv
+export KLDivLoss
+
 
 """
     CrossEntropy(p::Variable{T}, label::Variable{T}) -> y::Variable{T}
@@ -353,4 +356,22 @@ function InvPowerCELoss(p::Variable,
                         a::Real=0.3f0,
                         n::Real=1.0f0)
     return Loss(InvPowerCrossEntropy(p, label, a=a, n=n), reduction=reduction)
+end
+
+
+"""
+    KLDiv(Ypred::Union{AbstractArray,Variable}, Ytrue::Union{AbstractArray,Variable})
+Kullback-Leibler divergence is `Ytrue` * (log(`Ytrue`) - log(`Ypred`))
+"""
+function KLDiv(Ypred::Union{AtArray,Variable}, Ytrue::Union{AtArray,Variable})
+    return Ytrue .* (log(Ytrue) .- log(Ypred))
+end
+
+
+"""
+    KLDivLoss(Ypred::Union{AbstractArray,Variable}, Ytrue::Union{AbstractArray,Variable}, reduction::String="sum",)
+Kullback-Leibler divergence Loss is reducefn(`Ytrue` * (log(`Ytrue`) - log(`Ypred`)))
+"""
+function KLDivLoss(Ypred::Union{AtArray,Variable}, Ytrue::Union{AtArray,Variable}, reduction::String="sum")
+    return Loss(KLDivLoss(Ypred, Ytrue), reduction=reduction)
 end
