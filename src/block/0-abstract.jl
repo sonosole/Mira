@@ -13,7 +13,7 @@ function (block::Block)(x::Variable, args...; kwargs...)
     return forward(block, x, args...; kwargs...)
 end
 
-function (block::Block)(x::Vector{Variable}, args...; kwargs...)
+function (block::Block)(x::Vector{Variable{T}}, args...; kwargs...) where T
     return forward(block, x, args...; kwargs...)
 end
 
