@@ -44,7 +44,7 @@ end
     xten = Variable(reshape(collect(1:12), 1,3,4,1),keepsgrad=true);
     xmat = ten2mat(xten, p, k, d, s, padconst, 0);
     @test sum(xmat.value - mat) == 0
-    backward(xmat)
+    backward(xmat, keepgraph=true)
     @test sum(reshape(xten.delta, 3,4) - grad) == 0
 end
 
@@ -75,6 +75,6 @@ end
     xten = Variable(ten, keepsgrad=true);
     xmat = ten2mat(xten, p, k, d, s, padconst, 0);
     @test sum(xmat.value - mat) == 0
-    backward(xmat)
+    backward(xmat, keepgraph=true)
     @test sum(reshape(xten.delta, 5,6) - grad) == 0
 end
