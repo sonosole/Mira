@@ -1,4 +1,4 @@
-export dotMul
+export emul
 export dotdiv
 export addmv
 export mulmv
@@ -224,16 +224,16 @@ end
 
 
 """
-    dotMul(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
-a tensor multiplies a tensor element by element
+    emul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+a tensor multiplies a tensor element by element, size(x)==size(y)
 """
-function dotMul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+function emul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     assert_same_size(x, y)
     backprop = (x.backprop || y.backprop)
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), backprop)
     if backprop
-        z.backward = function ∇dotMul()
+        z.backward = function ∇emul()
             needgrad(x) && (x ← δ(z) .* ᵛ(y))
             needgrad(y) && (y ← δ(z) .* ᵛ(x))
             ifNotKeepδThenFreeδ!(z)
@@ -246,14 +246,14 @@ end
 
 
 """
-    dotMul(x::Variable, y::AbstractArray)
+    emul(x::Variable, y::AbstractArray)
 a tensor multiplies a tensor element by element
 """
-function dotMul(x::Variable{T}, y::AbstractArray) where T
+function emul(x::Variable{T}, y::AbstractArray) where T
     assert_same_size(x, y)
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if backprop
-        z.backward = function ∇dotMul()
+        z.backward = function ∇emul()
             if needgrad(x)
                 x ← δ(z) .* ᵛ(y)
             end
@@ -266,14 +266,14 @@ end
 
 
 """
-    dotMul(x::AbstractArray, y::Variable)
+    emul(x::AbstractArray, y::Variable)
 a tensor multiplies a tensor element by element
 """
-function dotMul(x::AbstractArray, y::Variable{T}) where T
+function emul(x::AbstractArray, y::Variable{T}) where T
     assert_same_size(x, y)
     z = Variable{T}(x .* ᵛ(y), x.backprop)
     if backprop
-        z.backward = function ∇dotMul()
+        z.backward = function ∇emul()
             if needgrad(y)
                 y ← δ(z) .* ᵛ(x)
             end

@@ -134,11 +134,11 @@ function swish(x::AbstractArray)
 end
 
 function swish!(x::Variable)
-    return dotMul(sigmoid(x), x)
+    return emul(sigmoid(x), x)
 end
 
 function swish(x::Variable)
-    return dotMul(sigmoid(x), x)
+    return emul(sigmoid(x), x)
 end
 
 silu(x) = swish(x)
@@ -218,19 +218,19 @@ end
 function mish!(x::AbstractArray)
     y = softplus(x)
     z = tanh!(y)
-    return dotMul(x, z)
+    return emul(x, z)
 end
 
 function mish!(x::Variable)
     y = softplus(x)
     z = tanh!(y)
-    return dotMul(x, z)
+    return emul(x, z)
 end
 
 function mish(x::Variable)
     y = softplus(x)
     z = tanh(y)
-    return dotMul(x, z)
+    return emul(x, z)
 end
 
 

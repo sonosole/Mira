@@ -168,7 +168,7 @@ end
 
 # z = x .* y
 function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2}
-    samesize(x, y) && return dotMul(x, y)
+    samesize(x, y) && return emul(x, y)
 
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) .* ᵛ(y), x.backprop || y.backprop)
@@ -192,7 +192,7 @@ end
 
 
 function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
-    samesize(x, y) && return dotMul(x, y)
+    samesize(x, y) && return emul(x, y)
 
     z = Variable{T}(ᵛ(x) .* y, x.backprop)
     if z.backprop
@@ -210,7 +210,7 @@ end
 
 
 function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
-    samesize(x, y) && return dotMul(x, y)
+    samesize(x, y) && return emul(x, y)
 
     z = Variable{T}(x .* ᵛ(y), y.backprop)
     if z.backprop
