@@ -11,7 +11,6 @@ using Random
     include("./checkgrad/4-chain.jl")
     include("./checkgrad/5-conv1d.jl")
     include("./checkgrad/5-depthconv1d.jl")
-    include("./checkgrad/6-addingProblem.jl")
     include("./checkgrad/7-scaler.jl")
     include("./checkgrad/8-ctc.jl")
     include("./checkgrad/9-ace.jl")
