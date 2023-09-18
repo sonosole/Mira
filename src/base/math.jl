@@ -1,7 +1,7 @@
 export dotMul
 export dotdiv
 export addmv
-export matMulVec
+export mulmv
 export assert_same_size
 
 @inline function assert_same_size(x::Union{Variable,AbstractArray}, y::Union{Variable,AbstractArray})
@@ -412,19 +412,16 @@ end
 
 
 """
-    addmv(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
-a matrix tensor `var1` multiplies a vector tensor `var2`
+    mulmv(m::Variable{T1}, v::Variable{T2}) where {T1,T2}
+a matrix tensor `m` multiplies a vector tensor `v`
 """
-function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
-    # M -- 一般充当激活节点，非网络需要学习的参数
-    # V -- 列向量，循环权重，是网络需要学习的参数
-    # Z = M .* V
+function mulmv(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     @assert (M.shape[1]==V.shape[1] && V.shape[2]==1)
     backprop = (M.backprop || V.backprop)
     T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)
     if backprop
-        Z.backward = function ∇matMulVec()
+        Z.backward = function ∇mulmv()
             needgrad(M) && (M ←     δ(Z) .* ᵛ(V))
             needgrad(V) && (V ← sum(δ(Z) .* ᵛ(M), dims=2))
             ifNotKeepδThenFreeδ!(Z)

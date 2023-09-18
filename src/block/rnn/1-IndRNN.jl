@@ -108,7 +108,7 @@ function forward(m::IndRNN, x::Variable{T}) where T
     hu = nothing
     wx = nothing
     @sync begin
-        Threads.@spawn hu = matMulVec(h, u)
+        Threads.@spawn hu = mulmv(h, u)
         Threads.@spawn wx = w * x
     end
     x = f(addmv(hu + wx, b))
