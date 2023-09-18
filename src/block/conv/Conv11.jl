@@ -74,7 +74,7 @@ function forward(m::Conv1x1, x::Variable)
     ysize = ntuple(i -> i>1 ? xsize[i] : Cₒ, D)
 
     x = reshape(x, Cᵢ, L)
-    y = f( matAddVec(w*x, b) )
+    y = f( addmv(w*x, b) )
 
     return reshape(y, ysize)
 end

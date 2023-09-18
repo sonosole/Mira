@@ -111,7 +111,7 @@ function forward(m::IndRNN, x::Variable{T}) where T
         Threads.@spawn hu = matMulVec(h, u)
         Threads.@spawn wx = w * x
     end
-    x = f(matAddVec(hu + wx, b))
+    x = f(addmv(hu + wx, b))
     m.h = x
     return x
 end

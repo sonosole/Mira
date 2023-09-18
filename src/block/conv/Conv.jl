@@ -187,7 +187,7 @@ function forward(C::Conv, x::Variable)
     b = C.b
     S = fullsize(w, x, C.padding, C.kernel, C.dilation, C.stride)
     y = ten2mat(    x, C.padding, C.kernel, C.dilation, C.stride, C.padmode, C.padval)
-    z = reshape(matAddVec(w * y, b), S)
+    z = reshape(addmv(w * y, b), S)
     return C.f(z)
 end
 

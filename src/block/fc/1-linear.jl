@@ -122,7 +122,7 @@ end
 function forward(m::Linear, x::Variable)
     w = m.w
     b = m.b
-    return matAddVec(w * x, b)
+    return addmv(w * x, b)
 end
 
 

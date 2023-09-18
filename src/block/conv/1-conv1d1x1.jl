@@ -46,7 +46,7 @@ function forward(m::Conv1d1x1, x::Variable)
 
     C, T, B = size(x)
     x = reshape(x, (C, T*B))
-    y = f( matAddVec(w*x, b) )
+    y = f( addmv(w*x, b) )
     C = size(y, 1)
     return reshape(y, (C, T, B))
 end

@@ -1,6 +1,6 @@
 export dotMul
 export dotdiv
-export matAddVec
+export addmv
 export matMulVec
 export assert_same_size
 
@@ -390,19 +390,16 @@ end
 
 
 """
-    matAddVec(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
-a matrix tensor `var1` adds a vector tensor `var2`
+    addmv(m::Variable{T1}, v::Variable{T2}) where {T1,T2}
+a matrix tensor `m` adds a vector tensor `v`
 """
-function matAddVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
-    # M -- 充当和节点，非学习的参数
-    # V -- 偏置列向量，要学习的参数
-    # Z = M .+ V
+function addmv(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
     @assert (M.shape[1]==V.shape[1] && V.shape[2]==1)
     backprop = (M.backprop || V.backprop)
     T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
     if backprop
-        Z.backward = function ∇matAddVec()
+        Z.backward = function ∇addmv()
             needgrad(M) && (M ← δ(Z))
             needgrad(V) && (V ← sum(δ(Z), dims=2))
             ifNotKeepδThenFreeδ!(Z)
@@ -415,7 +412,7 @@ end
 
 
 """
-    matAddVec(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
+    addmv(var1::Variable{T1}, var2::Variable{T2}) where {T1,T2}
 a matrix tensor `var1` multiplies a vector tensor `var2`
 """
 function matMulVec(M::Variable{T1}, V::Variable{T2}) where {T1,T2}

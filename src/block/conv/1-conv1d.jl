@@ -249,7 +249,7 @@ function forward(block::PlainConv1d, x::Variable{T}) where T
     b = block.b
     f = block.f
     x = in2col(x, block.k, block.s)
-    x = matAddVec(w * x, b)
+    x = addmv(w * x, b)
     x = col2out(x, batchsize)
     return f(x)
 end

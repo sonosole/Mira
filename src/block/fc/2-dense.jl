@@ -99,7 +99,7 @@ function forward(m::Dense, x::Variable)
     f = m.f
     w = m.w
     b = m.b
-    return f( matAddVec(w*x, b) )
+    return f( addmv(w*x, b) )
 end
 
 

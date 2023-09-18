@@ -84,7 +84,7 @@ function forward(model::Maxout, x::Variable{T}) where T
     w = model.w
     b = model.b
     c = size(x, 2)
-    x = matAddVec(w * x, b)         # dim=(h*k, c)
+    x = addmv(w * x, b)         # dim=(h*k, c)
     temp = reshape(x.value, h,k,c)  # dim=(h,k,c)
     maxv = maximum(temp, dims=2)    # dim=(h,1,c)
     mask = temp .== maxv            # dim=(h,k,c)
