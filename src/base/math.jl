@@ -1,5 +1,5 @@
 export emul
-export dotdiv
+export ediv
 export addmv
 export mulmv
 export assert_same_size
@@ -285,12 +285,16 @@ function emul(x::AbstractArray, y::Variable{T}) where T
 end
 
 
-function dotdiv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+"""
+    ediv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
+a tensor divided by a tensor element by element, size(`x`)==size(`y`)
+"""
+function ediv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     assert_same_size(x, y)
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) ./ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
-        z.backward = function ∇dotdiv()
+        z.backward = function ∇ediv()
             δx = δ(z) ./ ᵛ(y)
             if needgrad(x)
                 x ← δx
@@ -307,11 +311,11 @@ function dotdiv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
 end
 
 
-function dotdiv(x::Variable{T}, y::AbstractArray) where T
+function ediv(x::Variable{T}, y::AbstractArray) where T
     assert_same_size(x, y)
     z = Variable{T}(ᵛ(x) ./ y, x.backprop)
     if z.backprop
-        z.backward = function ∇dotdiv()
+        z.backward = function ∇ediv()
             if needgrad(x)
                 x ← δ(z) ./ y
             end
@@ -322,11 +326,11 @@ function dotdiv(x::Variable{T}, y::AbstractArray) where T
     return z
 end
 
-function dotdiv(x::AbstractArray, y::Variable{T}) where T
+function ediv(x::AbstractArray, y::Variable{T}) where T
     assert_same_size(x, y)
     z = Variable{T}(x ./ ᵛ(y), x.backprop || y.backprop)
     if z.backprop
-        z.backward = function ∇dotdiv()
+        z.backward = function ∇ediv()
             if needgrad(y)
                 y ← - δ(z) ./ ᵛ(y) .* ᵛ(z)
             end
