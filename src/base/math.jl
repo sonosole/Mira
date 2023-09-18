@@ -4,7 +4,8 @@ export addmv
 export mulmv
 export assert_same_size
 
-@inline function assert_same_size(x::Union{Variable,AbstractArray}, y::Union{Variable,AbstractArray})
+@inline function assert_same_size(x::Union{Variable,AbstractArray},
+                                  y::Union{Variable,AbstractArray})
     @assert size(x) == size(y) "2 inputs shall be the same size"
 end
 
