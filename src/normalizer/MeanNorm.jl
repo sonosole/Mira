@@ -90,7 +90,6 @@ function forward(M::MeanNorm, x::Variable{T}) where T
             if needgrad(β)
                 β ← sum(δ(y), dims=v) .+ zero(β)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

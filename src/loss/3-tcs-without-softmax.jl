@@ -58,7 +58,6 @@ function FNNTCSLoss(p::Variable{T},
             if needgrad(p)
                 p ← - r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -124,7 +123,6 @@ function RNNTCSLoss(p::Variable{T},
             if needgrad(p)
                 p ← - r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -185,7 +183,6 @@ function FRNNTCSLoss(p::Variable{T},
             if needgrad(p)
                 p ← - r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -223,7 +220,6 @@ function FRNNFocalTCSLoss(p::Variable{T},
             if needgrad(p)
                 p ← δ(y) .* 𝒌 .* r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -248,7 +244,6 @@ function FRNNTCSProbs(p::Variable{T}, seqlabels::VecVecInt; background::Int=1, f
             if needgrad(p)
                 p ← δ(𝒑) .* ᵛ(𝒑) .* r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, p)
     end

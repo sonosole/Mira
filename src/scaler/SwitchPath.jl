@@ -70,7 +70,6 @@ function forward(m::SwitchPath, x::Variable{T}) where T
             if needgrad(a)
                 a ← sum(δ(y) .* k .* (1 .- G) .* ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
         addchild(y, a)

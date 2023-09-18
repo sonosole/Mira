@@ -217,7 +217,6 @@ function in2col(x::Variable{Array{T}}, kernel::Int, stride::Int) where T
                     end
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

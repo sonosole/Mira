@@ -293,7 +293,6 @@ function mat2ten(xmat     :: Variable{Array{T}},
                     @inbounds xmat.delta[m] .= reshape(xten.delta[t], rows, batchsize)
                 end
             end
-            ifNotKeepδThenFreeδ!(xten)
         end
         addchild(xten, xmat)
     end

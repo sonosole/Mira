@@ -180,7 +180,6 @@ function FRNNSoftmaxFastCTCLoss(x::Variable{T},
                     x ← δ(y) .* Δ .* weight
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -215,7 +214,6 @@ function FRNNFastCTCLoss(p::Variable{T},
                     p ← - δ(y) .* r ./ ᵛ(p) .* weight
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -259,7 +257,6 @@ function FRNNSoftmaxFocalFastCTCLoss(x::Variable{T},
                     x ← δ(y) .* 𝒌 .* Δ .* weight
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -301,7 +298,6 @@ function FRNNFocalFastCTCLoss(p::Variable{T},
                     p ← δ(y) .* 𝒌 .* r ./ ᵛ(p) .* weight
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -325,7 +321,6 @@ function FRNNFastCTCProbs(p::Variable{T}, seqlabels::VecVecInt; blank::Int=1) wh
             if needgrad(p)
                 p ← - δ(𝒑) .* r ./ ᵛ(p)
             end
-            ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, p)
     end
@@ -351,7 +346,6 @@ function FRNNSoftmaxFastCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::In
             if needgrad(x)
                 x ← δ(𝒑) .* Δ
             end
-            ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, x)
     end

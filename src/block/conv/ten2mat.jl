@@ -273,7 +273,6 @@ function ten2mat(x        :: Variable{Array{T}},
                     end
                 end
             end
-            ifNotKeepδThenFreeδ!(xmat)
         end
 
         addchild(xmat, xten)

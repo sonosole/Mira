@@ -116,7 +116,6 @@ function forward(m::LogLinear, x::Variable{T}) where T
             if needgrad(b)
                 b ← sum(δ(y) .* z .* sign.(ᵛ(b)), dims=m.views) .+ zero(b)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
         addchild(y, k)

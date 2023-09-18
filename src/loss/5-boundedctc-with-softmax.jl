@@ -24,7 +24,6 @@ function CRNN_BoundedCTC_With_Softmax(x::Variable{Array{T}},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

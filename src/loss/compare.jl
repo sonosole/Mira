@@ -21,7 +21,6 @@ function require_great_than_zero(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (-m)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -45,7 +44,6 @@ function require_great_equal_than_zero(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (-m)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -71,7 +69,6 @@ function require_less_than_zero(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* m
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -95,7 +92,6 @@ function require_less_equal_than_zero(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* m
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

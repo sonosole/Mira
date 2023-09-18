@@ -125,7 +125,6 @@ function seqforward(chain::Block, x::Variable{S}; keepstate=false) where S
                     v[t] ← y.delta[:,t,:]
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         for t = 1:T
             addchild(y, v[t])

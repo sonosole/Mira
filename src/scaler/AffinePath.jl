@@ -79,7 +79,6 @@ function forward(m::AffinePath, x::Variable{T}) where T
             needgrad(x) && (x ←     δ(y) .* ᵛ(w) )
             needgrad(w) && (w ← sum(δ(y) .* ᵛ(x)))
             needgrad(b) && (b ← sum(δ(y)        ))
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
         addchild(y, w)

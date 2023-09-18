@@ -78,7 +78,6 @@ function forward(m::ScaleChannels, x::Variable{T}) where T
             if needgrad(k)
                 k ← sum(δ(y) .* ᵛ(x), dims=m.views)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
         addchild(y, k)

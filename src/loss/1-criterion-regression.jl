@@ -26,7 +26,6 @@ function MAE(x::Variable{T}, label::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -48,7 +47,6 @@ function MAE(x::Variable{T}, label::AbstractArray) where T
             if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -84,7 +82,6 @@ function MSE(x::Variable{T}, label::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* 𝟐 .* (ᵛ(x) - ᵛ(label))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -101,7 +98,6 @@ function MSE(x::Variable{T}, label::AbstractArray) where T
             if needgrad(x)
                 x ← δ(y) .* 𝟐 .* (ᵛ(x) - label)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -134,7 +130,6 @@ function Lp(x::Variable{T}, label::Variable{T}; p=3) where T
                 # x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
                 x ← δ(y) .* ᵛ(y) ./ Δ .* p
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -153,7 +148,6 @@ function Lp(x::Variable{T}, label::AbstractArray; p=3) where T
                 # x.delta[i] .+= y.delta[i] .* y.value[i] ./ Δ[i] .* p
                 x ← δ(y) .* ᵛ(y) ./ Δ .* p
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

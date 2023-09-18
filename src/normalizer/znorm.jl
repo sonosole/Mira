@@ -59,7 +59,6 @@ function znorm(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) where {T,N
                 ∂l∂y = δ(y)
                 x ← (σ¯¹ .* m¯¹) .* (m .* ∂l∂y .- ∑(∂l∂y) .- x̌ .* ∑(∂l∂y .* x̌))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -87,7 +86,6 @@ function znorm_mean_var(x::Variable{T}; dims::IntOrDims{N}=1, eps::Real=1e-38) w
                 ∂l∂y = δ(y)
                 x ← (σ¯¹ .* m¯¹) .* (m .* ∂l∂y .- ∑(∂l∂y) .- x̌ .* ∑(∂l∂y .* x̌))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

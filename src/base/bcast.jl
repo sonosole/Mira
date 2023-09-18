@@ -63,7 +63,6 @@ function broadcasted(::typeof(+), x::Variable{T1}, y::Variable{T2}) where {T1,T2
                 δy = δ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -81,7 +80,6 @@ function broadcasted(::typeof(+), x::Variable{T}, y::TensorOrReal) where T
             if needgrad(x)
                 x ← unbcast(δ(z), ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -98,7 +96,6 @@ function broadcasted(::typeof(+), x::TensorOrReal, y::Variable{T}) where T
             if needgrad(y)
                 y ← unbcast(δ(z), ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -122,7 +119,6 @@ function broadcasted(::typeof(-), x::Variable{T1}, y::Variable{T2}) where {T1,T2
                 δy = - δ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -140,7 +136,6 @@ function broadcasted(::typeof(-), x::Variable{T}, y::TensorOrReal) where T
             if needgrad(x)
                 x ← unbcast(δ(z), ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -158,7 +153,6 @@ function broadcasted(::typeof(-), x::TensorOrReal, y::Variable{T}) where T
                 δy = - δ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -182,7 +176,6 @@ function broadcasted(::typeof(*), x::Variable{T1}, y::Variable{T2}) where {T1,T2
                 δy = δ(z) .* ᵛ(x)
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -201,7 +194,6 @@ function broadcasted(::typeof(*), x::Variable{T}, y::TensorOrReal) where T
                 δx = δ(z) .* y
                 x ← unbcast(δx, ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -219,7 +211,6 @@ function broadcasted(::typeof(*), x::TensorOrReal, y::Variable{T}) where T
                 δy = δ(z) .* x
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -243,7 +234,6 @@ function broadcasted(::typeof(/), x::Variable{T1}, y::Variable{T2}) where {T1,T2
                 δy = - δx .* ᵛ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -262,7 +252,6 @@ function broadcasted(::typeof(/), x::Variable{T}, y::TensorOrReal) where T
                 δx = δ(z) ./ y
                 x ← unbcast(δx, ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -280,7 +269,6 @@ function broadcasted(::typeof(/), x::TensorOrReal, y::Variable{T}) where T
                 δy = - δ(z) ./ ᵛ(y) .* ᵛ(z)
                 y ← unbcast(δy, ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end

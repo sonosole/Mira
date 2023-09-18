@@ -25,7 +25,6 @@ function dropout(x::Variable{Array{T}}; p::Real=0.1f0) where T
             if needgrad(x)
                 x ← δ(y) .* m
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -55,7 +54,6 @@ function dropout!(x::Variable{Array{T}}; p::Real=0.1f0) where T
             if needgrad(x)
                 x ← δ(y) .* m
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -85,7 +83,6 @@ function xdropout(x::Variable{Array{T}}; p::Real=0.1f0, dims::IntOrDims=1) where
             if needgrad(x)
                 x ← δ(y) .* m
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -115,7 +112,6 @@ function xdropout!(x::Variable{Array{T}}; p::Real=0.1f0, dim::IntOrDims=1) where
             if needgrad(x)
                 x ← δ(y) .* m
             end
-            ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
     end

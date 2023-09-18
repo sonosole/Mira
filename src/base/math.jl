@@ -19,7 +19,6 @@ function Base.:+(x::Variable{T}, constant::Real) where T
             if needgrad(x)
                 x ← δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -41,7 +40,6 @@ function Base.:-(x::Variable{T}, constant::Real) where T
             if needgrad(x)
                 x ← δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -58,7 +56,6 @@ function Base.:-(constant::Real, x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -74,7 +71,6 @@ function Base.:-(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -91,7 +87,6 @@ function Base.:*(x::Variable{T}, constant::Real) where T
             if needgrad(x)
                 x ← δ(y) .* C
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -117,7 +112,6 @@ function Base.:^(x::Variable{T}, n::Real) where T
             if needgrad(x)
                 x ← n .* ᵛ(y) ./ ᵛ(x) .* δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -134,7 +128,6 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
         z.backward = function ∇eadd()
             needgrad(x) && (x ← δ(z))
             needgrad(y) && (y ← δ(z))
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -151,7 +144,6 @@ function Base.:+(x::Variable{T}, y::AbstractArray) where T
             if needgrad(x)
                 x ← δ(z)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -166,7 +158,6 @@ function Base.:+(x::AbstractArray, y::Variable{T}) where T
             if needgrad(y)
                 y ← δ(z)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -183,7 +174,6 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
         z.backward = function ∇eminus()
             needgrad(x) && (x ←  δ(z))
             needgrad(y) && (y ← -δ(z))
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -200,7 +190,6 @@ function Base.:-(x::Variable{T}, y::AbstractArray) where T
             if needgrad(x)
                 x ← δ(z)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -215,7 +204,6 @@ function Base.:-(x::AbstractArray, y::Variable{T}) where T
             if needgrad(y)
                 y ← - δ(z)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -236,7 +224,6 @@ function emul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
         z.backward = function ∇emul()
             needgrad(x) && (x ← δ(z) .* ᵛ(y))
             needgrad(y) && (y ← δ(z) .* ᵛ(x))
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -257,7 +244,6 @@ function emul(x::Variable{T}, y::AbstractArray) where T
             if needgrad(x)
                 x ← δ(z) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -277,7 +263,6 @@ function emul(x::AbstractArray, y::Variable{T}) where T
             if needgrad(y)
                 y ← δ(z) .* ᵛ(x)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -302,7 +287,6 @@ function ediv(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
             if needgrad(y)
                 y ← - δx .* ᵛ(z)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
         addchild(z, y)
@@ -319,7 +303,6 @@ function ediv(x::Variable{T}, y::AbstractArray) where T
             if needgrad(x)
                 x ← δ(z) ./ y
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, x)
     end
@@ -334,7 +317,6 @@ function ediv(x::AbstractArray, y::Variable{T}) where T
             if needgrad(y)
                 y ← - δ(z) ./ ᵛ(y) .* ᵛ(z)
             end
-            ifNotKeepδThenFreeδ!(z)
         end
         addchild(z, y)
     end
@@ -354,7 +336,6 @@ function Base.:*(W::Variable{T1}, X::Variable{T2}) where {T1,T2}
         Y.backward = function ∇matMul()
             needgrad(W) && (W ← δ(Y)  * ᵛ(X)')
             needgrad(X) && (X ← ᵛ(W)' * δ(Y) )
-            ifNotKeepδThenFreeδ!(Y)
         end
         addchild(Y, W)
         addchild(Y, X)
@@ -370,7 +351,6 @@ function Base.:*(W::Variable{T}, X::AbstractArray) where T
             if needgrad(W)
                 W ← δ(Y) * X'
             end
-            ifNotKeepδThenFreeδ!(Y)
         end
         addchild(Y, W)
     end
@@ -385,7 +365,6 @@ function Base.:*(W::AbstractArray, X::Variable{T}) where T
             if needgrad(X)
                 X ← W' * δ(Y)
             end
-            ifNotKeepδThenFreeδ!(Y)
         end
         addchild(Y, X)
     end
@@ -406,7 +385,6 @@ function addmv(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
         Z.backward = function ∇addmv()
             needgrad(M) && (M ← δ(Z))
             needgrad(V) && (V ← sum(δ(Z), dims=2))
-            ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
         addchild(Z, V)
@@ -428,7 +406,6 @@ function mulmv(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
         Z.backward = function ∇mulmv()
             needgrad(M) && (M ←     δ(Z) .* ᵛ(V))
             needgrad(V) && (V ← sum(δ(Z) .* ᵛ(M), dims=2))
-            ifNotKeepδThenFreeδ!(Z)
         end
         addchild(Z, M)
         addchild(Z, V)
@@ -453,7 +430,6 @@ function Base.:*(x::Variable{T}, constant::GradScalar) where T
             if needgrad(x)
                 x ← δ(y) .* C
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -5,7 +5,6 @@ function Base.floor(x::Variable{T}; digits::Int=0) where T
             if needgrad(x)
                 x ← δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -20,7 +19,6 @@ function Base.ceil(x::Variable{T}; digits::Int=0) where T
             if needgrad(x)
                 x ← δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -35,7 +33,6 @@ function Base.round(x::Variable{T}; digits::Int=0) where T
             if needgrad(x)
                 x ← δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -50,7 +47,6 @@ function Base.trunc(x::Variable{T}; digits::Int=0) where T
             if needgrad(x)
                 x ← δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

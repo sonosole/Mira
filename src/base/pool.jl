@@ -16,7 +16,6 @@ function Base.maximum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
                 zerodelta(x)
                 ᵟ(x)[i] .+= δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -32,7 +31,6 @@ function Base.minimum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
                 zerodelta(x)
                 ᵟ(x)[i] .+= δ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -46,7 +44,6 @@ function Base.sum(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
             if needgrad(x)
                 x ← δ(y) .+ zero(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -62,7 +59,6 @@ function mean(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
             if needgrad(x)
                 x ← δ(μ) .* m⁻¹ .+ zero(x)
             end
-            ifNotKeepδThenFreeδ!(μ)
         end
         addchild(μ, x)
     end
@@ -94,7 +90,6 @@ function var(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
             if needgrad(x)
                 x ← δ(σ²) .* (ᵛ(x) .- μ) .* 𝟐𝐦⁻¹
             end
-            ifNotKeepδThenFreeδ!(σ²)
         end
         addchild(σ², x)
     end
@@ -138,7 +133,6 @@ function linearpool(x::Variable{T}; dims::IntOrDims{N}=2) where {T,N}
             if needgrad(x)
                 x ← (𝟚 .* ᵛ(x) .- ᵛ(y)) ./ Σxᵢ .* δ(y) .+ zero(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -172,7 +166,6 @@ function exppool(x::Variable{T}; dims::IntOrDims{N}=2) where {T,N}
             if needgrad(x)
                 x ← eˣ ./ Σeˣⁱ .* (l .+ ᵛ(x) .- ᵛ(y)) .* δ(y) .+ zero(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -208,7 +201,6 @@ function powerpool(x::Variable{T}, n::Real=3; dims::IntOrDims{N}=2) where {T,N}
             if needgrad(x)
                 x ← ((n+l) .* xᵢⁿ .- n .* xᵢⁿ⁻¹ .* ᵛ(y)) ./ Σxᵢⁿ .* δ(y) .+ zero(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

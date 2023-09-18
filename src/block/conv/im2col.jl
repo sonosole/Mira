@@ -283,7 +283,6 @@ function im2col(x        :: Variable{Array{T}},
                     end
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
 
         addchild(y, px)

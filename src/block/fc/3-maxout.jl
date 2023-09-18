@@ -94,7 +94,6 @@ function forward(model::Maxout, x::Variable{T}) where T
             if needgrad(x)
                 x ← reshape(mask .* reshape(δ(y), h,1,c), h*k,c)
             end
-            ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
     end

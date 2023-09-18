@@ -42,7 +42,6 @@ function min2max!(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
                 U = T(upper)
                 x ← δ(y) .* (L .< ᵛ(x) .< U)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -65,7 +64,6 @@ function min2max(x::Variable{S}; lower::Real=0.0f0, upper::Real=1.0f0) where S
                 U = T(upper)
                 x ← δ(y) .* (L .< ᵛ(x) .< U)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -96,7 +94,6 @@ function sigmoid!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -111,7 +108,6 @@ function sigmoid(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* (l .- ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -186,7 +182,6 @@ function hardswish(x::Variable{T}, α::Real=1.0f0) where T
                 inv2 = D(0.50000000000000f0)
                 x ← δ(y) .* ∂hardswish.(ᵛ(x), D(0), D(1), D(3), D(-3), inv2, inv3)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -203,7 +198,6 @@ function hardswish!(x::Variable{T}, α::Real=1.0f0) where T
                 inv2 = D(0.50000000000000f0)
                 x ← δ(y) .* ∂hardswish.(ᵛ(x), D(0), D(1), D(3), D(-3), inv2, inv3)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -250,7 +244,6 @@ function softmax(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
                 ẏy = δ(y) .* ᵛ(y)
                 x ← ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -280,7 +273,6 @@ function softplus!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (l .+ exp.( - ᵛ(x) ))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -295,7 +287,6 @@ function softplus(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (l .+ exp.( - ᵛ(x) ))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -314,7 +305,6 @@ function exp!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -328,7 +318,6 @@ function Base.exp(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -352,7 +341,6 @@ function exp2!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* log(𝟚) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -368,7 +356,6 @@ function Base.exp2(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* log(𝟚) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -392,7 +379,6 @@ function exp10!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* log(lO) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -408,7 +394,6 @@ function Base.exp10(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* log(lO) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -434,7 +419,6 @@ function abs!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -448,7 +432,6 @@ function Base.abs(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* sign.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -465,7 +448,6 @@ function sqrt!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (𝟚 .* ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -481,7 +463,6 @@ function Base.sqrt(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (𝟚 .* ᵛ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -496,7 +477,6 @@ function inv!(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) .* ᵛ(y) .* ᵛ(y);
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -510,7 +490,6 @@ function Base.inv(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) .* ᵛ(y) .* ᵛ(y)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -525,7 +504,6 @@ function Base.:/(constant::Real, x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) .* ᵛ(y) .* ᵛ(y) .* (1/c)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -543,7 +521,6 @@ function log!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ ᵛ(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -557,7 +534,6 @@ function Base.log(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ ᵛ(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -581,7 +557,6 @@ function log2!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (log(𝟚) .* ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -596,7 +571,6 @@ function Base.log2(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (log(𝟚) .* ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -620,7 +594,6 @@ function log10!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (log(lO) .* ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -635,7 +608,6 @@ function Base.log10(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (log(lO) .* ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -651,7 +623,6 @@ function sec!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -666,7 +637,6 @@ function Base.sec(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ᵛ(y) .* tan.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -692,7 +662,6 @@ function tan!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (𝟙 .+ ᵛ(y) .^ 𝟚)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -709,7 +678,6 @@ function Base.tan(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (𝟙 .+ ᵛ(y).^𝟚)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -724,7 +692,6 @@ function atan!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (1 .+ ᵛ(x) .^ 2)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -738,7 +705,6 @@ function Base.atan(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ (1 .+ ᵛ(x) .^ 2)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -769,7 +735,6 @@ function hardtanh!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -783,7 +748,6 @@ function hardtanh(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (abs(ᵛ(x)) .< 1.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -809,7 +773,6 @@ function tand!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -827,7 +790,6 @@ function Base.tand(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* DPI .* (𝟙 .+ ᵛ(y).^𝟚)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -845,7 +807,6 @@ function tanh!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -862,7 +823,6 @@ function Base.tanh(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (𝟙 .- ᵛ(y).^𝟚)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -903,7 +863,6 @@ function sin!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* cos.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -917,7 +876,6 @@ function Base.sin(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* cos.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -932,7 +890,6 @@ function asin!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -946,7 +903,6 @@ function Base.asin(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -960,7 +916,6 @@ function asinh!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .+ 1)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -974,7 +929,6 @@ function Base.asinh(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .+ 1)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -997,7 +951,6 @@ function sinc!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* cosc.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1012,7 +965,6 @@ function Base.sinc(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* cosc.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1036,7 +988,6 @@ function sind!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* DPI .* cosd.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1051,7 +1002,6 @@ function Base.sind(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* DPI .* cosd.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1075,7 +1025,6 @@ function sinpi!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* 𝝅 .* cospi.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1090,7 +1039,6 @@ function Base.sinpi(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* 𝝅 .* cospi.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1104,7 +1052,6 @@ function sinh!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* cosh.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1118,7 +1065,6 @@ function Base.sinh(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* cosh.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1155,7 +1101,6 @@ function cos!(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) .* sin.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1169,7 +1114,6 @@ function Base.cos(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) .* sin.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1184,7 +1128,6 @@ function acos!(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1198,7 +1141,6 @@ function Base.acos(x::Variable{T}) where T
             if needgrad(x)
                 x ← - δ(y) ./ sqrt.(1 .- ᵛ(x) .^ 2)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1213,7 +1155,6 @@ function cosh!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* sinh.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1227,7 +1168,6 @@ function Base.cosh(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* sinh.(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1242,7 +1182,6 @@ function acosh!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .- 1)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1256,7 +1195,6 @@ function Base.acosh(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) ./ sqrt.(ᵛ(x) .^ 2 .- 1)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1288,7 +1226,6 @@ function polymax(x::Variable{T}, n::Int; dims::Union{Int,NTuple{N,Int}}=1) where
                 ẏy = δ(y) .* ᵛ(y)
                 x ← (ẏy .- ᵛ(y) .* sum(ẏy, dims=dims)) .* k ./ ᵛ(x)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1325,7 +1262,6 @@ function relu!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (ᵛ(x) .> 0.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1339,7 +1275,6 @@ function relu(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (ᵛ(x) .> 0.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1375,7 +1310,6 @@ function leakyrelu!(x::Variable{T}, k::Real=0.01f0) where T
                 S = eltype(x)
                 x ← δ(y) .* ∂leakyrelu.(ᵛ(x), S(k), S(0), S(1))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1391,7 +1325,6 @@ function leakyrelu(x::Variable{T}, k::Real=0.01f0) where T
                 S = eltype(x)
                 x ← δ(y) .* ∂leakyrelu.(ᵛ(x), S(k), S(0), S(1))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1417,7 +1350,6 @@ function relu1!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1431,7 +1363,6 @@ function relu1(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 1.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1457,7 +1388,6 @@ function relu6!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1471,7 +1401,6 @@ function relu6(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* (0.0f0 .< ᵛ(x) .< 6.0f0)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1508,7 +1437,6 @@ function elu(x::Variable{T}, α::Real=1.0f0) where T
                 S = eltype(x)
                 x ← δ(y) .* ∂elu.(ᵛ(x), ᵛ(y), S(α), S(0), S(1))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1523,7 +1451,6 @@ function elu!(x::Variable{T}, α::Real=1.0f0) where T
                 S = eltype(x)
                 x ← δ(y) .* ∂elu.(ᵛ(x), ᵛ(y), S(α), S(0), S(1))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1576,7 +1503,6 @@ function selu(x::Variable{T}) where T
                 α = S(1.6732632423543772848170429916717)
                 x ← δ(y) .* ∂selu.(ᵛ(x), ᵛ(y), λ, α, S(0))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1593,7 +1519,6 @@ function selu!(x::Variable{T}) where T
                 α = S(1.6732632423543772848170429916717)
                 x ← δ(y) .* ∂selu.(ᵛ(x), ᵛ(y), λ, α, S(0))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1652,7 +1577,6 @@ function gelu(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ∂gelu(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1666,7 +1590,6 @@ function gelu!(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y) .* ∂gelu(ᵛ(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1710,7 +1633,6 @@ function celu(x::Variable{T}, α::Real=1.0f0) where T
                 D = eltype(x)
                 x ← δ(y) .* ∂celu.(ᵛ(x), ᵛ(y), D(α), D(0), D(1))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -1725,7 +1647,6 @@ function celu!(x::Variable{T}, α::Real=1.0f0) where T
                 D = eltype(x)
                 x ← δ(y) .* ∂celu.(ᵛ(x), ᵛ(y), D(α), D(0), D(1))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -42,7 +42,6 @@ function DNNSoftmaxCTCLossSingleSeq(x::Variable{T}, seq::VecInt; blank::Int=1) w
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -96,7 +95,6 @@ function FNNSoftmaxCTCLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -152,7 +150,6 @@ function RNNSoftmaxCTCLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -205,7 +202,6 @@ function FRNNSoftmaxCTCLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -244,7 +240,6 @@ function FRNNSoftmaxFocalCTCLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* 𝒌 .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -281,7 +276,6 @@ function FRNNSoftmaxCTCProbs(x::Variable{T}, seqlabels::VecVecInt; blank::Int=1)
             if needgrad(x)
                 x ← δ(𝒑) .* ᵛ(𝒑) .*  Δ
             end
-            ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, x)
     end

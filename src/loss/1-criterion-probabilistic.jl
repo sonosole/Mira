@@ -38,7 +38,6 @@ function CrossEntropy(p::Variable{T}, label::Variable{T}) where T
             if needgrad(p)
                 p ← - δ(y) .* 𝝆 ./ 𝒑
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -62,7 +61,6 @@ function CrossEntropy(p::Variable{T}, label::AbstractArray) where T
             if needgrad(p)
                 p ← - δ(y) .* 𝝆 ./ 𝒑
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -107,7 +105,6 @@ function BinaryCrossEntropy(p::Variable{T}, label::Variable{T}) where T
                 δ₂ = @.      𝝆  /      p⁺
                 p ← δ(y) .* (δ₁ - δ₂)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -139,7 +136,6 @@ function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
                 δ₂ = @.      𝝆  /      p⁺
                 p ← δ(y) .* (δ₁ - δ₂)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -205,7 +201,6 @@ function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha
                 δ₂ = @. w₂ * p⁺ ^ γ * (l / (p⁻ - l) + γ * log(l - p⁻) / p⁺)
                 p ← δ(y) .* (δ₁ + δ₂)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -242,7 +237,6 @@ function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where 
                 δy = δ(y)
                 p  ← @. δy * 𝝆 * (l - p⁻)^n * (γ * log(p⁺) + l - l / p⁺)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -302,7 +296,6 @@ function NLogCrossEntropy(p::Variable{T}, label::AbstractArray) where T
             if needgrad(p)
                 p ← δ(y) .* 𝟐 .* 𝜸 .* 𝒍𝒏𝒑 ./ 𝒑
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end
@@ -342,7 +335,6 @@ function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f
                 δp = δ(p)
                 p  ← @. δy * 𝜸 * (𝒏 * 𝒑 * 𝒍𝒏𝒑 - Q) / (𝒑 * Qⁿ⁺¹)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end

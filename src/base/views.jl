@@ -23,7 +23,6 @@ function Base.permutedims(x::Variable{T}, d::Vector{Int}) where T
             if needgrad(x)
                 x ← permutedims(δ(y), invpermdims(d))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -39,7 +38,6 @@ function Base.permutedims(x::Variable{T}, d::NTuple{D, Int}) where {T,D}
             if needgrad(x)
                 x ← permutedims(δ(y), invpermdims(d))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -54,7 +52,6 @@ function Base.adjoint(x::Variable{T}) where T
             if needgrad(x)
                 x ← δ(y)'
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -69,7 +66,6 @@ function Base.transpose(x::Variable{T}) where T
             if needgrad(x)
                 x ← transpose(ᵟ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -84,7 +80,6 @@ function Base.reshape(x::Variable{T}, newsize::Dims{N}) where {T,N}
             if needgrad(x)
                 x ← reshape(δ(y), size(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -98,7 +93,6 @@ function Base.reshape(x::Variable{T}, shape::Int...) where T
             if needgrad(x)
                 x ← reshape(δ(y), size(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -112,7 +106,6 @@ function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int) where T
             if needgrad(x)
                 x ← reshape(δ(y), size(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -126,7 +119,6 @@ function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int, s₃::Int) where T
             if needgrad(x)
                 x ← reshape(δ(y), size(x))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

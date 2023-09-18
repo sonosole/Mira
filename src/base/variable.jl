@@ -1,7 +1,6 @@
 export zerodelta
 export clone
 export needgrad
-export ifNotKeepδThenFreeδ!
 export elsizeof
 export value, delta, ᵛ, ᵟ, δ
 export isleaf, setleaf, backprop, keepsgrad, needsgrad
@@ -175,14 +174,6 @@ function needgrad(x::Variable)
 end
 
 
-function ifNotKeepδThenFreeδ!(x::Variable)
-    if !x.keepsgrad
-        x.delta = nothing
-    end
-end
-
-
-
 Base.sizeof(x::Variable)         =  sizeof(x.value)
 Base.size(x::Variable)           =    size(x.value)
 Base.size(x::Variable, dim::Int) =    size(x.value, dim)
@@ -210,7 +201,6 @@ function Base.getindex(x::Variable{T}, k...) where T
                 zerodelta(x)
                 x.delta[k...] += y.delta
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -227,7 +217,6 @@ function Base.getindex(x::Variable{T}, k::Int) where T
                 zerodelta(x)
                 x.delta[k:k] += y.delta
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -244,7 +233,6 @@ function Base.getindex(x::Variable{T}, k::CartesianIndices) where T
                 zerodelta(x)
                 x.delta[k] += y.delta
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -366,7 +354,6 @@ function totype(type::Type, x::Variable{T}) where T
             if needgrad(x)
                 x ← T(δ(y))
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

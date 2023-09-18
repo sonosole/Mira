@@ -94,7 +94,6 @@ function padcircular(x::Variable{T}, pads::Pads{D}) where {T,D}
                 end
                 x ← ᵟ(y)[xranges]
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -67,7 +67,6 @@ function forward(m::ScalePath, x::Variable{T}) where T
             if needgrad(w)
                 w ← sum(δ(y) .* ᵛ(x)) .+ zero(w)
             end
-            ifNotKeepδThenFreeδ!(y);
         end
         addchild(y, x)
         addchild(y, w)

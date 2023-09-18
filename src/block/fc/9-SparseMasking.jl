@@ -42,7 +42,6 @@ function sparseLoss(s::SparseMasking)
                 δ₂ =       𝜌  ./ (     ᵛ(p) .+ ϵ)
                 p ← δ(y) .* (δ₁ - δ₂)
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, p)
     end

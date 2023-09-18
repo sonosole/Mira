@@ -143,7 +143,6 @@ function catchannel(xs::Vector{Variable{T}}) where T
                     xs[i] ← y.delta[preidx, postidx]
                 end
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         for i in 1:G
             addchild(y, xs[i])

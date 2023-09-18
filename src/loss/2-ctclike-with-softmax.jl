@@ -41,7 +41,6 @@ function SoftmaxCTCLikeLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(c) .* Δ
             end
-            ifNotKeepδThenFreeδ!(c)
         end
         addchild(c, x)
     end
@@ -103,7 +102,6 @@ function SoftmaxFocalCTCLikeLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(c) .* ζ .* Δ
             end
-            ifNotKeepδThenFreeδ!(c)
         end
         addchild(c, x)
     end
@@ -145,7 +143,6 @@ function SoftmaxCTCLikeProbs(x::Variable{T}, seqlabels::VecVecInt; pathfn::Funct
             if needgrad(x)
                 x ← δ(p) .* Δ
             end
-            ifNotKeepδThenFreeδ!(p)
         end
         addchild(p, x)
     end
@@ -188,7 +185,6 @@ function SoftmaxCTCLikeFocalCELoss(x::Variable{T},
                 ṗp .*= δ(C)
                 x ← ṗp .- p .* sum(ṗp, dims=1)
             end
-            ifNotKeepδThenFreeδ!(C)
         end
         addchild(C, x)
     end
@@ -240,7 +236,6 @@ function SoftmaxIterativeCTCLikeLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -47,7 +47,6 @@ function Base.cat(x₁::Variable{T}, x₂::Variable{T}; dims::Int=1) where T
                 Threads.@spawn (needgrad(x₁) && (x₁ ← δ(x)[c₁...]))
                 Threads.@spawn (needgrad(x₂) && (x₂ ← δ(x)[c₂...]))
             end
-            ifNotKeepδThenFreeδ!(x)
         end
         addchild(x, x₁)
         addchild(x, x₂)
@@ -115,7 +114,6 @@ function Base.cat(x₁::Variable{T}, x₂::Variable{T}, x₃::Variable{T}; dims:
                 Threads.@spawn (needgrad(x₂) && (x₂ ← δ(x)[c₂...]))
                 Threads.@spawn (needgrad(x₃) && (x₃ ← δ(x)[c₃...]))
             end
-            ifNotKeepδThenFreeδ!(x)
         end
         addchild(x, x₁)
         addchild(x, x₂)
@@ -194,7 +192,6 @@ function Base.cat(xs::Vector{Variable{T}}; dims::Int=1) where T
                     (needgrad(xs[n]) && (xs[n] ← δ(x)[cs[n]]))
                 end
             end
-            ifNotKeepδThenFreeδ!(x)
         end
         for n in 1:N
             addchild(x, xs[n])

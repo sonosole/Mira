@@ -26,7 +26,6 @@ function meannorm(x::Variable{T}; dims::IntOrDims{N}=1) where {T,N}
                 ∂l∂y = δ(y)
                 x ← ∂l∂y .- sum(∂l∂y; dims) .* m⁻¹
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

@@ -184,7 +184,6 @@ function CRNNSoftmaxTDC(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

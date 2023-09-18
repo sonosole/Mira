@@ -58,7 +58,6 @@ function FNNSoftmaxTCSLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -126,7 +125,6 @@ function RNNSoftmaxTCSLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -187,7 +185,6 @@ function FRNNSoftmaxTCSLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -216,7 +213,6 @@ function FRNNSoftmaxTCSProbs(x::Variable{T},
             if needgrad(x)
                 x ← δ(𝒑)  .* ᵛ(𝒑) .* Δ
             end
-            ifNotKeepδThenFreeδ!(𝒑)
         end
         addchild(𝒑, x)
     end
@@ -255,7 +251,6 @@ function FRNNSoftmaxFocalTCSLoss(x::Variable{T},
             if needgrad(x)
                 x ← δ(y) .* 𝒌 .* Δ
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end

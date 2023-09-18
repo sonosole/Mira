@@ -236,7 +236,6 @@ function padconst(x::Variable{T}, pads::Pads{D}, val::Real=0) where {T,D}
             if needgrad(x)
                 x ← δ(y)[xrange]
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -256,7 +255,6 @@ function padconst(x::Variable{T}, pads::Vector{Dims2}, val::Real=0) where T
             if needgrad(x)
                 x ← δ(y)[xrange]
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
@@ -276,7 +274,6 @@ function padconst(x::Variable{T}, pads::Vector{Pair{Int,Dims2}}, val::Real=0) wh
             if needgrad(x)
                 x ← δ(y)[xrange]
             end
-            ifNotKeepδThenFreeδ!(y)
         end
         addchild(y, x)
     end
