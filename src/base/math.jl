@@ -15,7 +15,7 @@ function Base.:+(x::Variable{T}, constant::Real) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .+ C, x.backprop)
     if y.backprop
-        y.backward = function ∇matAddScalar()
+        y.backward = function ∇addconst()
             if needgrad(x)
                 x ← δ(y)
             end
@@ -37,7 +37,7 @@ function Base.:-(x::Variable{T}, constant::Real) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .- C, x.backprop)
     if y.backprop
-        y.backward = function ∇matMinusScalar()
+        y.backward = function ∇minusconst()
             if needgrad(x)
                 x ← δ(y)
             end
@@ -54,7 +54,7 @@ function Base.:-(constant::Real, x::Variable{T}) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(C .- ᵛ(x), x.backprop)
     if y.backprop
-        y.backward = function ∇scalarMinusMat()
+        y.backward = function ∇constminus()
             if needgrad(x)
                 x ← - δ(y)
             end
@@ -70,7 +70,7 @@ function Base.:-(x::Variable{T}) where T
     # a matrix minus a constant element by element
     y = Variable{T}(- ᵛ(x), x.backprop)
     if y.backprop
-        y.backward = function ∇setNegative()
+        y.backward = function ∇negate()
             if needgrad(x)
                 x ← - δ(y)
             end
@@ -87,7 +87,7 @@ function Base.:*(x::Variable{T}, constant::Real) where T
     C = eltype(ᵛ(x))(constant)
     y = Variable{T}(ᵛ(x) .* C, x.backprop)
     if y.backprop
-        y.backward = function ∇matMulScalar()
+        y.backward = function ∇mulconst()
             if needgrad(x)
                 x ← δ(y) .* C
             end
@@ -131,7 +131,7 @@ function Base.:+(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) + ᵛ(y), backprop)
     if backprop
-        z.backward = function ∇add2var()
+        z.backward = function ∇eadd()
             needgrad(x) && (x ← δ(z))
             needgrad(y) && (y ← δ(z))
             ifNotKeepδThenFreeδ!(z)
@@ -147,7 +147,7 @@ function Base.:+(x::Variable{T}, y::AbstractArray) where T
     assert_same_size(x, y)
     z = Variable{T}(ᵛ(x) + y, x.backprop)
     if z.backprop
-        z.backward = function ∇minus2var()
+        z.backward = function ∇eadd()
             if needgrad(x)
                 x ← δ(z)
             end
@@ -162,7 +162,7 @@ function Base.:+(x::AbstractArray, y::Variable{T}) where T
     assert_same_size(x, y)
     z = Variable{T}(x + ᵛ(y), y.backprop)
     if z.backprop
-        z.backward = function ∇minus2var()
+        z.backward = function ∇eadd()
             if needgrad(y)
                 y ← δ(z)
             end
@@ -180,7 +180,7 @@ function Base.:-(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
     T = vartype(T1, T2)
     z = Variable{T}(ᵛ(x) - ᵛ(y), backprop)
     if backprop
-        z.backward = function ∇minus2var()
+        z.backward = function ∇eminus()
             needgrad(x) && (x ←  δ(z))
             needgrad(y) && (y ← -δ(z))
             ifNotKeepδThenFreeδ!(z)
@@ -196,7 +196,7 @@ function Base.:-(x::Variable{T}, y::AbstractArray) where T
     assert_same_size(x, y)
     z = Variable{T}(ᵛ(x) - y, x.backprop)
     if z.backprop
-        z.backward = function ∇minus2var()
+        z.backward = function ∇eminus()
             if needgrad(x)
                 x ← δ(z)
             end
@@ -211,7 +211,7 @@ function Base.:-(x::AbstractArray, y::Variable{T}) where T
     assert_same_size(x, y)
     z = Variable{T}(x - ᵛ(y), y.backprop)
     if z.backprop
-        z.backward = function ∇minus2var()
+        z.backward = function ∇eminus()
             if needgrad(y)
                 y ← - δ(z)
             end
@@ -449,7 +449,7 @@ function Base.:*(x::Variable{T}, constant::GradScalar) where T
     C = eltype(ᵛ(x))(constant.v)
     y = Variable{T}(ᵛ(x), x.backprop)
     if y.backprop
-        y.backward = function ∇matMulScalar()
+        y.backward = function ∇mulconst()
             if needgrad(x)
                 x ← δ(y) .* C
             end
