@@ -122,7 +122,7 @@ end
 
 function zerodelta(x::Variable{T}) where T
     if isnothing(x.delta)
-        x.delta = Zeros(T, x.shape)
+        x.delta = Zeros(T, size(x))
     end
 end
 
@@ -149,7 +149,7 @@ set all elements of `x.delta` be `δx`
 """
 @inline function (←)(x::Variable{T}, g::Real) where T
     if isnothing(x.delta)
-        x.delta = Zeros(T, x.shape)
+        x.delta = Zeros(T, size(x))
     end
     x.delta .+= eltype(x)(g)
     return nothing

@@ -18,7 +18,7 @@ function dropout(x::Variable{Array{T}}; p::Real=0.1f0) where T
     isequal(p, 0) && return x
     l = T(1)
     p = T(p)
-    m = (rand(T, x.shape) .< (l - p)) .* (l/(l - p)) # weighted mask
+    m = (rand(T, size(x)) .< (l - p)) .* (l/(l - p)) # weighted mask
     y = Variable{Array{T}}(ᵛ(x) .* m, x.backprop)
     if y.backprop
         y.backward = function ∇dropout()
@@ -48,7 +48,7 @@ function dropout!(x::Variable{Array{T}}; p::Real=0.1f0) where T
     isequal(p, 0) && return x
     l = T(1)
     p = T(p)
-    m = (rand(T, x.shape) .< (l - p)) .* (l/(l - p)) # weighted mask
+    m = (rand(T, size(x)) .< (l - p)) .* (l/(l - p)) # weighted mask
     y = Variable{Array{T}}(dotmul!(ᵛ(x), m), x.backprop)
     if y.backprop
         y.backward = function ∇dropout!()

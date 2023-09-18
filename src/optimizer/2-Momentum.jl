@@ -18,7 +18,7 @@ mutable struct Momentum <: Optimizer
         vel = Vector(undef,num)
         for i = 1:num
             c , θ = xparams[i]
-            vel[i] = Zeros(typeof(ᵛ(θ)), θ.shape)
+            vel[i] = Zeros(typeof(ᵛ(θ)), size(θ))
         end
         new(xparams, vel, lr, inertia, L1decay, L2decay, "Momentum")
     end

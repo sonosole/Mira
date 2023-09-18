@@ -82,7 +82,7 @@ function Base.reshape(x::Variable{T}, newsize::Dims{N}) where {T,N}
     if y.backprop
         y.backward = function ∇reshape()
             if needgrad(x)
-                x ← reshape(δ(y), x.shape)
+                x ← reshape(δ(y), size(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -96,7 +96,7 @@ function Base.reshape(x::Variable{T}, shape::Int...) where T
     if y.backprop
         y.backward = function ∇reshape()
             if needgrad(x)
-                x ← reshape(δ(y), x.shape)
+                x ← reshape(δ(y), size(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -110,7 +110,7 @@ function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int) where T
     if y.backprop
         y.backward = function ∇reshape()
             if needgrad(x)
-                x ← reshape(δ(y), x.shape)
+                x ← reshape(δ(y), size(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end
@@ -124,7 +124,7 @@ function Base.reshape(x::Variable{T}, s₁::Int, s₂::Int, s₃::Int) where T
     if y.backprop
         y.backward = function ∇reshape()
             if needgrad(x)
-                x ← reshape(δ(y), x.shape)
+                x ← reshape(δ(y), size(x))
             end
             ifNotKeepδThenFreeδ!(y)
         end

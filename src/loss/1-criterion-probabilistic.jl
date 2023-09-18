@@ -26,7 +26,7 @@ export KLDivLoss
 cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 """
 function CrossEntropy(p::Variable{T}, label::Variable{T}) where T
-    @assert (p.shape == label.shape)
+    @assert (size(p) == size(label))
     backprop = (p.backprop || label.backprop)
     ϵ = eltype(p)(1e-38)
     𝝆 = value(label)
@@ -51,7 +51,7 @@ end
 cross entropy is `y = - label * log(p)` where `p` is the output of the network.
 """
 function CrossEntropy(p::Variable{T}, label::AbstractArray) where T
-    @assert p.shape == size(label)
+    @assert size(p) == size(label)
     ϵ = eltype(p)(1e-38)
     𝒑 = value(p) .+ ϵ
     𝝆 = label
@@ -87,7 +87,7 @@ end
 binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function BinaryCrossEntropy(p::Variable{T}, label::Variable{T}) where T
-    @assert (p.shape == label.shape)
+    @assert (size(p) == size(label))
     backprop = (p.backprop || label.backprop)
     TO = eltype(p)
     ϵ  = TO(1e-38)
@@ -120,7 +120,7 @@ end
 binary cross entropy is `y = - label*log(p) - (1-label)*log(1-p)` where `p` is the output of the network.
 """
 function BinaryCrossEntropy(p::Variable{T}, label::AbstractArray) where T
-    @assert p.shape == size(label)
+    @assert size(p) == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     l  = TO(1.0f0)
@@ -179,7 +179,7 @@ focal loss version of BinaryCrossEntropy:\n
 where `γ` is the `focus` value, `α` is the weight for positive class.
 """
 function FocalBCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0, alpha::Real=0.5f0) where T
-    @assert p.shape == size(label)
+    @assert size(p) == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)
     l  = TO(1.0f0)
@@ -221,7 +221,7 @@ focal loss version of CrossEntropy:\n
 where `γ` is the `focus` value.
 """
 function FocalCE(p::Variable{T}, label::AbstractArray; focus::Real=1.0f0) where T
-    @assert p.shape == size(label)
+    @assert size(p) == size(label)
     TO = eltype(p)
     ϵ  = TO(1e-38)  # alias for value closing to zero
     l  = TO(1.0f0)  # alias for value one
@@ -289,7 +289,7 @@ Loss = [ − ln(`p`) ] * [ − `label` * ln(`p`) ], where `p` is the predicted p
 """
 function NLogCrossEntropy(p::Variable{T}, label::AbstractArray) where T
     # Loss = (-𝒍𝒏𝒑)*(-𝜸 * 𝒍𝒏𝒑), negative log weighted CELoss
-    @assert p.shape == size(label)
+    @assert size(p) == size(label)
     S = eltype(p)
     ϵ = S(1e-38)
     𝜸 = label
@@ -321,7 +321,7 @@ Loss = [ 1 / (`p` + (1-`a`))`ⁿ` ] * [ − `label` * ln(`p`) ], where `p` is th
 `a` in [0, 0.5] is recommended.
 """
 function InvPowerCrossEntropy(p::Variable{T}, label::AbstractArray; a::Real=0.3f0, n::Real=1f0) where T
-    @assert p.shape == size(label)
+    @assert size(p) == size(label)
     S = eltype(p)
     ϵ = S(1e-38)
     a = S(1 - a)

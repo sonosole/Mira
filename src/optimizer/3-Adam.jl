@@ -25,8 +25,8 @@ mutable struct Adam <: Optimizer
         w2  = Vector(undef,num)
         for i = 1:num
             c , θ = xparams[i]
-            w1[i] = Zeros(typeof(ᵛ(θ)), θ.shape)
-            w2[i] = Zeros(typeof(ᵛ(θ)), θ.shape)
+            w1[i] = Zeros(typeof(ᵛ(θ)), size(θ))
+            w2[i] = Zeros(typeof(ᵛ(θ)), size(θ))
         end
         new(xparams,w1,w2,lr, b1, b2, eps, 0, 1.0, 1.0, L1decay, L2decay, "Adam")
     end

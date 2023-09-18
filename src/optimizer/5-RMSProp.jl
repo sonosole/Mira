@@ -19,7 +19,7 @@ mutable struct RMSProp <: Optimizer
         w = Vector(undef,n)
         for i = 1:n
             c , θ = xparams[i]
-            w[i] = Zeros(typeof(ᵛ(θ)), θ.shape)
+            w[i] = Zeros(typeof(ᵛ(θ)), size(θ))
         end
         new(xparams, w, lr, eps, inertia, L1decay, L2decay, "RMSProp")
     end

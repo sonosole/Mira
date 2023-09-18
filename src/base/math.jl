@@ -398,7 +398,7 @@ end
 a matrix tensor `m` adds a vector tensor `v`
 """
 function addmv(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
-    @assert (M.shape[1]==V.shape[1] && V.shape[2]==1)
+    @assert (size(M,1) == size(V,1) && size(V, 2)==1)
     backprop = (M.backprop || V.backprop)
     T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .+ ᵛ(V), backprop)
@@ -420,7 +420,7 @@ end
 a matrix tensor `m` multiplies a vector tensor `v`
 """
 function mulmv(M::Variable{T1}, V::Variable{T2}) where {T1,T2}
-    @assert (M.shape[1]==V.shape[1] && V.shape[2]==1)
+    @assert (size(M,1) == size(V,1) && size(V, 2)==1)
     backprop = (M.backprop || V.backprop)
     T = vartype(T1, T2)
     Z = Variable{T}(ᵛ(M) .* ᵛ(V), backprop)

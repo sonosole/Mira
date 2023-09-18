@@ -18,7 +18,7 @@ mean absolute error (MAE) between each element in the input `x` and target `labe
     y = |xᵢ - lᵢ|
 """
 function MAE(x::Variable{T}, label::Variable{T}) where T
-    @assert (x.shape == label.shape)
+    @assert (size(x) == size(label))
     backprop = (x.backprop || label.backprop)
     y = Variable{T}(abs.(ᵛ(x) - ᵛ(label)), backprop)
     if backprop
@@ -41,7 +41,7 @@ mean absolute error (MAE) between each element in the input `x` and target `labe
     y = |xᵢ - lᵢ|
 """
 function MAE(x::Variable{T}, label::AbstractArray) where T
-    @assert x.shape == size(label)
+    @assert size(x) == size(label)
     y = Variable{T}(abs.(ᵛ(x) - label), x.backprop)
     if y.backprop
         y.backward = function ∇MAE()
@@ -75,7 +75,7 @@ mean sqrt error (MSE) between each element in the input `x` and target `label`. 
     y = (xᵢ - lᵢ)²
 """
 function MSE(x::Variable{T}, label::Variable{T}) where T
-    @assert (x.shape == label.shape)
+    @assert (size(x) == size(label))
     backprop = (x.backprop || label.backprop)
     𝟐 = eltype(x)(2)
     y = Variable{T}((ᵛ(x) - ᵛ(label)) .^ 𝟐, backprop)
@@ -93,7 +93,7 @@ end
 
 
 function MSE(x::Variable{T}, label::AbstractArray) where T
-    @assert x.shape == size(label)
+    @assert size(x) == size(label)
     𝟐 = eltype(x)(2.0)
     y = Variable{T}((ᵛ(x) - label) .^ 𝟐, x.backprop)
     if y.backprop
@@ -123,7 +123,7 @@ absolute error's `p`-th power between each element in the input `x` and target `
     y = |xᵢ - lᵢ|ᵖ
 """
 function Lp(x::Variable{T}, label::Variable{T}; p=3) where T
-    @assert (x.shape == label.shape)
+    @assert (size(x) == size(label))
     backprop = (x.backprop || label.backprop)
     Δ = ᵛ(x) - ᵛ(label)
     y = Variable{T}(Δ .^ p, backprop)
@@ -143,7 +143,7 @@ end
 
 
 function Lp(x::Variable{T}, label::AbstractArray; p=3) where T
-    @assert x.shape == size(label)
+    @assert size(x) == size(label)
     Δ = ᵛ(x) - label
     y = Variable{T}(Δ .^ p, x.backprop)
     if y.backprop
