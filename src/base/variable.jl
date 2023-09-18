@@ -33,7 +33,6 @@ export passgrad, ←
 mutable struct Variable{T}
     value     :: Union{Nil,T}        # value in forward
     delta     :: Union{Nil,T}        # gradients collected in backprop
-    shape     :: Tuple               # shape of `value`
     isleaf    :: Bool                # whether leaf node
     backprop  :: Bool                # whether needs backprop when forward
     keepsgrad :: Bool                # whether keeps grad after backprop
@@ -45,12 +44,11 @@ mutable struct Variable{T}
                             keepsgrad :: Bool = false,
                             isleaf    :: Bool = false) where T <: AbstractArray
         delta    = nothing
-        shape    = size(x)
         ismarked = false
         indegree = 0
         backward = nothing
         children = ifelse(!isleaf, Vector{Variable}(), nothing)
-        new{T}(x, delta, shape, isleaf, backprop, keepsgrad, ismarked, indegree, backward, children)
+        new{T}(x, delta, isleaf, backprop, keepsgrad, ismarked, indegree, backward, children)
     end
 end
 
