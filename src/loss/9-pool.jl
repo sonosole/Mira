@@ -138,11 +138,11 @@ end
 
 
 function SoftmaxPoolLoss(x::Variable{S},
-                         seqlabels::Mira.VecVecInt;
+                         seqlabels::VecVecInt;
                          reduction::String="sum",
                          poolingfn::Function=linearpool,
                          blank::Int=1,
-                         focus::Mira.RealOrNil=nothing,
+                         focus::RealOrNil=nothing,
                          alpha::Real=0.50000000f0) where S
 
     C, T, B = size(x)

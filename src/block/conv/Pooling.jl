@@ -16,7 +16,7 @@ Applies a `D`-dim pooling over an `(D+2)`-dim input tensor of shape (ichannels, 
             padval   :: Real = 0f0,
             padmode  :: String  = "zeros",
             padding  :: PadsDOrStr = "valid") where D
-+ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum` (aka MaxPool) or `mean` (aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{D, Dims{2}}`
 """
@@ -174,7 +174,7 @@ Applies a `1`-D pooling over an `3`-D input tensor of shape (ichannels, `steps`,
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Dims2OrStr = "valid")
-+ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum` (aka MaxPool) or `mean` (aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `Dims{2}`
 """
@@ -211,7 +211,7 @@ Applies a `2`-D pooling over an `4`-D input tensor of shape (ichannels, `hight`,
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads2OrStr = "valid")
-+ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum` (aka MaxPool) or `mean` (aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{2, Dims{2}}`
 """
@@ -241,7 +241,7 @@ Applies a `3`-D pooling over an `5`-D input tensor of shape (ichannels, `hight`,
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads3OrStr = "valid")
-+ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum` (aka MaxPool) or `mean` (aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{3, Dims{2}}`
 """
@@ -271,7 +271,7 @@ Applies a `4`-D pooling over an `6`-D input tensor of shape (ichannels, `w1`,`w2
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads4OrStr = "valid")
-+ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum` (aka MaxPool) or `mean` (aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{4, Dims{2}}`
 """
@@ -300,7 +300,7 @@ Applies a `5`-D pooling over an `7`-D input tensor of shape (ichannels, `w1`,`w2
            padval   :: Real = 0f0,
            padmode  :: String = "repeat",
            padding  :: Pads5OrStr = "valid")
-+ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum`(aka MaxPool) or "mean"(aka AvgPool)
++ `poolingf` can be user-defined, e.g. `softmax`, but usally `maximum` (aka MaxPool) or `mean` (aka AvgPool)
 + `padmode` should be one of \"zeros\", \"constant\", \"repeat\", \"reflect\", \"symmetric\", \"circular\"
 + `padding` can be \"valid\", \"same\", or type `NTuple{5, Dims{2}}`
 """
