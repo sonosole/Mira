@@ -212,6 +212,11 @@ function Base.:-(x::AbstractArray, y::Variable{T}) where T
 end
 
 
+@inline function emul(x::AbstractArray, y::AbstractArray)
+    assert_same_size(x, y)
+    return x .* y
+end
+
 """
     emul(x::Variable{T1}, y::Variable{T2}) where {T1,T2}
 a tensor multiplies a tensor element by element, size(x)==size(y)
@@ -243,7 +248,7 @@ function emul(x::Variable{T}, y::AbstractArray) where T
     if backprop
         z.backward = function ∇emul()
             if needgrad(x)
-                x ← δ(z) .* ᵛ(y)
+                x ← δ(z) .* y
             end
         end
         addchild(z, x)
@@ -262,7 +267,7 @@ function emul(x::AbstractArray, y::Variable{T}) where T
     if backprop
         z.backward = function ∇emul()
             if needgrad(y)
-                y ← δ(z) .* ᵛ(x)
+                y ← δ(z) .* x
             end
         end
         addchild(z, y)
