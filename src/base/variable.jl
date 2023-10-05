@@ -191,10 +191,9 @@ Base.setindex!(x::Variable, v::AbstractArray, k...) = (x.value[k...]  = v)
 
 
 function Base.getindex(x::Variable{T}, k...) where T
-    !x.backprop && return x.value[k...]
     y = Variable{T}(x.value[k...], x.backprop)
     if y.backprop
-        y.backward = function ∇getindex()
+        y.backward = function ∇getindex1()
             if needgrad(x)
                 zerodelta(x)
                 x.delta[k...] += y.delta
@@ -207,10 +206,9 @@ end
 
 
 function Base.getindex(x::Variable{T}, k::Int) where T
-    !x.backprop && return x.value[k:k]
     y = Variable{T}(x.value[k:k], x.backprop)
     if y.backprop
-        y.backward = function ∇getindex()
+        y.backward = function ∇getindex2()
             if needgrad(x)
                 zerodelta(x)
                 x.delta[k:k] += y.delta
@@ -223,10 +221,9 @@ end
 
 
 function Base.getindex(x::Variable{T}, k::CartesianIndices) where T
-    !x.backprop && return x.value[k]
     y = Variable{T}(x.value[k], x.backprop)
     if y.backprop
-        y.backward = function ∇getindex()
+        y.backward = function ∇getindex3()
             if needgrad(x)
                 zerodelta(x)
                 x.delta[k] += y.delta
