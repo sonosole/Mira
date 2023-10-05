@@ -136,7 +136,7 @@ end
 
 
 function clone(this::InstanceNorm; type::Type=Array{Float32})
-    cloned    = ZNorm(this.ϵ, this.ρ, this.dims, this.bdim, this.reuse)
+    cloned    = InstanceNorm(this.ϵ, this.ρ, this.dims, this.bdim, this.reuse)
     cloned.γ  = clone(this.γ, type=type)
     cloned.β  = clone(this.β, type=type)
     cloned.μ  = type(this.μ)

@@ -105,7 +105,7 @@ end
 
 
 function clone(this::BatchNorm; type::Type=Array{Float32})
-    cloned    = ZNorm(this.ϵ, this.ρ, this.dims)
+    cloned    = BatchNorm(this.ϵ, this.ρ, this.dims)
     cloned.γ  = clone(this.γ, type=type)
     cloned.β  = clone(this.β, type=type)
     cloned.μ  = type(this.μ)
